@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI-Based Service Request and Work Order Management System</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- =========================
+         HEADER
+    ========================== -->
+
+    <header class="header">
+
+        <div class="brand">
+
+            <div class="logos">
+
+                <img src="images/wildcatslogo.png"
+                     alt="Holy Trinity College Wildcats Logo"
+                     class="wildcats-logo">
+
+                <img src="images/htclogo.png"
+                     alt="Holy Trinity College Seal"
+                     class="school-logo">
+
+            </div>
+
+            <div class="school-name">
+
+                <h2>HOLY TRINITY COLLEGE</h2>
+
+                <p>General Santos City</p>
+
+            </div>
+
+        </div>
+
+
+        <nav>
+
+            <a href="#home" class="active">HOME</a>
+
+            <a href="#services">SERVICES</a>
+
+            <a href="#about">ABOUT</a>
+
+            <a href="#contact">CONTACT</a>
+
+            <button class="nav-button" id="getStartedButton">
+                GET STARTED
+            </button>
+
+        </nav>
+
+    </header>
+
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+
+    <main>
+
+
+        <!-- HERO SECTION -->
+
+        <section class="hero" id="home">
+
+            <div class="hero-background"></div>
+
+
+            <div class="hero-content">
+
+                <div class="school-label">
+
+                    <span class="green-dot"></span>
+
+                    HOLY TRINITY COLLEGE SERVICE PORTAL
+
+                </div>
+
+
+                <h1>
+
+                    AI-Based Service Request &
+
+                    <span>
+                        Work Order Management System
+                    </span>
+
+                </h1>
+
+
+                <div class="gold-line"></div>
+
+
+                <p class="hero-description">
+
+                    A centralized platform for submitting,
+                    tracking, and managing school service
+                    requests and work orders across the campus.
+
+                </p>
+
+
+                <div class="hero-buttons">
+
+                    <button class="primary-button"
+                            id="requestButton">
+
+                        <span>＋</span>
+
+                        SUBMIT A REQUEST
+
+                    </button>
+
+
+                    <button class="secondary-button"
+                            id="trackButton">
+
+                        <span>⌕</span>
+
+                        TRACK REQUEST
+
+                    </button>
+
+                </div>
+
+
+                <div class="users">
+
+                    <strong>For:</strong>
+
+                    <span>Students</span>
+
+                    <span>Faculty</span>
+
+                    <span>Staff</span>
+
+                    <span>Administration</span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- REQUEST DASHBOARD -->
+
+            <div class="dashboard">
+
+                <div class="dashboard-header">
+
+                    <div>
+
+                        <span class="dashboard-label">
+                            SERVICE REQUEST PORTAL
+                        </span>
+
+                        <h2>
+                            Request Overview
+                        </h2>
+
+                    </div>
+
+
+                    <div class="prototype-status">
+
+                        <span></span>
+
+                        Initial Prototype
+
+                    </div>
+
+                </div>
+
+
+                <!-- STATISTICS -->
+
+                <div class="statistics">
+
+                    <div class="stat-card">
+
+                        <span>
+                            TOTAL REQUESTS
+                        </span>
+
+                        <strong>
+                            24
+                        </strong>
+
+                        <small>
+                            Current records
+                        </small>
+
+                    </div>
+
+
+                    <div class="stat-card pending-stat">
+
+                        <span>
+                            PENDING
+                        </span>
+
+                        <strong>
+                            08
+                        </strong>
+
+                        <small>
+                            Awaiting action
+                        </small>
+
+                    </div>
+
+
+                    <div class="stat-card completed-stat">
+
+                        <span>
+                            COMPLETED
+                        </span>
+
+                        <strong>
+                            16
+                        </strong>
+
+                        <small>
+                            Resolved requests
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- RECENT REQUESTS -->
+
+                <div class="recent-section">
+
+                    <div class="section-header">
+
+                        <h3>
+                            Recent Requests
+                        </h3>
+
+                        <a href="#">
+                            View All
+                        </a>
+
+                    </div>
+
+
+                    <!-- REQUEST 1 -->
+
+                    <div class="request-row">
+
+                        <div class="request-icon computer">
+                            <span>▣</span>
+                        </div>
+
+
+                        <div class="request-details">
+
+                            <strong>
+                                SR-2026-0024
+                            </strong>
+
+                            <h4>
+                                Computer Laboratory Internet Issue
+                            </h4>
+
+                            <p>
+                                IT & Network
+                                <span>•</span>
+                                Laboratory 2
+                            </p>
+
+                        </div>
+
+
+                        <div class="request-status">
+
+                            <span class="priority high">
+                                HIGH
+                            </span>
+
+                            <small>
+                                In Progress
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- REQUEST 2 -->
+
+                    <div class="request-row">
+
+                        <div class="request-icon facilities">
+                            <span>⌂</span>
+                        </div>
+
+
+                        <div class="request-details">
+
+                            <strong>
+                                SR-2026-0023
+                            </strong>
+
+                            <h4>
+                                Broken Classroom Electric Fan
+                            </h4>
+
+                            <p>
+                                Facilities
+                                <span>•</span>
+                                Room 204
+                            </p>
+
+                        </div>
+
+
+                        <div class="request-status">
+
+                            <span class="priority medium">
+                                MEDIUM
+                            </span>
+
+                            <small>
+                                Assigned
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- REQUEST 3 -->
+
+                    <div class="request-row">
+
+                        <div class="request-icon maintenance">
+                            <span>⚒</span>
+                        </div>
+
+
+                        <div class="request-details">
+
+                            <strong>
+                                SR-2026-0022
+                            </strong>
+
+                            <h4>
+                                Classroom Door Handle Repair
+                            </h4>
+
+                            <p>
+                                Maintenance
+                                <span>•</span>
+                                Room 106
+                            </p>
+
+                        </div>
+
+
+                        <div class="request-status">
+
+                            <span class="priority low">
+                                LOW
+                            </span>
+
+                            <small>
+                                Pending
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- AI PANEL -->
+
+            <div class="ai-panel">
+
+                <div class="ai-header">
+
+                    <div class="ai-icon">
+                        ✦
+                    </div>
+
+                    <h3>
+                        AI ASSISTANT
+                    </h3>
+
+                </div>
+
+
+                <p>
+
+                    AI may assist authorized personnel
+                    by analyzing service requests and
+                    providing recommendations.
+
+                </p>
+
+
+                <div class="ai-feature">
+
+                    <span>✓</span>
+
+                    Request Classification
+
+                </div>
+
+
+                <div class="ai-feature">
+
+                    <span>✓</span>
+
+                    Priority Recommendation
+
+                </div>
+
+
+                <div class="ai-feature">
+
+                    <span>✓</span>
+
+                    Duplicate Detection
+
+                </div>
+
+
+                <div class="ai-feature">
+
+                    <span>✓</span>
+
+                    Service Insights
+
+                </div>
+
+
+                <div class="ai-note">
+
+                    AI recommendations are reviewed
+                    and validated by authorized
+                    school personnel.
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- SERVICES SECTION -->
+
+        <section class="services" id="services">
+
+            <div class="section-title">
+
+                <span>
+                    SERVICE CATEGORIES
+                </span>
+
+                <h2>
+                    What can we help you with?
+                </h2>
+
+                <div class="title-line"></div>
+
+                <p>
+                    Select the appropriate service category
+                    when submitting a school-related concern.
+                </p>
+
+            </div>
+
+
+            <div class="service-grid">
+
+
+                <div class="service-card">
+
+                    <div class="service-icon">
+                        ▣
+                    </div>
+
+                    <h3>
+                        IT & Computer
+                    </h3>
+
+                    <p>
+                        Computer hardware, software,
+                        laboratory, and technical concerns.
+                    </p>
+
+                </div>
+
+
+
+                <div class="service-card">
+
+                    <div class="service-icon">
+                        ◉
+                    </div>
+
+                    <h3>
+                        Internet & Network
+                    </h3>
+
+                    <p>
+                        Internet connectivity, network
+                        access, and related concerns.
+                    </p>
+
+                </div>
+
+
+
+                <div class="service-card">
+
+                    <div class="service-icon">
+                        ⚡
+                    </div>
+
+                    <h3>
+                        Electrical
+                    </h3>
+
+                    <p>
+                        Electrical equipment, lighting,
+                        outlets, and power concerns.
+                    </p>
+
+                </div>
+
+
+
+                <div class="service-card">
+
+                    <div class="service-icon">
+                        ⌂
+                    </div>
+
+                    <h3>
+                        Facilities
+                    </h3>
+
+                    <p>
+                        Classroom facilities, furniture,
+                        fixtures, and building concerns.
+                    </p>
+
+                </div>
+
+
+
+                <div class="service-card">
+
+                    <div class="service-icon">
+                        ▤
+                    </div>
+
+                    <h3>
+                        Equipment
+                    </h3>
+
+                    <p>
+                        School equipment requiring
+                        inspection, repair, or replacement.
+                    </p>
+
+                </div>
+
+
+
+                <div class="service-card">
+
+                    <div class="service-icon">
+                        ⚒
+                    </div>
+
+                    <h3>
+                        Maintenance
+                    </h3>
+
+                    <p>
+                        General repair, cleaning, and
+                        maintenance-related requests.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- WORKFLOW -->
+
+        <section class="workflow">
+
+            <div class="section-title">
+
+                <span>
+                    PROPOSED SERVICE PROCESS
+                </span>
+
+                <h2>
+                    From Request to Resolution
+                </h2>
+
+                <div class="title-line"></div>
+
+            </div>
+
+
+            <div class="workflow-container">
+
+
+                <div class="workflow-step">
+
+                    <div class="step-number">
+                        01
+                    </div>
+
+                    <h3>
+                        Submit
+                    </h3>
+
+                    <p>
+                        Submit the details of
+                        your service concern.
+                    </p>
+
+                </div>
+
+
+                <div class="workflow-arrow">
+                    →
+                </div>
+
+
+                <div class="workflow-step">
+
+                    <div class="step-number">
+                        02
+                    </div>
+
+                    <h3>
+                        Review
+                    </h3>
+
+                    <p>
+                        Authorized personnel
+                        review the request.
+                    </p>
+
+                </div>
+
+
+                <div class="workflow-arrow">
+                    →
+                </div>
+
+
+                <div class="workflow-step">
+
+                    <div class="step-number">
+                        03
+                    </div>
+
+                    <h3>
+                        Assign
+                    </h3>
+
+                    <p>
+                        The request is assigned
+                        to responsible personnel.
+                    </p>
+
+                </div>
+
+
+                <div class="workflow-arrow">
+                    →
+                </div>
+
+
+                <div class="workflow-step">
+
+                    <div class="step-number">
+                        04
+                    </div>
+
+                    <h3>
+                        Resolve
+                    </h3>
+
+                    <p>
+                        Work is completed and
+                        recorded as resolved.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ABOUT SECTION -->
+
+        <section class="about" id="about">
+
+            <div class="about-box">
+
+                <div class="about-content">
+
+                    <span>
+                        ABOUT THE PROPOSED SYSTEM
+                    </span>
+
+                    <h2>
+                        A centralized approach
+                        to school service management.
+                    </h2>
+
+                    <p>
+                        The proposed AI-Based Service Request
+                        and Work Order Management System is
+                        designed to help Holy Trinity College
+                        organize service requests, assignments,
+                        work orders, status updates, and
+                        completion records in one centralized
+                        platform.
+                    </p>
+
+                    <p>
+                        AI-assisted features may help authorized
+                        personnel classify requests, recommend
+                        priority levels, and identify possible
+                        duplicate concerns. Final decisions
+                        remain with authorized school personnel.
+                    </p>
+
+                </div>
+
+
+                <div class="about-logos">
+
+                    <img src="images/wildcatslogo.png"
+                         alt="Wildcats Logo">
+
+                    <img src="images/htclogo.png"
+                         alt="Holy Trinity College Logo">
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+
+    <footer id="contact">
+
+        <div class="footer-main">
+
+
+            <div class="footer-brand">
+
+                <div class="footer-logos">
+
+                    <img src="images/wildcatslogo.png"
+                         alt="Wildcats Logo">
+
+                    <img src="images/htclogo.png"
+                         alt="Holy Trinity College Logo">
+
+                </div>
+
+
+                <div>
+
+                    <h3>
+                        Holy Trinity College
+                        of General Santos City
+                    </h3>
+
+                    <p>
+                        AI-Based Service Request and
+                        Work Order Management System
+                    </p>
+
+                    <strong>
+                        Excellence in Service,
+                        Commitment to Community.
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="developer">
+
+                <span>
+                    DEVELOPED BY
+                </span>
+
+                <h3>
+                    Sean Keith D. Fajanoy
+                </h3>
+
+                <p>
+                    System Analysis and Design
+                    • 2026
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-bottom">
+
+            <span>
+                © 2026 Holy Trinity College
+                of General Santos City
+            </span>
+
+            <span>
+                Initial System Interface Prototype
+            </span>
+
+        </div>
+
+    </footer>
+
+
+
+    <script src="js/script.js"></script>
+
+</body>
+
+</html>
