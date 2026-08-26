@@ -1,779 +1,2855 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>AI-Based Service Request and Work Order Management System</title>
+    <meta
+        name="description"
+        content="AI-Based Service Request and Work Order Management System of Holy Trinity College of General Santos City."
+    >
+
+    <title>HTC Service Request Portal</title>
 
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-    <!-- =========================
+    <!-- =====================================================
+         ACCESSIBILITY
+    ====================================================== -->
+
+    <a class="skip-link" href="#mainContent">
+        Skip to main content
+    </a>
+
+
+    <!-- =====================================================
          HEADER
-    ========================== -->
+    ====================================================== -->
 
-    <header class="header">
+    <header class="site-header">
 
-        <div class="brand">
+        <!-- Brand -->
 
-            <div class="logos">
+        <a
+            class="brand"
+            href="#home"
+            aria-label="Holy Trinity College Service Portal home"
+        >
+            <span class="brand-logos">
+                <img
+                    src="images/wildcatslogo.png"
+                    alt="Holy Trinity College Wildcats Logo"
+                >
 
-                <img src="images/wildcatslogo.png"
-                     alt="Holy Trinity College Wildcats Logo"
-                     class="wildcats-logo">
+                <img
+                    src="images/htclogo.png"
+                    alt="Holy Trinity College Seal"
+                >
+            </span>
 
-                <img src="images/htclogo.png"
-                     alt="Holy Trinity College Seal"
-                     class="school-logo">
-
-            </div>
-
-            <div class="school-name">
-
-                <h2>HOLY TRINITY COLLEGE</h2>
-
-                <p>General Santos City</p>
-
-            </div>
-
-        </div>
+            <span class="brand-copy">
+                <strong>HOLY TRINITY COLLEGE</strong>
+                <small>General Santos City</small>
+            </span>
+        </a>
 
 
-        <nav>
+        <!-- Mobile Menu Button -->
 
-            <a href="#home" class="active">HOME</a>
+        <button
+            class="menu-button"
+            id="menuButton"
+            type="button"
+            aria-label="Open navigation"
+            aria-expanded="false"
+        >
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
 
-            <a href="#services">SERVICES</a>
 
-            <a href="#about">ABOUT</a>
+        <!-- Main Navigation -->
 
-            <a href="#contact">CONTACT</a>
+        <nav
+            class="main-nav"
+            id="mainNav"
+            aria-label="Main navigation"
+        >
+            <a class="active" href="#home">
+                Home
+            </a>
 
-            <button class="nav-button" id="getStartedButton">
-                GET STARTED
+            <a href="#ai-assistance">
+                AI Assistance
+            </a>
+
+            <a href="#workflow">
+                Workflow
+            </a>
+
+            <a
+                id="workspaceNavLink"
+                href="#workspace"
+                hidden
+            >
+                My Workspace
+            </a>
+
+            <button
+                class="button button-small button-primary"
+                id="signInButton"
+                type="button"
+            >
+                Sign In
             </button>
-
         </nav>
 
     </header>
 
 
-
-    <!-- =========================
+    <!-- =====================================================
          MAIN CONTENT
-    ========================== -->
+    ====================================================== -->
 
-    <main>
-
-
-        <!-- HERO SECTION -->
-
-        <section class="hero" id="home">
-
-            <div class="hero-background"></div>
+    <main id="mainContent">
 
 
-            <div class="hero-content">
+        <!-- =================================================
+             PUBLIC / MAIN INTERFACE
+        ================================================== -->
 
-                <div class="school-label">
-
-                    <span class="green-dot"></span>
-
-                    HOLY TRINITY COLLEGE SERVICE PORTAL
-
-                </div>
+        <div id="publicContent">
 
 
-                <h1>
+            <!-- =============================================
+                 HERO SECTION
+            ============================================== -->
 
-                    AI-Based Service Request &
-
-                    <span>
-                        Work Order Management System
-                    </span>
-
-                </h1>
-
-
-                <div class="gold-line"></div>
+            <section
+                class="hero"
+                id="home"
+            >
+                <div class="section-shell hero-grid">
 
 
-                <p class="hero-description">
+                    <!-- Hero Content -->
 
-                    A centralized platform for submitting,
-                    tracking, and managing school service
-                    requests and work orders across the campus.
+                    <div class="hero-copy">
 
-                </p>
-
-
-                <div class="hero-buttons">
-
-                    <button class="primary-button"
-                            id="requestButton">
-
-                        <span>＋</span>
-
-                        SUBMIT A REQUEST
-
-                    </button>
-
-
-                    <button class="secondary-button"
-                            id="trackButton">
-
-                        <span>⌕</span>
-
-                        TRACK REQUEST
-
-                    </button>
-
-                </div>
-
-
-                <div class="users">
-
-                    <strong>For:</strong>
-
-                    <span>Students</span>
-
-                    <span>Faculty</span>
-
-                    <span>Staff</span>
-
-                    <span>Administration</span>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- REQUEST DASHBOARD -->
-
-            <div class="dashboard">
-
-                <div class="dashboard-header">
-
-                    <div>
-
-                        <span class="dashboard-label">
-                            SERVICE REQUEST PORTAL
+                        <span class="eyebrow">
+                            <i></i>
+                            Holy Trinity College Service Portal
                         </span>
+
+                        <h1>
+                            AI-Based Service Request &amp;
+                            <em>Work Order Management System</em>
+                        </h1>
+
+                        <p>
+                            A centralized campus platform for submitting concerns,
+                            reviewing service requests, approving work, assigning
+                            personnel, and monitoring completion.
+                        </p>
+
+
+                        <!-- Hero Buttons -->
+
+                        <div class="hero-actions">
+
+                            <button
+                                class="button button-primary"
+                                id="heroAccessButton"
+                                type="button"
+                            >
+                                Access Service Portal
+                            </button>
+
+                            <a
+                                class="button button-secondary"
+                                href="#workflow"
+                            >
+                                View Workflow
+                            </a>
+
+                        </div>
+
+
+                        <!-- User Roles -->
+
+                        <div
+                            class="audience-list"
+                            aria-label="System users"
+                        >
+                            <strong>Role-based access</strong>
+
+                            <span>Requester</span>
+                            <span>Administrator</span>
+                            <span>Department Head</span>
+                            <span>Technician</span>
+                        </div>
+
+                    </div>
+
+
+                    <!-- Request Overview -->
+
+                    <aside
+                        class="overview-card"
+                        aria-label="Service overview"
+                    >
+
+                        <div class="overview-heading">
+
+                            <div>
+                                <small>Campus Operations</small>
+                                <h2>Request Overview</h2>
+                            </div>
+
+                            <span class="live-indicator">
+                                <i></i>
+                                System Active
+                            </span>
+
+                        </div>
+
+
+                        <!-- Metrics -->
+
+                        <div class="metric-grid">
+
+                            <article>
+                                <span>Total Requests</span>
+                                <strong id="totalRequestMetric">24</strong>
+                                <small>Recorded concerns</small>
+                            </article>
+
+                            <article class="metric-pending">
+                                <span>Pending</span>
+                                <strong id="pendingRequestMetric">08</strong>
+                                <small>Awaiting action</small>
+                            </article>
+
+                            <article class="metric-completed">
+                                <span>Completed</span>
+                                <strong>16</strong>
+                                <small>Resolved requests</small>
+                            </article>
+
+                        </div>
+
+
+                        <!-- Recent Activity -->
+
+                        <div class="activity-list">
+
+                            <div class="activity-heading">
+                                <h3>Recent Activity</h3>
+                                <span>Current records</span>
+                            </div>
+
+
+                            <div class="activity-row">
+
+                                <span class="activity-icon green">
+                                    IT
+                                </span>
+
+                                <div>
+                                    <strong>SR-2026-0024</strong>
+                                    <p>Laboratory internet issue</p>
+                                </div>
+
+                                <span class="badge badge-progress">
+                                    In Progress
+                                </span>
+
+                            </div>
+
+
+                            <div class="activity-row">
+
+                                <span class="activity-icon gold">
+                                    FM
+                                </span>
+
+                                <div>
+                                    <strong>SR-2026-0023</strong>
+                                    <p>Broken classroom electric fan</p>
+                                </div>
+
+                                <span class="badge badge-assigned">
+                                    Assigned
+                                </span>
+
+                            </div>
+
+
+                            <div class="activity-row">
+
+                                <span class="activity-icon blue">
+                                    MT
+                                </span>
+
+                                <div>
+                                    <strong>SR-2026-0022</strong>
+                                    <p>Door handle repair</p>
+                                </div>
+
+                                <span class="badge badge-pending">
+                                    Pending
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </aside>
+
+                </div>
+            </section>
+
+
+            <!-- =============================================
+                 ROLE PREVIEW
+            ============================================== -->
+
+            <section class="role-preview-section">
+
+                <div class="section-shell">
+
+                    <div class="section-heading">
+
+                        <span>Role-Based System</span>
 
                         <h2>
-                            Request Overview
+                            Each user sees only the interface assigned
+                            to their role
                         </h2>
 
-                    </div>
-
-
-                    <div class="prototype-status">
-
-                        <span></span>
-
-                        Initial Prototype
-
-                    </div>
-
-                </div>
-
-
-                <!-- STATISTICS -->
-
-                <div class="statistics">
-
-                    <div class="stat-card">
-
-                        <span>
-                            TOTAL REQUESTS
-                        </span>
-
-                        <strong>
-                            24
-                        </strong>
-
-                        <small>
-                            Current records
-                        </small>
+                        <p>
+                            The public page is shared by everyone. After sign-in,
+                            the system opens the correct sub-interface and keeps
+                            all other role workspaces hidden.
+                        </p>
 
                     </div>
 
 
-                    <div class="stat-card pending-stat">
+                    <div class="role-preview-grid">
 
-                        <span>
-                            PENDING
-                        </span>
+                        <article>
+                            <span>01</span>
 
-                        <strong>
-                            08
-                        </strong>
-
-                        <small>
-                            Awaiting action
-                        </small>
-
-                    </div>
-
-
-                    <div class="stat-card completed-stat">
-
-                        <span>
-                            COMPLETED
-                        </span>
-
-                        <strong>
-                            16
-                        </strong>
-
-                        <small>
-                            Resolved requests
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- RECENT REQUESTS -->
-
-                <div class="recent-section">
-
-                    <div class="section-header">
-
-                        <h3>
-                            Recent Requests
-                        </h3>
-
-                        <a href="#">
-                            View All
-                        </a>
-
-                    </div>
-
-
-                    <!-- REQUEST 1 -->
-
-                    <div class="request-row">
-
-                        <div class="request-icon computer">
-                            <span>▣</span>
-                        </div>
-
-
-                        <div class="request-details">
-
-                            <strong>
-                                SR-2026-0024
-                            </strong>
-
-                            <h4>
-                                Computer Laboratory Internet Issue
-                            </h4>
+                            <h3>Requester</h3>
 
                             <p>
-                                IT & Network
-                                <span>•</span>
-                                Laboratory 2
+                                Submit requests and track only their
+                                service records.
                             </p>
-
-                        </div>
-
-
-                        <div class="request-status">
-
-                            <span class="priority high">
-                                HIGH
-                            </span>
-
-                            <small>
-                                In Progress
-                            </small>
-
-                        </div>
-
-                    </div>
+                        </article>
 
 
+                        <article>
+                            <span>02</span>
 
-                    <!-- REQUEST 2 -->
-
-                    <div class="request-row">
-
-                        <div class="request-icon facilities">
-                            <span>⌂</span>
-                        </div>
-
-
-                        <div class="request-details">
-
-                            <strong>
-                                SR-2026-0023
-                            </strong>
-
-                            <h4>
-                                Broken Classroom Electric Fan
-                            </h4>
+                            <h3>Service Administrator</h3>
 
                             <p>
-                                Facilities
-                                <span>•</span>
-                                Room 204
+                                Review requests, create work orders,
+                                and manage access.
                             </p>
-
-                        </div>
-
-
-                        <div class="request-status">
-
-                            <span class="priority medium">
-                                MEDIUM
-                            </span>
-
-                            <small>
-                                Assigned
-                            </small>
-
-                        </div>
-
-                    </div>
+                        </article>
 
 
+                        <article>
+                            <span>03</span>
 
-                    <!-- REQUEST 3 -->
-
-                    <div class="request-row">
-
-                        <div class="request-icon maintenance">
-                            <span>⚒</span>
-                        </div>
-
-
-                        <div class="request-details">
-
-                            <strong>
-                                SR-2026-0022
-                            </strong>
-
-                            <h4>
-                                Classroom Door Handle Repair
-                            </h4>
+                            <h3>Department Head</h3>
 
                             <p>
-                                Maintenance
-                                <span>•</span>
-                                Room 106
+                                Review requests that require authorization
+                                and approve or reject them.
                             </p>
+                        </article>
 
-                        </div>
 
+                        <article>
+                            <span>04</span>
 
-                        <div class="request-status">
+                            <h3>Technician</h3>
 
-                            <span class="priority low">
-                                LOW
-                            </span>
-
-                            <small>
-                                Pending
-                            </small>
-
-                        </div>
+                            <p>
+                                View assigned work and update progress
+                                or completion.
+                            </p>
+                        </article>
 
                     </div>
 
                 </div>
 
-            </div>
+            </section>
 
 
+            <!-- =============================================
+                 AI ASSISTANCE
+            ============================================== -->
 
-            <!-- AI PANEL -->
+            <section
+                class="ai-section section-shell"
+                id="ai-assistance"
+            >
 
-            <div class="ai-panel">
+                <div class="ai-copy">
 
-                <div class="ai-header">
-
-                    <div class="ai-icon">
-                        ✦
-                    </div>
-
-                    <h3>
-                        AI ASSISTANT
-                    </h3>
-
-                </div>
-
-
-                <p>
-
-                    AI may assist authorized personnel
-                    by analyzing service requests and
-                    providing recommendations.
-
-                </p>
-
-
-                <div class="ai-feature">
-
-                    <span>✓</span>
-
-                    Request Classification
-
-                </div>
-
-
-                <div class="ai-feature">
-
-                    <span>✓</span>
-
-                    Priority Recommendation
-
-                </div>
-
-
-                <div class="ai-feature">
-
-                    <span>✓</span>
-
-                    Duplicate Detection
-
-                </div>
-
-
-                <div class="ai-feature">
-
-                    <span>✓</span>
-
-                    Service Insights
-
-                </div>
-
-
-                <div class="ai-note">
-
-                    AI recommendations are reviewed
-                    and validated by authorized
-                    school personnel.
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- SERVICES SECTION -->
-
-        <section class="services" id="services">
-
-            <div class="section-title">
-
-                <span>
-                    SERVICE CATEGORIES
-                </span>
-
-                <h2>
-                    What can we help you with?
-                </h2>
-
-                <div class="title-line"></div>
-
-                <p>
-                    Select the appropriate service category
-                    when submitting a school-related concern.
-                </p>
-
-            </div>
-
-
-            <div class="service-grid">
-
-
-                <div class="service-card">
-
-                    <div class="service-icon">
-                        ▣
-                    </div>
-
-                    <h3>
-                        IT & Computer
-                    </h3>
-
-                    <p>
-                        Computer hardware, software,
-                        laboratory, and technical concerns.
-                    </p>
-
-                </div>
-
-
-
-                <div class="service-card">
-
-                    <div class="service-icon">
-                        ◉
-                    </div>
-
-                    <h3>
-                        Internet & Network
-                    </h3>
-
-                    <p>
-                        Internet connectivity, network
-                        access, and related concerns.
-                    </p>
-
-                </div>
-
-
-
-                <div class="service-card">
-
-                    <div class="service-icon">
-                        ⚡
-                    </div>
-
-                    <h3>
-                        Electrical
-                    </h3>
-
-                    <p>
-                        Electrical equipment, lighting,
-                        outlets, and power concerns.
-                    </p>
-
-                </div>
-
-
-
-                <div class="service-card">
-
-                    <div class="service-icon">
-                        ⌂
-                    </div>
-
-                    <h3>
-                        Facilities
-                    </h3>
-
-                    <p>
-                        Classroom facilities, furniture,
-                        fixtures, and building concerns.
-                    </p>
-
-                </div>
-
-
-
-                <div class="service-card">
-
-                    <div class="service-icon">
-                        ▤
-                    </div>
-
-                    <h3>
-                        Equipment
-                    </h3>
-
-                    <p>
-                        School equipment requiring
-                        inspection, repair, or replacement.
-                    </p>
-
-                </div>
-
-
-
-                <div class="service-card">
-
-                    <div class="service-icon">
-                        ⚒
-                    </div>
-
-                    <h3>
-                        Maintenance
-                    </h3>
-
-                    <p>
-                        General repair, cleaning, and
-                        maintenance-related requests.
-                    </p>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- WORKFLOW -->
-
-        <section class="workflow">
-
-            <div class="section-title">
-
-                <span>
-                    PROPOSED SERVICE PROCESS
-                </span>
-
-                <h2>
-                    From Request to Resolution
-                </h2>
-
-                <div class="title-line"></div>
-
-            </div>
-
-
-            <div class="workflow-container">
-
-
-                <div class="workflow-step">
-
-                    <div class="step-number">
-                        01
-                    </div>
-
-                    <h3>
-                        Submit
-                    </h3>
-
-                    <p>
-                        Submit the details of
-                        your service concern.
-                    </p>
-
-                </div>
-
-
-                <div class="workflow-arrow">
-                    →
-                </div>
-
-
-                <div class="workflow-step">
-
-                    <div class="step-number">
-                        02
-                    </div>
-
-                    <h3>
-                        Review
-                    </h3>
-
-                    <p>
-                        Authorized personnel
-                        review the request.
-                    </p>
-
-                </div>
-
-
-                <div class="workflow-arrow">
-                    →
-                </div>
-
-
-                <div class="workflow-step">
-
-                    <div class="step-number">
-                        03
-                    </div>
-
-                    <h3>
-                        Assign
-                    </h3>
-
-                    <p>
-                        The request is assigned
-                        to responsible personnel.
-                    </p>
-
-                </div>
-
-
-                <div class="workflow-arrow">
-                    →
-                </div>
-
-
-                <div class="workflow-step">
-
-                    <div class="step-number">
-                        04
-                    </div>
-
-                    <h3>
-                        Resolve
-                    </h3>
-
-                    <p>
-                        Work is completed and
-                        recorded as resolved.
-                    </p>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- ABOUT SECTION -->
-
-        <section class="about" id="about">
-
-            <div class="about-box">
-
-                <div class="about-content">
-
-                    <span>
-                        ABOUT THE PROPOSED SYSTEM
+                    <span class="section-label">
+                        Responsible AI Assistance
                     </span>
 
                     <h2>
-                        A centralized approach
-                        to school service management.
+                        AI supports decisions without replacing
+                        authorized personnel.
                     </h2>
 
                     <p>
-                        The proposed AI-Based Service Request
-                        and Work Order Management System is
-                        designed to help Holy Trinity College
-                        organize service requests, assignments,
-                        work orders, status updates, and
-                        completion records in one centralized
-                        platform.
+                        The AI component reviews request descriptions to
+                        recommend a category and priority and to flag possible
+                        duplicate concerns. Final approval and work assignment
+                        remain with authorized users.
                     </p>
 
-                    <p>
-                        AI-assisted features may help authorized
-                        personnel classify requests, recommend
-                        priority levels, and identify possible
-                        duplicate concerns. Final decisions
-                        remain with authorized school personnel.
-                    </p>
+
+                    <div class="human-review">
+
+                        <span>✓</span>
+
+                        <p>
+                            <strong>Human review remains required.</strong>
+
+                            Administrators validate AI suggestions and the
+                            Department Head or designated approver makes
+                            the authorization decision.
+                        </p>
+
+                    </div>
 
                 </div>
 
 
-                <div class="about-logos">
+                <!-- AI Capabilities -->
 
-                    <img src="images/wildcatslogo.png"
-                         alt="Wildcats Logo">
+                <div class="ai-capabilities">
 
-                    <img src="images/htclogo.png"
-                         alt="Holy Trinity College Logo">
+                    <article>
+
+                        <span>01</span>
+
+                        <div>
+                            <h3>Classification</h3>
+
+                            <p>
+                                Recommends the most likely service category.
+                            </p>
+                        </div>
+
+                    </article>
+
+
+                    <article>
+
+                        <span>02</span>
+
+                        <div>
+                            <h3>Priority</h3>
+
+                            <p>
+                                Estimates urgency based on the reported impact.
+                            </p>
+                        </div>
+
+                    </article>
+
+
+                    <article>
+
+                        <span>03</span>
+
+                        <div>
+                            <h3>Duplicate Check</h3>
+
+                            <p>
+                                Flags similar active requests for human review.
+                            </p>
+                        </div>
+
+                    </article>
+
+
+                    <article>
+
+                        <span>04</span>
+
+                        <div>
+                            <h3>Service Insights</h3>
+
+                            <p>
+                                Supports monitoring, dashboards, and reports.
+                            </p>
+                        </div>
+
+                    </article>
+
+                </div>
+
+            </section>
+
+
+            <!-- =============================================
+                 WORKFLOW
+            ============================================== -->
+
+            <section
+                class="workflow-section"
+                id="workflow"
+            >
+
+                <div class="section-shell">
+
+                    <div class="section-heading">
+
+                        <span>Service Workflow</span>
+
+                        <h2>
+                            From request to verified resolution
+                        </h2>
+
+                        <p>
+                            Each stage has a responsible role and
+                            a documented system record.
+                        </p>
+
+                    </div>
+
+
+                    <ol class="workflow-list">
+
+                        <li>
+                            <span>01</span>
+                            <small>Requester</small>
+
+                            <h3>Submit</h3>
+
+                            <p>
+                                Enter a concern and receive
+                                a request number.
+                            </p>
+                        </li>
+
+
+                        <li>
+                            <span>02</span>
+                            <small>AI + Administrator</small>
+
+                            <h3>Analyze</h3>
+
+                            <p>
+                                Recommend and validate category,
+                                priority, and duplicates.
+                            </p>
+                        </li>
+
+
+                        <li>
+                            <span>03</span>
+                            <small>Department Head</small>
+
+                            <h3>Approve</h3>
+
+                            <p>
+                                Authorize or reject requests
+                                requiring approval.
+                            </p>
+                        </li>
+
+
+                        <li>
+                            <span>04</span>
+                            <small>Administrator</small>
+
+                            <h3>Assign</h3>
+
+                            <p>
+                                Create the work order and assign
+                                service personnel.
+                            </p>
+                        </li>
+
+
+                        <li>
+                            <span>05</span>
+                            <small>Technician</small>
+
+                            <h3>Resolve</h3>
+
+                            <p>
+                                Perform the work and record
+                                progress or completion.
+                            </p>
+                        </li>
+
+                    </ol>
+
+                </div>
+
+            </section>
+
+        </div>
+
+
+        <!-- =================================================
+             ROLE WORKSPACE
+             ONLY ONE ROLE INTERFACE IS SHOWN AFTER LOGIN
+        ================================================== -->
+
+        <section
+            class="workspace-section"
+            id="workspace"
+            hidden
+        >
+
+            <div class="section-shell workspace-shell">
+
+
+                <!-- =========================================
+                     WORKSPACE SIDEBAR
+                ========================================== -->
+
+                <aside class="workspace-sidebar">
+
+
+                    <!-- Signed-in User -->
+
+                    <div class="workspace-user">
+
+                        <div
+                            class="workspace-avatar"
+                            id="workspaceAvatar"
+                        >
+                            GU
+                        </div>
+
+                        <div>
+                            <small>Signed in as</small>
+
+                            <strong id="workspaceUserName">
+                                Guest User
+                            </strong>
+
+                            <span id="workspaceUserEmail">
+                                user@htc.edu.ph
+                            </span>
+                        </div>
+
+                    </div>
+
+
+                    <!-- Assigned Role -->
+
+                    <div class="workspace-role-card">
+
+                        <small>Assigned Role</small>
+
+                        <strong id="workspaceRoleName">
+                            Role
+                        </strong>
+
+                    </div>
+
+
+                    <!-- Dynamic Workspace Navigation -->
+
+                    <nav
+                        class="workspace-navigation"
+                        id="workspaceNavigation"
+                        aria-label="Role workspace navigation"
+                    ></nav>
+
+
+                    <!-- Sign Out -->
+
+                    <button
+                        class="workspace-signout"
+                        id="signOutButton"
+                        type="button"
+                    >
+                        Sign Out
+                    </button>
+
+                </aside>
+
+
+                <!-- =========================================
+                     WORKSPACE MAIN CONTENT
+                ========================================== -->
+
+                <div class="workspace-main">
+
+
+                    <!-- Workspace Header -->
+
+                    <header class="workspace-header">
+
+                        <div>
+                            <span id="workspaceBreadcrumb">
+                                Service Portal / Workspace
+                            </span>
+
+                            <h2 id="workspacePageTitle">
+                                Overview
+                            </h2>
+                        </div>
+
+
+                        <div class="workspace-date">
+
+                            <small>Today</small>
+
+                            <strong id="workspaceDate"></strong>
+
+                        </div>
+
+                    </header>
+
+
+                    <!-- =====================================
+                         REQUESTER SUB-INTERFACE
+                    ====================================== -->
+
+                    <div
+                        class="role-interface"
+                        data-role="requester"
+                        hidden
+                    >
+
+
+                        <!-- Requester Overview -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="requester-overview"
+                        >
+
+                            <div class="welcome-banner">
+
+                                <div>
+
+                                    <small>
+                                        Requester Workspace
+                                    </small>
+
+                                    <h3>
+                                        Welcome,
+                                        <span data-user-name>User</span>
+                                    </h3>
+
+                                    <p>
+                                        Submit campus service concerns and
+                                        monitor the requests connected to
+                                        your account.
+                                    </p>
+
+                                </div>
+
+                                <span>REQUESTER</span>
+
+                            </div>
+
+
+                            <div class="dashboard-grid three">
+
+                                <article class="stat-card">
+
+                                    <small>
+                                        My Requests
+                                    </small>
+
+                                    <strong id="requesterTotalMetric">
+                                        03
+                                    </strong>
+
+                                    <p>
+                                        Requests linked to your account
+                                    </p>
+
+                                </article>
+
+
+                                <article class="stat-card">
+
+                                    <small>
+                                        In Progress
+                                    </small>
+
+                                    <strong>01</strong>
+
+                                    <p>
+                                        Currently being serviced
+                                    </p>
+
+                                </article>
+
+
+                                <article class="stat-card">
+
+                                    <small>
+                                        Completed
+                                    </small>
+
+                                    <strong>01</strong>
+
+                                    <p>
+                                        Resolved concerns
+                                    </p>
+
+                                </article>
+
+                            </div>
+
+
+                            <div class="info-card">
+
+                                <h3>
+                                    Requester Access
+                                </h3>
+
+                                <p>
+                                    You can submit a new service request
+                                    and view your own request records.
+                                    Administrative, approval, and technician
+                                    functions are not displayed in this
+                                    workspace.
+                                </p>
+
+                            </div>
+
+                        </section>
+
+
+                        <!-- Requester New Request -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="requester-new"
+                            hidden
+                        >
+
+                            <div class="panel-card">
+
+
+                                <!-- Panel Header -->
+
+                                <div class="panel-title">
+
+                                    <div>
+                                        <small>
+                                            Request Management
+                                        </small>
+
+                                        <h3>
+                                            Submit a Service Request
+                                        </h3>
+                                    </div>
+
+                                    <span>
+                                        AI Assisted
+                                    </span>
+
+                                </div>
+
+
+                                <!-- Service Request Form -->
+
+                                <form
+                                    class="record-form workspace-form"
+                                    id="serviceRequestForm"
+                                >
+
+                                    <div class="form-grid">
+
+
+                                        <!-- Name -->
+
+                                        <label>
+                                            Requester Name *
+
+                                            <input
+                                                id="requesterName"
+                                                type="text"
+                                                minlength="3"
+                                                required
+                                            >
+                                        </label>
+
+
+                                        <!-- Email -->
+
+                                        <label>
+                                            School Email *
+
+                                            <input
+                                                id="requesterEmail"
+                                                type="email"
+                                                required
+                                            >
+                                        </label>
+
+
+                                        <!-- Requester Type -->
+
+                                        <label>
+                                            Requester Type *
+
+                                            <select
+                                                id="requesterTypeInput"
+                                                required
+                                            >
+                                                <option value="">
+                                                    Select type
+                                                </option>
+
+                                                <option>
+                                                    Student
+                                                </option>
+
+                                                <option>
+                                                    Faculty
+                                                </option>
+
+                                                <option>
+                                                    Staff
+                                                </option>
+                                            </select>
+                                        </label>
+
+
+                                        <!-- Department -->
+
+                                        <label>
+                                            Department / Office *
+
+                                            <select
+                                                id="requestDepartment"
+                                                required
+                                            >
+                                                <option value="">
+                                                    Select department
+                                                </option>
+
+                                                <option>
+                                                    College Department
+                                                </option>
+
+                                                <option>
+                                                    Basic Education Department
+                                                </option>
+
+                                                <option>
+                                                    Information Technology Office
+                                                </option>
+
+                                                <option>
+                                                    Registrar's Office
+                                                </option>
+
+                                                <option>
+                                                    Administration Office
+                                                </option>
+                                            </select>
+                                        </label>
+
+
+                                        <!-- Location -->
+
+                                        <label>
+                                            Concern Location *
+
+                                            <input
+                                                id="requestLocation"
+                                                type="text"
+                                                placeholder="Example: Laboratory 2"
+                                                required
+                                            >
+                                        </label>
+
+
+                                        <!-- Category -->
+
+                                        <label>
+                                            Service Category *
+
+                                            <select
+                                                id="requestCategory"
+                                                required
+                                            >
+                                                <option value="">
+                                                    Select category
+                                                </option>
+
+                                                <option>
+                                                    AI Recommendation
+                                                </option>
+
+                                                <option>
+                                                    IT &amp; Computer
+                                                </option>
+
+                                                <option>
+                                                    Internet &amp; Network
+                                                </option>
+
+                                                <option>
+                                                    Electrical
+                                                </option>
+
+                                                <option>
+                                                    Facilities
+                                                </option>
+
+                                                <option>
+                                                    Equipment
+                                                </option>
+
+                                                <option>
+                                                    Maintenance
+                                                </option>
+                                            </select>
+                                        </label>
+
+
+                                        <!-- Description -->
+
+                                        <label class="full-width">
+                                            Concern Description *
+
+                                            <textarea
+                                                id="requestDescription"
+                                                rows="5"
+                                                minlength="15"
+                                                maxlength="500"
+                                                placeholder="Describe the problem, when it started, and how it affects the area."
+                                                required
+                                            ></textarea>
+
+                                            <small class="character-help">
+                                                <span id="requestCharacterCount">
+                                                    0
+                                                </span>/500 characters
+                                            </small>
+
+                                        </label>
+
+                                    </div>
+
+
+                                    <!-- AI Notice -->
+
+                                    <div class="form-note">
+
+                                        <span>✦</span>
+
+                                        <p>
+                                            <strong>
+                                                AI-assisted review
+                                            </strong>
+
+                                            The system recommends a category
+                                            and priority. Authorized personnel
+                                            make the final decision.
+                                        </p>
+
+                                    </div>
+
+
+                                    <!-- Form Buttons -->
+
+                                    <div class="form-actions">
+
+                                        <button
+                                            class="button button-ghost"
+                                            type="reset"
+                                        >
+                                            Clear
+                                        </button>
+
+                                        <button
+                                            class="button button-primary"
+                                            type="submit"
+                                        >
+                                            Submit Request
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            </div>
+
+                        </section>
+
+
+                        <!-- Requester Records -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="requester-records"
+                            hidden
+                        >
+
+                            <div class="table-card panel-card">
+
+
+                                <!-- Table Header -->
+
+                                <div class="table-heading">
+
+                                    <div>
+                                        <small>
+                                            Requester Records
+                                        </small>
+
+                                        <h3>
+                                            My Service Requests
+                                        </h3>
+                                    </div>
+
+                                    <span id="requestRecordCount">
+                                        3 Records
+                                    </span>
+
+                                </div>
+
+
+                                <!-- Request Table -->
+
+                                <div class="table-scroll">
+
+                                    <table>
+
+                                        <thead>
+                                            <tr>
+                                                <th>Request ID</th>
+                                                <th>Concern</th>
+                                                <th>Category</th>
+                                                <th>Location</th>
+                                                <th>Priority</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+
+
+                                        <tbody id="serviceRequestTableBody">
+
+                                            <tr>
+                                                <td>
+                                                    <strong>
+                                                        SR-2026-0024
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    Computer laboratory
+                                                    internet issue
+                                                </td>
+
+                                                <td>
+                                                    Internet &amp; Network
+                                                </td>
+
+                                                <td>
+                                                    Laboratory 2
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-high">
+                                                        High
+                                                    </span>
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-progress">
+                                                        In Progress
+                                                    </span>
+                                                </td>
+                                            </tr>
+
+
+                                            <tr>
+                                                <td>
+                                                    <strong>
+                                                        SR-2026-0020
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    Projector not displaying
+                                                </td>
+
+                                                <td>
+                                                    Equipment
+                                                </td>
+
+                                                <td>
+                                                    Room 205
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-medium">
+                                                        Medium
+                                                    </span>
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-completed">
+                                                        Completed
+                                                    </span>
+                                                </td>
+                                            </tr>
+
+
+                                            <tr>
+                                                <td>
+                                                    <strong>
+                                                        SR-2026-0018
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    Loose classroom door knob
+                                                </td>
+
+                                                <td>
+                                                    Maintenance
+                                                </td>
+
+                                                <td>
+                                                    Room 103
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-low">
+                                                        Low
+                                                    </span>
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-review">
+                                                        Under Review
+                                                    </span>
+                                                </td>
+                                            </tr>
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                            </div>
+
+                        </section>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         SERVICE ADMINISTRATOR SUB-INTERFACE
+                    ====================================== -->
+
+                    <div
+                        class="role-interface"
+                        data-role="administrator"
+                        hidden
+                    >
+
+
+                        <!-- Administrator Overview -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="administrator-overview"
+                        >
+
+                            <div class="welcome-banner">
+
+                                <div>
+
+                                    <small>
+                                        Service Administrator Workspace
+                                    </small>
+
+                                    <h3>
+                                        Operations Dashboard
+                                    </h3>
+
+                                    <p>
+                                        Review incoming requests, validate
+                                        AI recommendations, create work orders,
+                                        and manage authorized access.
+                                    </p>
+
+                                </div>
+
+                                <span>ADMIN</span>
+
+                            </div>
+
+
+                            <div class="dashboard-grid three">
+
+                                <article class="stat-card">
+                                    <small>Review Queue</small>
+                                    <strong>04</strong>
+                                    <p>Requests requiring validation</p>
+                                </article>
+
+                                <article class="stat-card">
+                                    <small>Open Work Orders</small>
+                                    <strong>06</strong>
+                                    <p>Assignments currently active</p>
+                                </article>
+
+                                <article class="stat-card">
+                                    <small>Active Personnel</small>
+                                    <strong>12</strong>
+                                    <p>Authorized service users</p>
+                                </article>
+
+                            </div>
+
+                        </section>
+
+
+                        <!-- Administrator Review Queue -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="administrator-review"
+                            hidden
+                        >
+
+                            <div class="table-card panel-card">
+
+                                <div class="table-heading">
+
+                                    <div>
+                                        <small>
+                                            Administrator Review
+                                        </small>
+
+                                        <h3>
+                                            Request Review Queue
+                                        </h3>
+                                    </div>
+
+                                    <span id="adminReviewCount">
+                                        3 Records
+                                    </span>
+
+                                </div>
+
+
+                                <div class="table-scroll">
+
+                                    <table>
+
+                                        <thead>
+                                            <tr>
+                                                <th>Request ID</th>
+                                                <th>Concern</th>
+                                                <th>AI Category</th>
+                                                <th>AI Priority</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+
+
+                                        <tbody id="adminReviewTableBody">
+
+
+                                            <!-- Request 1 -->
+
+                                            <tr>
+
+                                                <td>
+                                                    <strong>
+                                                        SR-2026-0025
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    Wi-Fi unavailable
+                                                    in Laboratory 1
+                                                </td>
+
+                                                <td>
+                                                    Internet &amp; Network
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-high">
+                                                        High
+                                                    </span>
+                                                </td>
+
+                                                <td data-status>
+                                                    <span class="badge badge-review">
+                                                        Under Review
+                                                    </span>
+                                                </td>
+
+                                                <td>
+                                                    <div class="row-actions">
+
+                                                        <button
+                                                            type="button"
+                                                            data-admin-action="forward"
+                                                        >
+                                                            Forward
+                                                        </button>
+
+                                                        <button
+                                                            class="danger"
+                                                            type="button"
+                                                            data-admin-action="duplicate"
+                                                        >
+                                                            Duplicate
+                                                        </button>
+
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+
+
+                                            <!-- Request 2 -->
+
+                                            <tr>
+
+                                                <td>
+                                                    <strong>
+                                                        SR-2026-0023
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    Broken classroom
+                                                    electric fan
+                                                </td>
+
+                                                <td>
+                                                    Equipment
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-medium">
+                                                        Medium
+                                                    </span>
+                                                </td>
+
+                                                <td data-status>
+                                                    <span class="badge badge-review">
+                                                        Under Review
+                                                    </span>
+                                                </td>
+
+                                                <td>
+                                                    <div class="row-actions">
+
+                                                        <button
+                                                            type="button"
+                                                            data-admin-action="forward"
+                                                        >
+                                                            Forward
+                                                        </button>
+
+                                                        <button
+                                                            class="danger"
+                                                            type="button"
+                                                            data-admin-action="duplicate"
+                                                        >
+                                                            Duplicate
+                                                        </button>
+
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+
+
+                                            <!-- Request 3 -->
+
+                                            <tr>
+
+                                                <td>
+                                                    <strong>
+                                                        SR-2026-0022
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    Classroom door handle repair
+                                                </td>
+
+                                                <td>
+                                                    Maintenance
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-low">
+                                                        Low
+                                                    </span>
+                                                </td>
+
+                                                <td data-status>
+                                                    <span class="badge badge-review">
+                                                        Under Review
+                                                    </span>
+                                                </td>
+
+                                                <td>
+                                                    <div class="row-actions">
+
+                                                        <button
+                                                            type="button"
+                                                            data-admin-action="forward"
+                                                        >
+                                                            Forward
+                                                        </button>
+
+                                                        <button
+                                                            class="danger"
+                                                            type="button"
+                                                            data-admin-action="duplicate"
+                                                        >
+                                                            Duplicate
+                                                        </button>
+
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                            </div>
+
+                        </section>
+
+
+                        <!-- Administrator Work Orders -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="administrator-work-orders"
+                            hidden
+                        >
+
+                            <div class="panel-card">
+
+
+                                <!-- Panel Header -->
+
+                                <div class="panel-title">
+
+                                    <div>
+                                        <small>
+                                            Work Assignment
+                                        </small>
+
+                                        <h3>
+                                            Create a Work Order
+                                        </h3>
+                                    </div>
+
+                                    <span>
+                                        Administrator
+                                    </span>
+
+                                </div>
+
+
+                                <!-- Work Order Form -->
+
+                                <form
+                                    class="record-form workspace-form"
+                                    id="workOrderEntryForm"
+                                >
+
+                                    <div class="form-grid">
+
+
+                                        <label>
+                                            Related Request ID *
+
+                                            <input
+                                                id="relatedRequestId"
+                                                type="text"
+                                                placeholder="SR-2026-0025"
+                                                pattern="SR-[0-9]{4}-[0-9]{4}"
+                                                required
+                                            >
+                                        </label>
+
+
+                                        <label>
+                                            Assigned Personnel / Team *
+
+                                            <select
+                                                id="assignedTeam"
+                                                required
+                                            >
+                                                <option value="">
+                                                    Select team
+                                                </option>
+
+                                                <option>
+                                                    IT Support Team
+                                                </option>
+
+                                                <option>
+                                                    Facilities Team
+                                                </option>
+
+                                                <option>
+                                                    Electrical Team
+                                                </option>
+
+                                                <option>
+                                                    Maintenance Team
+                                                </option>
+                                            </select>
+                                        </label>
+
+
+                                        <label>
+                                            Work Schedule *
+
+                                            <input
+                                                id="workScheduleInput"
+                                                type="date"
+                                                required
+                                            >
+                                        </label>
+
+
+                                        <label>
+                                            Initial Status *
+
+                                            <select
+                                                id="workStatusInput"
+                                                required
+                                            >
+                                                <option>
+                                                    Assigned
+                                                </option>
+
+                                                <option>
+                                                    In Progress
+                                                </option>
+                                            </select>
+                                        </label>
+
+
+                                        <label class="full-width">
+                                            Materials / Resources
+
+                                            <input
+                                                id="workMaterials"
+                                                type="text"
+                                                placeholder="Example: LAN cable, connector"
+                                            >
+                                        </label>
+
+
+                                        <label class="full-width">
+                                            Work Instructions *
+
+                                            <textarea
+                                                id="workInstructions"
+                                                rows="4"
+                                                minlength="10"
+                                                required
+                                            ></textarea>
+                                        </label>
+
+                                    </div>
+
+
+                                    <div class="form-actions">
+
+                                        <button
+                                            class="button button-ghost"
+                                            type="reset"
+                                        >
+                                            Clear
+                                        </button>
+
+                                        <button
+                                            class="button button-primary"
+                                            type="submit"
+                                        >
+                                            Create Work Order
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            </div>
+
+
+                            <!-- Work Order Records -->
+
+                            <div class="table-card panel-card compact-top">
+
+                                <div class="table-heading">
+
+                                    <div>
+                                        <small>
+                                            Assignment Records
+                                        </small>
+
+                                        <h3>
+                                            Work Orders
+                                        </h3>
+                                    </div>
+
+                                    <span id="workOrderRecordCount">
+                                        2 Records
+                                    </span>
+
+                                </div>
+
+
+                                <div class="table-scroll">
+
+                                    <table>
+
+                                        <thead>
+                                            <tr>
+                                                <th>Work Order</th>
+                                                <th>Request</th>
+                                                <th>Assigned Team</th>
+                                                <th>Schedule</th>
+                                                <th>Materials</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+
+
+                                        <tbody id="workOrderTableBody">
+
+                                            <tr>
+                                                <td>
+                                                    <strong>
+                                                        WO-2026-0018
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    SR-2026-0024
+                                                </td>
+
+                                                <td>
+                                                    IT Support Team
+                                                </td>
+
+                                                <td>
+                                                    Aug. 26, 2026
+                                                </td>
+
+                                                <td>
+                                                    LAN cable, connector
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-progress">
+                                                        In Progress
+                                                    </span>
+                                                </td>
+                                            </tr>
+
+
+                                            <tr>
+                                                <td>
+                                                    <strong>
+                                                        WO-2026-0017
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    SR-2026-0023
+                                                </td>
+
+                                                <td>
+                                                    Facilities Team
+                                                </td>
+
+                                                <td>
+                                                    Aug. 25, 2026
+                                                </td>
+
+                                                <td>
+                                                    Fan capacitor
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-assigned">
+                                                        Assigned
+                                                    </span>
+                                                </td>
+                                            </tr>
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                            </div>
+
+                        </section>
+
+
+                        <!-- Administrator User Access -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="administrator-access"
+                            hidden
+                        >
+
+                            <div class="panel-card">
+
+
+                                <!-- Panel Header -->
+
+                                <div class="panel-title">
+
+                                    <div>
+                                        <small>
+                                            Access Administration
+                                        </small>
+
+                                        <h3>
+                                            Add Authorized Personnel
+                                        </h3>
+                                    </div>
+
+                                    <span>
+                                        Restricted
+                                    </span>
+
+                                </div>
+
+
+                                <!-- Personnel Form -->
+
+                                <form
+                                    class="record-form workspace-form"
+                                    id="personnelAccessForm"
+                                >
+
+                                    <div class="form-grid">
+
+
+                                        <label>
+                                            Full Name *
+
+                                            <input
+                                                id="personnelName"
+                                                type="text"
+                                                minlength="3"
+                                                required
+                                            >
+                                        </label>
+
+
+                                        <label>
+                                            Email Address *
+
+                                            <input
+                                                id="personnelEmail"
+                                                type="email"
+                                                required
+                                            >
+                                        </label>
+
+
+                                        <label>
+                                            Department *
+
+                                            <select
+                                                id="personnelDepartment"
+                                                required
+                                            >
+                                                <option value="">
+                                                    Select department
+                                                </option>
+
+                                                <option>
+                                                    IT Support
+                                                </option>
+
+                                                <option>
+                                                    Facilities Office
+                                                </option>
+
+                                                <option>
+                                                    Administration
+                                                </option>
+
+                                                <option>
+                                                    Maintenance
+                                                </option>
+
+                                                <option>
+                                                    Electrical Services
+                                                </option>
+                                            </select>
+                                        </label>
+
+
+                                        <label>
+                                            System Role *
+
+                                            <select
+                                                id="personnelRole"
+                                                required
+                                            >
+                                                <option value="">
+                                                    Select role
+                                                </option>
+
+                                                <option>
+                                                    Service Administrator
+                                                </option>
+
+                                                <option>
+                                                    Department Head /
+                                                    Authorized Approver
+                                                </option>
+
+                                                <option>
+                                                    Service Personnel /
+                                                    Technician
+                                                </option>
+                                            </select>
+                                        </label>
+
+
+                                        <label>
+                                            Initial Password *
+
+                                            <input
+                                                id="personnelPassword"
+                                                type="password"
+                                                minlength="8"
+                                                required
+                                            >
+                                        </label>
+
+
+                                        <label>
+                                            Account Status *
+
+                                            <select id="personnelStatus">
+                                                <option>
+                                                    Active
+                                                </option>
+
+                                                <option>
+                                                    Inactive
+                                                </option>
+                                            </select>
+                                        </label>
+
+
+                                        <!-- Permissions -->
+
+                                        <fieldset class="full-width permission-fieldset">
+
+                                            <legend>
+                                                Access Rights *
+                                            </legend>
+
+
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    name="accessRights"
+                                                    value="Read"
+                                                >
+                                                Read
+                                            </label>
+
+
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    name="accessRights"
+                                                    value="Write"
+                                                >
+                                                Write
+                                            </label>
+
+
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    name="accessRights"
+                                                    value="Approve"
+                                                >
+                                                Approve
+                                            </label>
+
+
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    name="accessRights"
+                                                    value="Admin"
+                                                >
+                                                Admin
+                                            </label>
+
+
+                                            <small
+                                                id="permissionError"
+                                                class="field-error"
+                                            ></small>
+
+                                        </fieldset>
+
+                                    </div>
+
+
+                                    <div class="form-actions">
+
+                                        <button
+                                            class="button button-ghost"
+                                            type="reset"
+                                        >
+                                            Clear
+                                        </button>
+
+                                        <button
+                                            class="button button-primary"
+                                            type="submit"
+                                        >
+                                            Add Personnel
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            </div>
+
+
+                            <!-- Personnel Records -->
+
+                            <div class="table-card panel-card compact-top">
+
+                                <div class="table-heading">
+
+                                    <div>
+                                        <small>
+                                            Personnel Records
+                                        </small>
+
+                                        <h3>
+                                            User Access Records
+                                        </h3>
+                                    </div>
+
+                                    <span id="personnelRecordCount">
+                                        3 Records
+                                    </span>
+
+                                </div>
+
+
+                                <div class="table-scroll">
+
+                                    <table>
+
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Name</th>
+                                                <th>Department</th>
+                                                <th>Role</th>
+                                                <th>Rights</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+
+
+                                        <tbody id="personnelTableBody">
+
+                                            <tr>
+                                                <td>
+                                                    <strong>SP-001</strong>
+                                                </td>
+
+                                                <td>
+                                                    Alex Reyes
+                                                </td>
+
+                                                <td>
+                                                    IT Support
+                                                </td>
+
+                                                <td>
+                                                    Service Personnel
+                                                </td>
+
+                                                <td>
+                                                    Read, Write
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-completed">
+                                                        Active
+                                                    </span>
+                                                </td>
+                                            </tr>
+
+
+                                            <tr>
+                                                <td>
+                                                    <strong>SP-002</strong>
+                                                </td>
+
+                                                <td>
+                                                    Maria Santos
+                                                </td>
+
+                                                <td>
+                                                    Facilities Office
+                                                </td>
+
+                                                <td>
+                                                    Service Administrator
+                                                </td>
+
+                                                <td>
+                                                    Read, Write, Admin
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-completed">
+                                                        Active
+                                                    </span>
+                                                </td>
+                                            </tr>
+
+
+                                            <tr>
+                                                <td>
+                                                    <strong>SP-003</strong>
+                                                </td>
+
+                                                <td>
+                                                    John Cruz
+                                                </td>
+
+                                                <td>
+                                                    Administration
+                                                </td>
+
+                                                <td>
+                                                    Authorized Approver
+                                                </td>
+
+                                                <td>
+                                                    Read, Approve
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-completed">
+                                                        Active
+                                                    </span>
+                                                </td>
+                                            </tr>
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                            </div>
+
+                        </section>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         DEPARTMENT HEAD / APPROVER
+                    ====================================== -->
+
+                    <div
+                        class="role-interface"
+                        data-role="approver"
+                        hidden
+                    >
+
+
+                        <!-- Approver Overview -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="approver-overview"
+                        >
+
+                            <div class="welcome-banner">
+
+                                <div>
+
+                                    <small>
+                                        Department Head /
+                                        Authorized Approver
+                                    </small>
+
+                                    <h3>
+                                        Approval Dashboard
+                                    </h3>
+
+                                    <p>
+                                        Review requests forwarded by the
+                                        Service Administrator and make the
+                                        authorization decision.
+                                    </p>
+
+                                </div>
+
+                                <span>APPROVER</span>
+
+                            </div>
+
+
+                            <div class="dashboard-grid three">
+
+                                <article class="stat-card">
+
+                                    <small>
+                                        Awaiting Approval
+                                    </small>
+
+                                    <strong id="approvalPendingMetric">
+                                        03
+                                    </strong>
+
+                                    <p>
+                                        Requests requiring your decision
+                                    </p>
+
+                                </article>
+
+
+                                <article class="stat-card">
+
+                                    <small>
+                                        Approved
+                                    </small>
+
+                                    <strong>08</strong>
+
+                                    <p>
+                                        Authorized this month
+                                    </p>
+
+                                </article>
+
+
+                                <article class="stat-card">
+
+                                    <small>
+                                        Rejected
+                                    </small>
+
+                                    <strong>01</strong>
+
+                                    <p>
+                                        Returned with a decision
+                                    </p>
+
+                                </article>
+
+                            </div>
+
+                        </section>
+
+
+                        <!-- Approval Queue -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="approver-queue"
+                            hidden
+                        >
+
+                            <div class="table-card panel-card">
+
+                                <div class="table-heading">
+
+                                    <div>
+                                        <small>
+                                            Authorization
+                                        </small>
+
+                                        <h3>
+                                            Approval Queue
+                                        </h3>
+                                    </div>
+
+                                    <span id="approvalRecordCount">
+                                        3 Records
+                                    </span>
+
+                                </div>
+
+
+                                <div class="table-scroll">
+
+                                    <table>
+
+                                        <thead>
+                                            <tr>
+                                                <th>Request ID</th>
+                                                <th>Concern</th>
+                                                <th>Category</th>
+                                                <th>Priority</th>
+                                                <th>Status</th>
+                                                <th>Decision</th>
+                                            </tr>
+                                        </thead>
+
+
+                                        <tbody id="approvalTableBody">
+
+
+                                            <!-- Approval 1 -->
+
+                                            <tr>
+
+                                                <td>
+                                                    <strong>
+                                                        SR-2026-0025
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    Wi-Fi unavailable
+                                                    in Laboratory 1
+                                                </td>
+
+                                                <td>
+                                                    Internet &amp; Network
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-high">
+                                                        High
+                                                    </span>
+                                                </td>
+
+                                                <td data-status>
+                                                    <span class="badge badge-pending">
+                                                        Awaiting Approval
+                                                    </span>
+                                                </td>
+
+                                                <td>
+                                                    <div class="row-actions">
+
+                                                        <button
+                                                            type="button"
+                                                            data-approval-action="approve"
+                                                        >
+                                                            Approve
+                                                        </button>
+
+                                                        <button
+                                                            class="danger"
+                                                            type="button"
+                                                            data-approval-action="reject"
+                                                        >
+                                                            Reject
+                                                        </button>
+
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+
+
+                                            <!-- Approval 2 -->
+
+                                            <tr>
+
+                                                <td>
+                                                    <strong>
+                                                        SR-2026-0023
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    Broken classroom
+                                                    electric fan
+                                                </td>
+
+                                                <td>
+                                                    Equipment
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-medium">
+                                                        Medium
+                                                    </span>
+                                                </td>
+
+                                                <td data-status>
+                                                    <span class="badge badge-pending">
+                                                        Awaiting Approval
+                                                    </span>
+                                                </td>
+
+                                                <td>
+                                                    <div class="row-actions">
+
+                                                        <button
+                                                            type="button"
+                                                            data-approval-action="approve"
+                                                        >
+                                                            Approve
+                                                        </button>
+
+                                                        <button
+                                                            class="danger"
+                                                            type="button"
+                                                            data-approval-action="reject"
+                                                        >
+                                                            Reject
+                                                        </button>
+
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+
+
+                                            <!-- Approval 3 -->
+
+                                            <tr>
+
+                                                <td>
+                                                    <strong>
+                                                        SR-2026-0022
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    Classroom door
+                                                    handle repair
+                                                </td>
+
+                                                <td>
+                                                    Maintenance
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-low">
+                                                        Low
+                                                    </span>
+                                                </td>
+
+                                                <td data-status>
+                                                    <span class="badge badge-pending">
+                                                        Awaiting Approval
+                                                    </span>
+                                                </td>
+
+                                                <td>
+                                                    <div class="row-actions">
+
+                                                        <button
+                                                            type="button"
+                                                            data-approval-action="approve"
+                                                        >
+                                                            Approve
+                                                        </button>
+
+                                                        <button
+                                                            class="danger"
+                                                            type="button"
+                                                            data-approval-action="reject"
+                                                        >
+                                                            Reject
+                                                        </button>
+
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                            </div>
+
+                        </section>
+
+                    </div>
+
+
+                    <!-- =====================================
+                         TECHNICIAN SUB-INTERFACE
+                    ====================================== -->
+
+                    <div
+                        class="role-interface"
+                        data-role="technician"
+                        hidden
+                    >
+
+
+                        <!-- Technician Overview -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="technician-overview"
+                        >
+
+                            <div class="welcome-banner">
+
+                                <div>
+
+                                    <small>
+                                        Service Personnel / Technician
+                                    </small>
+
+                                    <h3>
+                                        Assigned Work Dashboard
+                                    </h3>
+
+                                    <p>
+                                        View work orders assigned to the
+                                        service queue and record progress
+                                        or completion updates.
+                                    </p>
+
+                                </div>
+
+                                <span>TECHNICIAN</span>
+
+                            </div>
+
+
+                            <div class="dashboard-grid three">
+
+                                <article class="stat-card">
+                                    <small>Assigned</small>
+                                    <strong>04</strong>
+                                    <p>Waiting to be started</p>
+                                </article>
+
+                                <article class="stat-card">
+                                    <small>In Progress</small>
+                                    <strong>02</strong>
+                                    <p>Currently being serviced</p>
+                                </article>
+
+                                <article class="stat-card">
+                                    <small>Completed Today</small>
+                                    <strong>03</strong>
+                                    <p>Finished work orders</p>
+                                </article>
+
+                            </div>
+
+                        </section>
+
+
+                        <!-- Technician Assigned Work -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="technician-assigned"
+                            hidden
+                        >
+
+                            <div class="table-card panel-card">
+
+                                <div class="table-heading">
+
+                                    <div>
+                                        <small>
+                                            Service Queue
+                                        </small>
+
+                                        <h3>
+                                            Assigned Work Orders
+                                        </h3>
+                                    </div>
+
+                                    <span id="technicianWorkCount">
+                                        2 Records
+                                    </span>
+
+                                </div>
+
+
+                                <div class="table-scroll">
+
+                                    <table>
+
+                                        <thead>
+                                            <tr>
+                                                <th>Work Order</th>
+                                                <th>Request</th>
+                                                <th>Task</th>
+                                                <th>Schedule</th>
+                                                <th>Priority</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+
+
+                                        <tbody id="technicianWorkTableBody">
+
+                                            <tr>
+                                                <td>
+                                                    <strong>
+                                                        WO-2026-0018
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    SR-2026-0024
+                                                </td>
+
+                                                <td>
+                                                    Repair laboratory
+                                                    network connection
+                                                </td>
+
+                                                <td>
+                                                    Aug. 26, 2026
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-high">
+                                                        High
+                                                    </span>
+                                                </td>
+
+                                                <td data-status>
+                                                    <span class="badge badge-progress">
+                                                        In Progress
+                                                    </span>
+                                                </td>
+                                            </tr>
+
+
+                                            <tr>
+                                                <td>
+                                                    <strong>
+                                                        WO-2026-0017
+                                                    </strong>
+                                                </td>
+
+                                                <td>
+                                                    SR-2026-0023
+                                                </td>
+
+                                                <td>
+                                                    Inspect and repair
+                                                    classroom fan
+                                                </td>
+
+                                                <td>
+                                                    Aug. 25, 2026
+                                                </td>
+
+                                                <td>
+                                                    <span class="badge badge-medium">
+                                                        Medium
+                                                    </span>
+                                                </td>
+
+                                                <td data-status>
+                                                    <span class="badge badge-assigned">
+                                                        Assigned
+                                                    </span>
+                                                </td>
+                                            </tr>
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                            </div>
+
+                        </section>
+
+
+                        <!-- Technician Progress Update -->
+
+                        <section
+                            class="workspace-view"
+                            data-view="technician-update"
+                            hidden
+                        >
+
+                            <div class="panel-card">
+
+
+                                <!-- Panel Header -->
+
+                                <div class="panel-title">
+
+                                    <div>
+                                        <small>
+                                            Progress Recording
+                                        </small>
+
+                                        <h3>
+                                            Update Work Order Status
+                                        </h3>
+                                    </div>
+
+                                    <span>
+                                        Technician
+                                    </span>
+
+                                </div>
+
+
+                                <!-- Progress Update Form -->
+
+                                <form
+                                    class="record-form workspace-form"
+                                    id="progressUpdateForm"
+                                >
+
+                                    <div class="form-grid">
+
+
+                                        <label>
+                                            Work Order ID *
+
+                                            <input
+                                                id="progressWorkOrderId"
+                                                type="text"
+                                                placeholder="WO-2026-0018"
+                                                pattern="WO-[0-9]{4}-[0-9]{4}"
+                                                required
+                                            >
+                                        </label>
+
+
+                                        <label>
+                                            New Status *
+
+                                            <select
+                                                id="progressStatusInput"
+                                                required
+                                            >
+                                                <option>
+                                                    In Progress
+                                                </option>
+
+                                                <option>
+                                                    Completion Review
+                                                </option>
+
+                                                <option>
+                                                    Completed
+                                                </option>
+                                            </select>
+                                        </label>
+
+
+                                        <label class="full-width">
+                                            Action Taken *
+
+                                            <textarea
+                                                id="progressActionTaken"
+                                                rows="4"
+                                                minlength="10"
+                                                placeholder="Describe the work performed."
+                                                required
+                                            ></textarea>
+                                        </label>
+
+
+                                        <label class="full-width">
+                                            Remarks
+
+                                            <input
+                                                id="progressRemarks"
+                                                type="text"
+                                                placeholder="Optional notes"
+                                            >
+                                        </label>
+
+                                    </div>
+
+
+                                    <div class="form-actions">
+
+                                        <button
+                                            class="button button-ghost"
+                                            type="reset"
+                                        >
+                                            Clear
+                                        </button>
+
+                                        <button
+                                            class="button button-primary"
+                                            type="submit"
+                                        >
+                                            Save Progress
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            </div>
+
+                        </section>
+
+                    </div>
 
                 </div>
 
@@ -784,25 +2860,30 @@
     </main>
 
 
-
-    <!-- =========================
+    <!-- =====================================================
          FOOTER
-    ========================== -->
+    ====================================================== -->
 
-    <footer id="contact">
+    <footer class="site-footer">
 
-        <div class="footer-main">
+        <div class="section-shell footer-main">
 
+
+            <!-- Footer Brand -->
 
             <div class="footer-brand">
 
                 <div class="footer-logos">
 
-                    <img src="images/wildcatslogo.png"
-                         alt="Wildcats Logo">
+                    <img
+                        src="images/wildcatslogo.png"
+                        alt="Wildcats Logo"
+                    >
 
-                    <img src="images/htclogo.png"
-                         alt="Holy Trinity College Logo">
+                    <img
+                        src="images/htclogo.png"
+                        alt="Holy Trinity College Logo"
+                    >
 
                 </div>
 
@@ -810,8 +2891,7 @@
                 <div>
 
                     <h3>
-                        Holy Trinity College
-                        of General Santos City
+                        Holy Trinity College of General Santos City
                     </h3>
 
                     <p>
@@ -819,46 +2899,40 @@
                         Work Order Management System
                     </p>
 
-                    <strong>
-                        Excellence in Service,
-                        Commitment to Community.
-                    </strong>
-
                 </div>
 
             </div>
 
 
+            <!-- Developer -->
 
             <div class="developer">
 
-                <span>
-                    DEVELOPED BY
-                </span>
+                <small>
+                    Developed by
+                </small>
 
-                <h3>
+                <strong>
                     Sean Keith D. Fajanoy
-                </h3>
+                </strong>
 
-                <p>
-                    System Analysis and Design
-                    • 2026
-                </p>
+                <span>
+                    System Analysis and Design • 2026
+                </span>
 
             </div>
 
         </div>
 
 
-        <div class="footer-bottom">
+        <div class="section-shell footer-bottom">
 
             <span>
-                © 2026 Holy Trinity College
-                of General Santos City
+                © 2026 Holy Trinity College of General Santos City
             </span>
 
             <span>
-                Initial System Interface Prototype
+                Service Request Portal
             </span>
 
         </div>
@@ -866,9 +2940,195 @@
     </footer>
 
 
+    <!-- =====================================================
+         SIGN-IN MODAL
+    ====================================================== -->
+
+    <div
+        class="modal"
+        id="loginModal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="loginTitle"
+        hidden
+    >
+
+        <!-- Background Overlay -->
+
+        <div
+            class="modal-backdrop"
+            data-close-modal
+        ></div>
+
+
+        <!-- Modal Card -->
+
+        <div class="modal-card">
+
+
+            <!-- Close Button -->
+
+            <button
+                class="modal-close"
+                type="button"
+                aria-label="Close sign-in dialog"
+                data-close-modal
+            >
+                ×
+            </button>
+
+
+            <!-- Logo -->
+
+            <img
+                src="images/htclogo.png"
+                alt="Holy Trinity College Logo"
+                class="modal-logo"
+            >
+
+
+            <!-- Login Heading -->
+
+            <span class="section-label">
+                Role-Based Access
+            </span>
+
+            <h2 id="loginTitle">
+                Sign in to the service portal
+            </h2>
+
+            <p>
+                This prototype uses the selected role
+                to open the correct sub-interface.
+            </p>
+
+
+            <!-- Login Form -->
+
+            <form id="loginForm">
+
+
+                <!-- Full Name -->
+
+                <label>
+                    Full Name *
+
+                    <input
+                        id="loginName"
+                        type="text"
+                        placeholder="Enter your full name"
+                        minlength="3"
+                        required
+                    >
+                </label>
+
+
+                <!-- Email -->
+
+                <label>
+                    Email Address *
+
+                    <input
+                        id="loginEmail"
+                        type="email"
+                        placeholder="name@htc.edu.ph"
+                        required
+                    >
+                </label>
+
+
+                <!-- Password -->
+
+                <label>
+                    Password *
+
+                    <input
+                        id="loginPassword"
+                        type="password"
+                        minlength="8"
+                        placeholder="Minimum 8 characters"
+                        required
+                    >
+                </label>
+
+
+                <!-- System Role -->
+
+                <label>
+                    System Role *
+
+                    <select
+                        id="loginRole"
+                        required
+                    >
+
+                        <option value="requester">
+                            Requester
+                        </option>
+
+                        <option value="administrator">
+                            Service Administrator
+                        </option>
+
+                        <option value="approver">
+                            Department Head / Authorized Approver
+                        </option>
+
+                        <option value="technician">
+                            Service Personnel / Technician
+                        </option>
+
+                    </select>
+                </label>
+
+
+                <!-- Remember Me -->
+
+                <label class="remember-control">
+
+                    <input
+                        id="rememberMe"
+                        type="checkbox"
+                    >
+
+                    Remember me on this device
+
+                </label>
+
+
+                <!-- Sign In Button -->
+
+                <button
+                    class="button button-primary button-full"
+                    type="submit"
+                >
+                    Sign In
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TOAST NOTIFICATIONS
+    ====================================================== -->
+
+    <div
+        class="toast-region"
+        id="toastRegion"
+        aria-live="polite"
+        aria-atomic="true"
+    ></div>
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
 
     <script src="js/script.js"></script>
 
 </body>
-
 </html>
