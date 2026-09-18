@@ -73,6 +73,70 @@ public class ServiceRequestServlet extends HttpServlet {
             return;
         }
 
+        String requestIdParameter = request.getParameter("requestId");
+
+        if (requestIdParameter != null) {
+            long requestId;
+
+            try {
+                requestId = Long.parseLong(requestIdParameter.trim());
+            } catch (NumberFormatException exception) {
+                sendError(
+                        response,
+                        HttpServletResponse.SC_BAD_REQUEST,
+                        "The requestId parameter must be a positive whole number.");
+
+                return;
+            }
+
+            if (requestId <= 0) {
+                sendError(
+                        response,
+                        HttpServletResponse.SC_BAD_REQUEST,
+                        "The requestId parameter must be a positive whole number.");
+
+                return;
+            }
+
+            try {
+                ServiceRequest serviceRequest = serviceRequestQueryDAO
+                        .findByRequesterIdAndRequestId(
+                                personnelId,
+                                requestId);
+
+                if (serviceRequest == null) {
+                    sendError(
+                            response,
+                            HttpServletResponse.SC_NOT_FOUND,
+                            "The requested service request was not found.");
+
+                    return;
+                }
+
+                Map<String, Object> result = new LinkedHashMap<>();
+                result.put("success", true);
+                result.put("message", "Service request loaded successfully.");
+                result.put("request", serviceRequest);
+
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.getWriter().write(gson.toJson(result));
+                return;
+
+            } catch (SQLException exception) {
+                LOGGER.log(
+                        Level.SEVERE,
+                        "Requester service-request detail retrieval failed.",
+                        exception);
+
+                sendError(
+                        response,
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        "Unable to load the service request.");
+
+                return;
+            }
+        }
+
         int limit = ServiceRequestQueryDAO.DEFAULT_LIMIT;
 
         String limitParameter = request.getParameter("limit");

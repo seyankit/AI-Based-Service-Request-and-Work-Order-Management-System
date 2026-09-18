@@ -17,6 +17,49 @@ public class ServiceRequestQueryDAO {
     public static final int DEFAULT_LIMIT = 50;
     public static final int MAXIMUM_LIMIT = 100;
 
+        private static final String REQUEST_SELECT = """
+                        SELECT
+                                sr.Request_ID,
+                                sr.Request_Number,
+                                sr.Requester_ID,
+                                sr.Requester_Department_ID,
+                                d.Department_Name AS Requester_Department_Name,
+
+                                sr.Requested_Category_ID,
+                                requested_category.Category_Name
+                                        AS Requested_Category_Name,
+
+                                sr.Final_Category_ID,
+                                final_category.Category_Name
+                                        AS Final_Category_Name,
+
+                                sr.Routed_Department_ID,
+                                sr.Preferred_Priority,
+                                sr.Final_Priority,
+                                sr.Request_Title,
+                                sr.Request_Description,
+                                sr.Request_Location,
+                                sr.Date_Reported,
+                                sr.Current_Status,
+                                sr.Completed_At,
+                                sr.Closed_At,
+                                sr.Created_At,
+                                sr.Updated_At
+                        FROM SERVICE_REQUEST sr
+
+                        LEFT JOIN DEPARTMENT d
+                                ON d.Department_ID =
+                                   sr.Requester_Department_ID
+
+                        LEFT JOIN SERVICE_CATEGORY requested_category
+                                ON requested_category.Category_ID =
+                                   sr.Requested_Category_ID
+
+                        LEFT JOIN SERVICE_CATEGORY final_category
+                                ON final_category.Category_ID =
+                                   sr.Final_Category_ID
+                        """;
+
     /*
      * Returns only requests belonging to the authenticated requester.
      *
@@ -36,48 +79,7 @@ public class ServiceRequestQueryDAO {
 
         int limit = normalizeLimit(requestedLimit);
 
-        String sql = """
-                SELECT
-                    sr.Request_ID,
-                    sr.Request_Number,
-                    sr.Requester_ID,
-                    sr.Requester_Department_ID,
-                    d.Department_Name AS Requester_Department_Name,
-
-                    sr.Requested_Category_ID,
-                    requested_category.Category_Name
-                        AS Requested_Category_Name,
-
-                    sr.Final_Category_ID,
-                    final_category.Category_Name
-                        AS Final_Category_Name,
-
-                    sr.Routed_Department_ID,
-                    sr.Preferred_Priority,
-                    sr.Final_Priority,
-                    sr.Request_Title,
-                    sr.Request_Description,
-                    sr.Request_Location,
-                    sr.Date_Reported,
-                    sr.Current_Status,
-                    sr.Completed_At,
-                    sr.Closed_At,
-                    sr.Created_At,
-                    sr.Updated_At
-                FROM SERVICE_REQUEST sr
-
-                LEFT JOIN DEPARTMENT d
-                    ON d.Department_ID =
-                       sr.Requester_Department_ID
-
-                LEFT JOIN SERVICE_CATEGORY requested_category
-                    ON requested_category.Category_ID =
-                       sr.Requested_Category_ID
-
-                LEFT JOIN SERVICE_CATEGORY final_category
-                    ON final_category.Category_ID =
-                       sr.Final_Category_ID
-
+        String sql = REQUEST_SELECT + """
                 WHERE sr.Requester_ID = ?
 
                 ORDER BY
@@ -117,6 +119,53 @@ public class ServiceRequestQueryDAO {
         }
 
         return requests;
+    }
+
+    public ServiceRequest findByRequesterIdAndRequestId(
+            int requesterId,
+            long requestId
+    ) throws SQLException {
+
+        if (requesterId <= 0) {
+            throw new IllegalArgumentException(
+                    "The requester ID must be positive."
+            );
+        }
+
+        if (requestId <= 0) {
+            throw new IllegalArgumentException(
+                    "The request ID must be positive."
+            );
+        }
+
+        String sql = REQUEST_SELECT + """
+                WHERE sr.Request_ID = ?
+                  AND sr.Requester_ID = ?
+                LIMIT 1
+                """;
+
+        try (
+            Connection connection =
+                    DatabaseConnection.getConnection();
+            PreparedStatement statement =
+                    connection.prepareStatement(sql)
+        ) {
+            statement.setLong(
+                    1,
+                    requestId
+            );
+
+            statement.setInt(
+                    2,
+                    requesterId
+            );
+
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next()
+                        ? mapServiceRequest(result)
+                        : null;
+            }
+        }
     }
 
     private int normalizeLimit(

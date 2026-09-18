@@ -2632,14 +2632,100 @@ async function loadRequesterAttachmentsForDetails(requestId) {
   return Array.isArray(data.attachments) ? data.attachments : [];
 }
 
+async function loadRequesterServiceRequestDetails(requestId) {
+  const response = await fetch(
+    `${API_ENDPOINTS.serviceRequests}?requestId=${encodeURIComponent(requestId)}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      credentials: "same-origin",
+      cache: "no-store",
+    },
+  );
+
+  const data = await readJsonResponse(response);
+
+  if (!response.ok || !data.success || !data.request) {
+    throw new Error(data.message || "Unable to load request details.");
+  }
+
+  return mapServiceRequestFromApi(data.request);
+}
+
+async function showRequestHistory(request) {
+  const requestId = Number(request?.databaseId);
+
+  if (!Number.isInteger(requestId) || requestId <= 0) {
+    showToast("This request has no valid identifier.", "error");
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${API_ENDPOINTS.serviceRequests}/history?requestId=${encodeURIComponent(requestId)}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        credentials: "same-origin",
+        cache: "no-store",
+      },
+    );
+
+    const data = await readJsonResponse(response);
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Unable to load request history.");
+    }
+
+    const history = Array.isArray(data.history) ? data.history : [];
+    const fields = history.length === 0
+      ? [{ label: "History", value: "No status history is available.", full: true }]
+      : history.map((item, index) => ({
+          label: `History ${index + 1}`,
+          value: [
+            item.changedAt,
+            `${item.previousStatus || "Initial"} -> ${item.newStatus || ""}`,
+            item.changeReason,
+          ].filter(Boolean).join(" | "),
+          full: true,
+        }));
+
+    showDetails(request.id, "Request History", fields);
+  } catch (error) {
+    console.error("Request history error:", error);
+    showToast(error.message || "Unable to load request history.", "error");
+  }
+}
+
 /* =========================
    REQUEST DETAILS
 ========================= */
 async function showRequestDetails(request) {
+  const requestId = Number(request?.databaseId);
+
+  if (!Number.isInteger(requestId) || requestId <= 0) {
+    showToast("This request has no valid identifier.", "error");
+    return;
+  }
+
+  let detailRequest;
+
+  try {
+    detailRequest = await loadRequesterServiceRequestDetails(requestId);
+  } catch (error) {
+    console.error("Request details error:", error);
+    showToast(error.message || "Unable to load request details.", "error");
+    return;
+  }
+
   let attachmentFields = [
     {
       label: "Attachment",
-      value: request.attachmentName || "No attachment",
+      value: detailRequest.attachmentName || "No attachment",
     },
   ];
 
@@ -2648,10 +2734,10 @@ async function showRequestDetails(request) {
    * requester-owned. Do not use it for admin,
    * department-head, or technician views.
    */
-  if (state.activeRole === "requester" && request.databaseId != null) {
+  if (state.activeRole === "requester") {
     try {
       const attachments = await loadRequesterAttachmentsForDetails(
-        request.databaseId,
+        requestId,
       );
 
       if (attachments.length > 0) {
@@ -2705,73 +2791,73 @@ async function showRequestDetails(request) {
   const fields = [
     {
       label: "Request Title",
-      value: request.title,
+      value: detailRequest.title,
       full: true,
     },
 
     {
       label: "Requester",
-      value: request.requesterName,
+      value: detailRequest.requesterName,
     },
 
     {
       label: "Email",
-      value: request.requesterEmail,
+      value: detailRequest.requesterEmail,
     },
 
     {
       label: "Department / Program",
-      value: request.department,
+      value: detailRequest.department,
     },
 
     {
       label: "Location / Room",
-      value: request.location,
+      value: detailRequest.location,
     },
 
     {
       label: "Category",
-      value: request.category,
+      value: detailRequest.category,
     },
 
     {
       label: "Priority",
-      value: request.priority,
+      value: detailRequest.priority,
       badge: true,
     },
 
     {
       label: "Status",
-      value: request.status,
+      value: detailRequest.status,
       badge: true,
     },
 
     {
       label: "Date Reported",
-      value: formatDate(request.dateReported),
+      value: formatDate(detailRequest.dateReported),
     },
 
     ...attachmentFields,
 
     {
       label: "Detailed Description",
-      value: request.description,
+      value: detailRequest.description,
       full: true,
     },
 
     {
       label: "AI Suggested Category",
-      value: request.aiCategory,
+      value: detailRequest.aiCategory,
     },
 
     {
       label: "AI Suggested Priority",
-      value: request.aiPriority,
+      value: detailRequest.aiPriority,
     },
 
     {
       label: "Duplicate Check",
-      value: request.duplicateCheck,
+      value: detailRequest.duplicateCheck,
       full: true,
     },
 
@@ -2783,7 +2869,7 @@ async function showRequestDetails(request) {
     },
   ];
 
-  showDetails(request.id, "Service Request", fields);
+  showDetails(detailRequest.id, "Service Request", fields);
 }
 
 function showWorkOrderDetails(workOrder) {
@@ -5281,7 +5367,7 @@ function handleRequestTableAction(event) {
   }
 
   if (button.dataset.action === "track-request") {
-    showToast(`${request.id} is currently ${request.status}.`, "info");
+    showRequestHistory(request);
   }
 }
 
