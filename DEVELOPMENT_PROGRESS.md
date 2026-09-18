@@ -125,10 +125,13 @@ Policy implemented:
 
 - Failed attempts are recorded per account in ACCOUNT_LOGIN_SECURITY.
 - After 5 failed attempts the account is temporarily locked for 15 minutes.
-- During an active lockout every attempt is rejected with HTTP 423 (Locked)
-  and a Retry-After header, including attempts with the correct password.
+- During an active lockout every attempt is rejected with the identical generic
+  unauthenticated failure as every other failed sign-in (no 423, no Retry-After).
 - A successful login clears the failure counters, failure timestamps and any
   lock, and stamps Last_Successful_Login_At.
+- The success reset runs only after the password, Account_Status and role
+  checks all pass; rejected logins never clear failures or stamp
+  Last_Successful_Login_At.
 - Failed attempts older than one lockout period stop counting, so stale
   failures never accumulate toward a future lockout. An expired lock always
   starts a clean window, which also keeps rows valid against the CHECK
@@ -152,18 +155,38 @@ Code changes:
   dummy hash; existing hashPassword/verifyPassword settings untouched
   (PBKDF2WithHmacSHA256, 210,000 iterations, 256-bit key).
 - src/main/java/ph/edu/htcgsc/serviceportal/servlet/LoginServlet.java:
-  lock check before password verification, failure recording, success reset,
+  password-first verification with lock check, failure recording, success reset,
   dummy verification for unknown emails. Preserved: account-status checks,
   role checks, session-fixation protection (invalidate old session, create
   new session), JSON response shape, CSRF behavior, prepared statements.
-  Lockout responses use HTTP 423 with a Retry-After header; the JSON body
+  All unauthenticated failures return the identical generic 401 response; the JSON body
   keeps the existing success/authenticated/message fields the frontend reads.
+
+Security correction (2026-09-19):
+
+- Lockout responses no longer differ from any other credential failure.
+  Unknown emails, wrong passwords and active lockouts (with the correct or
+  a wrong password) all receive the identical generic HTTP 401 response
+  {"success":false,"authenticated":false,"message":"Invalid email or
+  password."}. No HTTP 423, no Retry-After header, and no failure count or
+  lock timestamps are exposed, so accounts cannot be enumerated.
+- The password is verified before the lock check so every unauthenticated
+  failure follows the same code path with the same PBKDF2 cost; the correct
+  password is still blocked while locked.
+- While an account is already locked, additional failed attempts are not
+  recorded; the lock state is already at its maximum.
+- LoginSecurityDAO.resetOnSuccess(...) now runs only after the password,
+  Account_Status and role checks all pass, immediately before the new
+  session is created. Rejected logins never clear failures or stamp
+  Last_Successful_Login_At.
+- New focused servlet tests (LoginServletTest, 7 tests) cover both
+  behaviors using dependency-free stubs and JDK proxies.
 
 Verification evidence (2026-09-19):
 
-- mvn clean test: BUILD SUCCESS — 21 tests, 0 failures, 0 errors
-  (11 LoginSecurityPolicyTest, 5 PasswordUtilDummyVerificationTest,
-  5 RegistrationValidatorTest).
+- mvn clean test: BUILD SUCCESS — 28 tests, 0 failures, 0 errors
+  (7 LoginServletTest, 11 LoginSecurityPolicyTest,
+  5 PasswordUtilDummyVerificationTest, 5 RegistrationValidatorTest).
 - mvn clean package: BUILD SUCCESS — target\HTCServicePortal.war generated.
 - Java 17, Tomcat 10.1, Jakarta Servlet API 6 compatibility unchanged.
 - Remaining for this feature: end-to-end runtime verification against MySQL
