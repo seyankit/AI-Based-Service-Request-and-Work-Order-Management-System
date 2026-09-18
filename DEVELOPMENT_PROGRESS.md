@@ -40,7 +40,7 @@ These items form the stable baseline that future AI agents must preserve.
 
 | Module | Status | Current evidence / remaining work |
 |---|---|---|
-| Registration, verification, login, sessions | PARTIAL | Real PBKDF2, MySQL, session, SMTP and verification code exists. Login lockout, verification concurrency, session revocation and account restriction edge cases still require runtime verification. |
+| Registration, verification, login, sessions | PARTIAL | Real PBKDF2, MySQL, session, SMTP and verification code exists. Login lockout implemented in code (PHASE 1A: 5 failed attempts, 15-minute lockout, correct-password blocked while locked, success reset, dummy PBKDF2 timing normalization) with unit tests; runtime verification, verification concurrency, session revocation and account restriction edge cases still require runtime verification. |
 | Requests and drafts | WORKING / NEEDS RUNTIME VERIFICATION | Transactional request creation, request numbering, requester history, audit, pending AI state, notifications and owned draft CRUD exist. Complete requester lifecycle still needs end-to-end runtime testing. |
 | Administrator review | PARTIAL | Review queue, routing and duplicate-review code exists. Complete AI human-review workflow and staff runtime behavior still require verification. |
 | Personnel and account review | PARTIAL | Personnel/account review APIs and DAO logic exist. Activation, editing and complete authorization behavior require verification. |
@@ -55,7 +55,7 @@ These items form the stable baseline that future AI agents must preserve.
 | Attachments | PARTIAL | Request attachment storage/security foundations exist. Staff access, technician evidence uploads and complete file-count/access rules still require verification. |
 | Frontend | PARTIAL | Requester functionality is substantially connected. Administrator, approver and technician workflows still require completion and runtime testing. |
 | Configuration and documentation | PARTIAL | Environment-based MySQL configuration is verified. SMTP, Python AI runtime configuration and final deployment documentation still require verification/update. |
-| Automated tests | PARTIAL | 5 JUnit tests currently pass. Coverage is still insufficient for authentication, RBAC, requests, approvals, work orders, uploads and AI integration. |
+| Automated tests | PARTIAL | 21 JUnit tests currently pass (registration validation, login-lockout policy, PBKDF2 dummy verification). Coverage is still insufficient for authentication, RBAC, requests, approvals, work orders, uploads and AI integration. |
 | Deployment | PARTIAL | Maven WAR, Tomcat deployment and Java-to-MySQL health are verified. Full application lifecycle and production deployment are not yet verified. |
 
 ## Database Audit
@@ -103,6 +103,8 @@ The authoritative repository must not include:
 ## Remaining Development Order
 
 1. Authentication runtime verification
+   - PHASE 1A (login attempt tracking and temporary lockout): implemented, see the PHASE 1A section below.
+
 2. Requester end-to-end workflow
 3. Administrator and Department Head approval
 4. Work Order management
@@ -113,6 +115,61 @@ The authoritative repository must not include:
 9. Security hardening
 10. Automated and end-to-end testing
 11. Final deployment verification
+## PHASE 1A — Login Attempt Tracking and Temporary Lockout
+
+Implemented on branch full-system-migration against the existing
+database/014_account_login_security.sql schema (table ACCOUNT_LOGIN_SECURITY).
+No other modules were modified.
+
+Policy implemented:
+
+- Failed attempts are recorded per account in ACCOUNT_LOGIN_SECURITY.
+- After 5 failed attempts the account is temporarily locked for 15 minutes.
+- During an active lockout every attempt is rejected with HTTP 423 (Locked)
+  and a Retry-After header, including attempts with the correct password.
+- A successful login clears the failure counters, failure timestamps and any
+  lock, and stamps Last_Successful_Login_At.
+- Failed attempts older than one lockout period stop counting, so stale
+  failures never accumulate toward a future lockout. An expired lock always
+  starts a clean window, which also keeps rows valid against the CHECK
+  constraints of migration 014.
+- Unknown email addresses run a full dummy PBKDF2 verification so response
+  timing does not reveal whether an email exists; the response stays a
+  generic "Invalid email or password."
+- Rows are created on demand; no existing rows are deleted or modified.
+
+Code changes:
+
+- src/main/java/ph/edu/htcgsc/serviceportal/model/LoginFailureState.java (new):
+  immutable snapshot of one ACCOUNT_LOGIN_SECURITY row.
+- src/main/java/ph/edu/htcgsc/serviceportal/util/LoginSecurityPolicy.java (new):
+  pure lockout decision logic (5 attempts, 15 minutes, stale-window handling).
+- src/main/java/ph/edu/htcgsc/serviceportal/dao/LoginSecurityDAO.java (new):
+  prepared-statement tracking with a transactional SELECT ... FOR UPDATE
+  read-modify-write, insert-on-demand and reset-on-success upsert.
+- src/main/java/ph/edu/htcgsc/serviceportal/util/PasswordUtil.java:
+  added verifyDummyPassword(String) using a fixed-salt full-cost PBKDF2
+  dummy hash; existing hashPassword/verifyPassword settings untouched
+  (PBKDF2WithHmacSHA256, 210,000 iterations, 256-bit key).
+- src/main/java/ph/edu/htcgsc/serviceportal/servlet/LoginServlet.java:
+  lock check before password verification, failure recording, success reset,
+  dummy verification for unknown emails. Preserved: account-status checks,
+  role checks, session-fixation protection (invalidate old session, create
+  new session), JSON response shape, CSRF behavior, prepared statements.
+  Lockout responses use HTTP 423 with a Retry-After header; the JSON body
+  keeps the existing success/authenticated/message fields the frontend reads.
+
+Verification evidence (2026-09-19):
+
+- mvn clean test: BUILD SUCCESS — 21 tests, 0 failures, 0 errors
+  (11 LoginSecurityPolicyTest, 5 PasswordUtilDummyVerificationTest,
+  5 RegistrationValidatorTest).
+- mvn clean package: BUILD SUCCESS — target\HTCServicePortal.war generated.
+- Java 17, Tomcat 10.1, Jakarta Servlet API 6 compatibility unchanged.
+- Remaining for this feature: end-to-end runtime verification against MySQL
+  (migration 014 applied) with real lockout, expiry and reset behavior.
+
+
 
 ## Completion Record
 

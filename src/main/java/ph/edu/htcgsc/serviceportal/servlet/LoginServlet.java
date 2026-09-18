@@ -2,8 +2,11 @@ package ph.edu.htcgsc.serviceportal.servlet;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import ph.edu.htcgsc.serviceportal.dao.LoginSecurityDAO;
 import ph.edu.htcgsc.serviceportal.dao.PersonnelDAO;
+import ph.edu.htcgsc.serviceportal.model.LoginFailureState;
 import ph.edu.htcgsc.serviceportal.model.Personnel;
+import ph.edu.htcgsc.serviceportal.util.LoginSecurityPolicy;
 import ph.edu.htcgsc.serviceportal.util.PasswordUtil;
 
 import jakarta.servlet.http.HttpServlet;
@@ -12,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -24,7 +28,17 @@ public class LoginServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(LoginServlet.class.getName());
     private static final Set<Integer> APPLICATION_ROLE_IDS = Set.of(1, 2, 3, 4);
     private final Gson gson = new Gson();
-    private final PersonnelDAO personnelDAO = new PersonnelDAO();
+    private PersonnelDAO personnelDAO = new PersonnelDAO();
+    private LoginSecurityDAO loginSecurityDAO = new LoginSecurityDAO();
+
+    public LoginServlet() {
+    }
+
+    // Visible for testing: lets focused servlet tests inject DAO mocks.
+    LoginServlet(PersonnelDAO personnelDAO, LoginSecurityDAO loginSecurityDAO) {
+        this.personnelDAO = personnelDAO;
+        this.loginSecurityDAO = loginSecurityDAO;
+    }
 
     private static class LoginRequest {
         String email;
@@ -62,16 +76,48 @@ public class LoginServlet extends HttpServlet {
             String email = data.email.trim().toLowerCase(Locale.ROOT);
             Personnel personnel = personnelDAO.findByEmail(email);
 
-            if (personnel == null
-                    || !PasswordUtil.verifyPassword(
-                            data.password,
-                            personnel.getPasswordHash())) {
+            if (personnel == null) {
+                // Timing normalization: unknown emails run the same PBKDF2
+                // cost as real accounts, so existence is not revealed.
+                PasswordUtil.verifyDummyPassword(data.password);
+                sendAuthenticationFailure(response);
+                return;
+            }
 
-                sendError(
-                        response,
-                        HttpServletResponse.SC_UNAUTHORIZED,
-                        "Invalid email or password."
-                );
+            // Verify the password before the lock check so that every
+            // unauthenticated failure follows the same code path with the
+            // same cost, and the externally visible response is identical
+            // whether the email is unknown, the password is wrong, or the
+            // account is locked.
+            boolean passwordValid = PasswordUtil.verifyPassword(
+                    data.password,
+                    personnel.getPasswordHash()
+            );
+
+            LoginFailureState securityState =
+                    loginSecurityDAO.findState(personnel.getPersonnelId());
+            boolean accountLocked = LoginSecurityPolicy.isLocked(
+                    securityState,
+                    Instant.now()
+            );
+
+            if (!passwordValid) {
+                if (!accountLocked) {
+                    // Only unlocked accounts accumulate new failed attempts;
+                    // a locked account is already at its maximum state.
+                    loginSecurityDAO.recordFailedAttempt(
+                            personnel.getPersonnelId(),
+                            Instant.now()
+                    );
+                }
+                sendAuthenticationFailure(response);
+                return;
+            }
+
+            if (accountLocked) {
+                // The lockout also blocks the correct password until it
+                // expires. Externally this looks like any other failure.
+                sendAuthenticationFailure(response);
                 return;
             }
 
@@ -101,6 +147,10 @@ public class LoginServlet extends HttpServlet {
                 );
                 return;
             }
+
+            // Every authorization check has passed: only now clear any
+            // recorded failures and stamp the successful login time.
+            loginSecurityDAO.resetOnSuccess(personnel.getPersonnelId(), Instant.now());
 
             HttpSession oldSession = request.getSession(false);
             if (oldSession != null) {
@@ -178,6 +228,22 @@ public class LoginServlet extends HttpServlet {
         result.put("authenticated", false);
         result.put("message", message);
         response.getWriter().write(gson.toJson(result));
+    }
+
+    /**
+     * The single externally visible shape for every unauthenticated
+     * credential failure. Unknown emails, wrong passwords and active
+     * lockouts all look exactly the same, so accounts cannot be
+     * enumerated and lock state is not exposed.
+     */
+    private void sendAuthenticationFailure(HttpServletResponse response)
+            throws IOException {
+
+        sendError(
+                response,
+                HttpServletResponse.SC_UNAUTHORIZED,
+                "Invalid email or password."
+        );
     }
 
     private void prepareJsonResponse(HttpServletResponse response) {

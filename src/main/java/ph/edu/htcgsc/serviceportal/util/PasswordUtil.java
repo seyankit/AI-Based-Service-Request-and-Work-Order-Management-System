@@ -75,6 +75,49 @@ public final class PasswordUtil {
         }
     }
 
+    /**
+     * Timing-normalization check used when a sign-in attempt names an email
+     * address that does not exist. It runs a full PBKDF2 verification
+     * against a fixed dummy hash so the response timing is similar to an
+     * attempt against a real account, and it always returns {@code false}.
+     */
+    public static boolean verifyDummyPassword(String password) {
+        return verifyPassword(password, DummyHashHolder.DUMMY_STORED_HASH);
+    }
+
+    /**
+     * Builds the constant dummy hash lazily on first use, with a fixed salt,
+     * so the cost and format always match the current PBKDF2 settings.
+     */
+    private static final class DummyHashHolder {
+
+        private static final String DUMMY_PASSWORD =
+                "htc-service-portal-timing-normalization";
+
+        private static final byte[] DUMMY_SALT = {
+            (byte) 0x7a, (byte) 0x3c, (byte) 0x11, (byte) 0xf2,
+            (byte) 0x9e, (byte) 0x40, (byte) 0x6b, (byte) 0xd5,
+            (byte) 0x28, (byte) 0xc7, (byte) 0x83, (byte) 0x1a,
+            (byte) 0xf6, (byte) 0x59, (byte) 0xae, (byte) 0x0d
+        };
+
+        private static final String DUMMY_STORED_HASH = build();
+
+        private static String build() {
+            byte[] hash = generateHash(
+                    DUMMY_PASSWORD.toCharArray(),
+                    DUMMY_SALT,
+                    ITERATIONS
+            );
+
+            return ITERATIONS
+                    + ":"
+                    + Base64.getEncoder().encodeToString(DUMMY_SALT)
+                    + ":"
+                    + Base64.getEncoder().encodeToString(hash);
+        }
+    }
+
     private static byte[] generateHash(
             char[] password,
             byte[] salt,
