@@ -1,0 +1,88 @@
+# Java and Maven generated files
+target/
+*.class
+*.war
+
+# Java IDE metadata
+.classpath
+.project
+.settings/
+.idea/
+*.iml
+.vscode/
+
+# Python virtual environments
+.venv/
+venv/
+
+# Python generated files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local credentials and secrets
+.env
+.env.*
+!.env.example
+setenv.bat
+setenv.sh
+*.pem
+*.key
+*.p12
+*.jks
+
+# Runtime and temporary files
+*.log
+*.tmp
+*.temp
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+# Maven
+target/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Temporary / backup files
+*.bak
+*.backup
+*.corrupted-*
+*.step*-backup
+*.step*-*-backup
+*.before-*
+
+# Temporary database backups/dumps
+database/*before*.sql
+
+# Generated/debug output
+step*-schema-output.txt
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS
+Thumbs.db
+.DS_Store

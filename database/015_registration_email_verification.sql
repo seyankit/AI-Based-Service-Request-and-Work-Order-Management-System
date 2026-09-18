@@ -1,0 +1,49 @@
+﻿-- Task 6/7 registration hardening: composite names, verified school email, trusted roles.
+-- Run after database.sql and migrations 001-014. Review on a backup first.
+
+ALTER TABLE SCHOOL_PERSONNEL
+    ADD COLUMN Middle_Name VARCHAR(70) NULL AFTER First_Name,
+    ADD COLUMN Suffix VARCHAR(10) NULL AFTER Last_Name,
+    ADD COLUMN Email_Verified_At TIMESTAMP NULL AFTER Email;
+
+-- MySQL CHECK constraints cannot be altered portably with IF EXISTS across all supported versions.
+-- If CK_SCHOOL_PERSONNEL_STATUS from database.sql exists, drop it once before running this statement:
+-- ALTER TABLE SCHOOL_PERSONNEL DROP CHECK CK_SCHOOL_PERSONNEL_STATUS;
+ALTER TABLE SCHOOL_PERSONNEL
+    MODIFY Account_Status VARCHAR(30) NOT NULL DEFAULT 'Pending Email Verification';
+
+CREATE TABLE IF NOT EXISTS EMAIL_VERIFICATION_TOKEN (
+    Verification_ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    Personnel_ID INT UNSIGNED NOT NULL,
+    Token_Hash VARCHAR(88) NOT NULL,
+    Created_At TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    Expires_At TIMESTAMP NOT NULL,
+    Used_At TIMESTAMP NULL,
+    Revoked_At TIMESTAMP NULL,
+    PRIMARY KEY (Verification_ID),
+    UNIQUE KEY UQ_EMAIL_VERIFICATION_TOKEN_HASH (Token_Hash),
+    KEY IX_EMAIL_VERIFICATION_PERSONNEL (Personnel_ID),
+    KEY IX_EMAIL_VERIFICATION_EXPIRY (Expires_At),
+    CONSTRAINT FK_EMAIL_VERIFICATION_PERSONNEL
+        FOREIGN KEY (Personnel_ID) REFERENCES SCHOOL_PERSONNEL(Personnel_ID)
+        ON UPDATE RESTRICT ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS INSTITUTIONAL_ROLE_ASSIGNMENT (
+    Assignment_ID INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    Email VARCHAR(120) NOT NULL,
+    Role_ID TINYINT UNSIGNED NOT NULL,
+    Department_ID INT UNSIGNED NULL,
+    Active TINYINT(1) NOT NULL DEFAULT 1,
+    Created_At TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    Updated_At TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (Assignment_ID),
+    UNIQUE KEY UQ_INSTITUTIONAL_ROLE_EMAIL (Email),
+    KEY IX_INSTITUTIONAL_ROLE_ROLE (Role_ID),
+    CONSTRAINT FK_INSTITUTIONAL_ROLE_ROLE FOREIGN KEY (Role_ID) REFERENCES PERSONNEL_ROLE(Role_ID),
+    CONSTRAINT FK_INSTITUTIONAL_ROLE_DEPARTMENT FOREIGN KEY (Department_ID) REFERENCES DEPARTMENT(Department_ID)
+) ENGINE=InnoDB;
+
+-- Do NOT expose this table through public APIs.
+-- Add verified privileged personnel here administratively. Unmapped verified emails resolve to Requester (Role 1).
+

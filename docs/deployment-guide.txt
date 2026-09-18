@@ -1,0 +1,213 @@
+HTC SERVICE PORTAL - WINDOWS POWERSHELL BUILD AND DEPLOY
+=======================================================
+
+Run PowerShell as the same Windows user that owns the project and Tomcat files.
+Replace the four example paths below. Every variable is defined in this
+script so a new PowerShell terminal does not depend on an earlier session.
+
+1. DEFINE AND VERIFY PATHS
+--------------------------
+
+$project = "C:\PATH\TO\HTCServicePortal-fixed"
+$maven = "C:\Program Files\Apache NetBeans\java\maven\bin\mvn.cmd"
+$tomcat = "C:\PATH\TO\apache-tomcat-10.1.x"
+$javaHome = "C:\Program Files\Java\jdk-17"
+
+$pom = Join-Path $project "pom.xml"
+$catalina = Join-Path $tomcat "bin\catalina.bat"
+$startup = Join-Path $tomcat "bin\startup.bat"
+$shutdown = Join-Path $tomcat "bin\shutdown.bat"
+$sourceWar = Join-Path $project "target\HTCServicePortal.war"
+$deployedWar = Join-Path $tomcat "webapps\HTCServicePortal.war"
+$explodedApp = Join-Path $tomcat "webapps\HTCServicePortal"
+$contextFile = Join-Path $tomcat "conf\Catalina\localhost\HTCServicePortal.xml"
+
+foreach ($requiredPath in @($project, $maven, $tomcat, $javaHome, $pom, $catalina)) {
+    if (-not (Test-Path -LiteralPath $requiredPath)) {
+        throw "Required path was not found: $requiredPath"
+    }
+}
+
+$env:JAVA_HOME = $javaHome
+$env:Path = "$javaHome\bin;$env:Path"
+
+java -version
+& $maven -version
+
+2. CONFIGURE THE DATABASE PASSWORD FOR THIS TOMCAT START
+--------------------------------------------------------
+
+$secureDbPassword = Read-Host "Enter the htc_app MySQL password" -AsSecureString
+$temporaryCredential = [System.Management.Automation.PSCredential]::new(
+    "htc_app",
+    $secureDbPassword
+)
+
+$env:HTC_DB_USER = "htc_app"
+$env:HTC_DB_PASSWORD = $temporaryCredential.GetNetworkCredential().Password
+
+# The URL below is optional because the application already uses it as its
+# default. Keeping it explicit makes troubleshooting easier.
+$env:HTC_DB_URL = "jdbc:mysql://127.0.0.1:3306/htc_service_portal?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Manila&useUnicode=true&characterEncoding=UTF-8"
+
+3. BUILD THE WAR
+----------------
+
+Push-Location $project
+try {
+    & $maven clean package
+    if ($LASTEXITCODE -ne 0) {
+        throw "Maven build failed with exit code $LASTEXITCODE. Do not deploy the old WAR."
+    }
+} finally {
+    Pop-Location
+}
+
+if (-not (Test-Path -LiteralPath $sourceWar)) {
+    throw "Expected WAR was not produced: $sourceWar"
+}
+
+Get-Item -LiteralPath $sourceWar | Select-Object FullName, Length, LastWriteTime
+
+4. STOP TOMCAT
+--------------
+
+& $shutdown
+Start-Sleep -Seconds 4
+
+# If shutdown.bat says that Tomcat is not running, continue. If Java still owns
+# port 8080, identify the process before stopping anything manually.
+netstat -ano | findstr :8080
+
+5. CHECK FOR A STALE EXPLICIT CONTEXT
+-------------------------------------
+
+if (Test-Path -LiteralPath $contextFile) {
+    Write-Warning "An explicit context file can override webapps deployment: $contextFile"
+    Get-Content -LiteralPath $contextFile
+}
+
+# After inspecting it, use this recoverable rename only if the file points to an
+# old or incorrect docBase. Remove the leading # characters to run it.
+# $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+# Move-Item -LiteralPath $contextFile -Destination "$contextFile.disabled-$timestamp"
+
+6. REMOVE ONLY THE OLD HTC DEPLOYMENT AND COPY THE NEW WAR
+----------------------------------------------------------
+
+if (-not (Test-Path -LiteralPath $catalina)) {
+    throw "Tomcat validation failed; refusing to remove deployment files."
+}
+
+if (Test-Path -LiteralPath $explodedApp) {
+    Remove-Item -LiteralPath $explodedApp -Recurse -Force
+}
+
+if (Test-Path -LiteralPath $deployedWar) {
+    Remove-Item -LiteralPath $deployedWar -Force
+}
+
+Copy-Item -LiteralPath $sourceWar -Destination $deployedWar
+Get-Item -LiteralPath $deployedWar | Select-Object FullName, Length, LastWriteTime
+
+7. START TOMCAT AND CHECK PORT 8080
+-----------------------------------
+
+& $startup
+Start-Sleep -Seconds 6
+
+# startup.bat launches a child Java process that inherits the environment above.
+# Clear the plaintext copy from this PowerShell process after startup.
+Remove-Item Env:HTC_DB_PASSWORD -ErrorAction SilentlyContinue
+$temporaryCredential = $null
+$secureDbPassword = $null
+
+netstat -ano | findstr :8080
+Test-NetConnection -ComputerName localhost -Port 8080
+
+8. TEST THE BACKEND
+-------------------
+
+$baseUrl = "http://localhost:8080/HTCServicePortal"
+
+Invoke-RestMethod -Method Get -Uri "$baseUrl/api/health"
+Invoke-RestMethod -Method Get -Uri "$baseUrl/api/departments"
+
+# Optional end-to-end requester registration. Use a new HTC email each run.
+$newAccountPassword = Read-Host "Enter a temporary strong test password" -AsSecureString
+$newAccountCredential = [System.Management.Automation.PSCredential]::new(
+    "test-account",
+    $newAccountPassword
+)
+$plainTestPassword = $newAccountCredential.GetNetworkCredential().Password
+
+$registrationBody = @{
+    firstName = "Test"
+    lastName = "Requester"
+    email = "replace-with-unused-email@online.htcgsc.edu.ph"
+    contactNumber = "09171234567"
+    personnelType = "Staff"
+    password = $plainTestPassword
+    departmentId = 1
+    roleId = 1
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+    -Method Post `
+    -Uri "$baseUrl/api/register" `
+    -ContentType "application/json" `
+    -Body $registrationBody
+
+$loginBody = @{
+    email = "replace-with-unused-email@online.htcgsc.edu.ph"
+    password = $plainTestPassword
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+    -Method Post `
+    -Uri "$baseUrl/api/login" `
+    -ContentType "application/json" `
+    -Body $loginBody `
+    -SessionVariable portalSession
+
+Invoke-RestMethod `
+    -Method Get `
+    -Uri "$baseUrl/api/session" `
+    -WebSession $portalSession
+
+Invoke-RestMethod `
+    -Method Post `
+    -Uri "$baseUrl/api/logout" `
+    -WebSession $portalSession
+
+$plainTestPassword = $null
+$newAccountCredential = $null
+$newAccountPassword = $null
+
+9. OPEN AND REFRESH THE INTERFACE
+---------------------------------
+
+Start-Process "$baseUrl/"
+
+In the browser:
+
+1. Press Ctrl + Shift + I to open DevTools.
+2. Open Network and select Disable cache while DevTools remains open.
+3. Press Ctrl + F5.
+4. Open Console and confirm this exact marker appears:
+   HTC Service Portal JS version: 2026.09.13-auth3
+5. Confirm script.js?v=20260913-auth3 returned HTTP 200 and was not loaded from
+   an old Tomcat deployment.
+
+10. IF TOMCAT RUNS AS A WINDOWS SERVICE
+---------------------------------------
+
+Environment variables set in this PowerShell window will not be inherited by a
+Tomcat service that is already running. Configure the service account's
+environment or add this JVM system property through the Tomcat service manager,
+then restart the service:
+
+-Dhtc.db.password=YOUR_MYSQL_PASSWORD
+
+Do not place the real value in GitHub, pom.xml, web.xml, JavaScript, or a tracked
+setenv.bat file.

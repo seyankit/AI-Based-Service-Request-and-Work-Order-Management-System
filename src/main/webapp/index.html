@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI-Based Service Request and Work Order Management System of Holy Trinity College of General Santos City.">
+  <title>HTC Service Request Portal</title>
+ <link rel="stylesheet" href="css/style.css?v=20260916-step2final2">
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Skip to main content</a>
+
+  <header class="site-header" id="siteHeader">
+    <a class="brand" href="#home" aria-label="Holy Trinity College Service Portal home">
+      <span class="brand-logos" aria-hidden="true">
+        <img src="images/wildcatslogo.png" alt="Holy Trinity College Wildcats Logo">
+        <img src="images/htclogo.png" alt="Holy Trinity College Seal">
+      </span>
+      <span class="brand-copy">
+        <strong>HOLY TRINITY COLLEGE</strong>
+        <small>General Santos City</small>
+      </span>
+    </a>
+
+    <button class="menu-button" id="menuButton" type="button" aria-label="Open navigation" aria-controls="mainNav" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="main-nav" id="mainNav" aria-label="Main navigation">
+      <a class="public-nav-link active" href="#home">Home</a>
+      <a class="public-nav-link" href="#services">Services</a>
+      <a class="public-nav-link" href="#ai-assistance">AI Assistance</a>
+      <a class="public-nav-link" href="#workflow">Workflow</a>
+      <a id="workspaceNavLink" href="#workspace" hidden>My Workspace</a>
+      <button class="button button-small button-primary" id="signInButton" type="button">Sign In</button>
+    </nav>
+  </header>
+
+  <main id="mainContent">
+    <div id="publicContent">
+      <section class="hero" id="home">
+        <div class="section-shell hero-grid">
+          <div class="hero-copy">
+            <span class="eyebrow"><i></i> Holy Trinity College Service Portal</span>
+            <h1>AI-Based Service Request &amp; <em>Work Order Management System</em></h1>
+            <p>A centralized campus platform for submitting service concerns, reviewing requests, approving work, assigning personnel, and monitoring completion.</p>
+            <div class="hero-actions">
+              <button class="button button-primary" id="heroAccessButton" type="button">Submit a Service Request</button>
+              <button class="button button-secondary" id="heroTrackButton" type="button">Track My Requests</button>
+            </div>
+            <div class="audience-list" aria-label="System users">
+              <strong>Role-based access</strong>
+              <span>Requester</span><span>Administrator</span><span>Department Head</span><span>Technician</span>
+            </div>
+          </div>
+
+          <aside class="overview-card" aria-label="Service overview">
+            <div class="overview-heading">
+              <div><small>Campus Operations</small><h2>Request Overview</h2></div>
+              <span class="live-indicator"><i></i> Service Portal</span>
+            </div>
+            <div class="metric-grid">
+              <article><span>Total Requests</span><strong id="publicTotalMetric">00</strong><small>Recorded concerns</small></article>
+              <article class="metric-pending"><span>Pending</span><strong id="publicPendingMetric">00</strong><small>Awaiting action</small></article>
+              <article class="metric-progress"><span>In Progress</span><strong id="publicProgressMetric">00</strong><small>Currently serviced</small></article>
+              <article class="metric-completed"><span>Completed</span><strong id="publicCompletedMetric">00</strong><small>Resolved requests</small></article>
+            </div>
+            <div class="activity-list">
+              <div class="activity-heading"><h3>Recent Activity</h3><span>Recent requests</span></div>
+              <div id="publicRecentActivity"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="role-preview-section">
+        <div class="section-shell">
+          <div class="section-heading">
+            <span>Role-Based Service Management</span>
+            <h2>Access the tools and services available to your assigned account</h2>
+            <p>Each account is provided with access to tools and functions based on its assigned responsibilities.</p>
+          </div>
+          <div class="role-preview-grid">
+            <article><span>01</span><h3>Requester</h3><p>Submit service concerns and monitor request progress from one workspace.</p></article>
+            <article><span>02</span><h3>Service Administrator</h3><p>Review incoming requests, manage priorities, coordinate approvals, and create work assignments.</p></article>
+            <article><span>03</span><h3>Department Head</h3><p>Review requests requiring authorization and record approval decisions.</p></article>
+            <article><span>04</span><h3>Technician</h3><p>Manage assigned work orders, update service progress, and record completion details.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="services-section" id="services">
+        <div class="section-shell">
+          <div class="section-heading">
+            <span>Campus Service Categories</span>
+            <h2>One portal for common school service concerns</h2>
+            <p>Choose the service category that best matches your concern and route it to the appropriate campus service unit.</p>
+          </div>
+          <div class="service-grid">
+            <article class="service-card">
+              <div class="service-card-media">
+                <img src="images/itcomputer.jpg" alt="IT and Computer service" loading="lazy" decoding="async">
+              </div>
+              <div class="service-card-body">
+                <span class="service-card-label">Technology Support</span>
+                <h3>IT &amp; Computer</h3>
+                <p>Computers, printers, software, peripherals, and laboratory devices.</p>
+              </div>
+            </article>
+
+            <article class="service-card">
+              <div class="service-card-media">
+                <img src="images/net.jpg" alt="Internet and Network service" loading="lazy" decoding="async">
+              </div>
+              <div class="service-card-body">
+                <span class="service-card-label">Connectivity</span>
+                <h3>Internet &amp; Network</h3>
+                <p>Wi-Fi, connectivity, routers, switches, and campus network concerns.</p>
+              </div>
+            </article>
+
+            <article class="service-card">
+              <div class="service-card-media">
+                <img src="images/electrical.jpg" alt="Electrical service" loading="lazy" decoding="async">
+              </div>
+              <div class="service-card-body">
+                <span class="service-card-label">Electrical Support</span>
+                <h3>Electrical</h3>
+                <p>Power outlets, lighting, switches, wiring, and electrical safety issues.</p>
+              </div>
+            </article>
+
+            <article class="service-card">
+              <div class="service-card-media">
+                <img src="images/faci.jpg" alt="Facilities service" loading="lazy" decoding="async">
+              </div>
+              <div class="service-card-body">
+                <span class="service-card-label">Campus Facilities</span>
+                <h3>Facilities</h3>
+                <p>Rooms, furniture, doors, windows, and general campus facilities.</p>
+              </div>
+            </article>
+
+            <article class="service-card">
+              <div class="service-card-media">
+                <img src="images/equip.jpg" alt="Equipment service" loading="lazy" decoding="async">
+              </div>
+              <div class="service-card-body">
+                <span class="service-card-label">Shared Equipment</span>
+                <h3>Equipment</h3>
+                <p>Projectors, fans, air-conditioning units, and shared equipment.</p>
+              </div>
+            </article>
+
+            <article class="service-card">
+              <div class="service-card-media">
+                <img src="images/maint.jpg" alt="Maintenance service" loading="lazy" decoding="async">
+              </div>
+              <div class="service-card-body">
+                <span class="service-card-label">General Maintenance</span>
+                <h3>Maintenance</h3>
+                <p>Repairs and upkeep that do not fit the more specific categories.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="ai-section section-shell" id="ai-assistance">
+        <div class="ai-copy">
+          <span class="section-label">AI-Assisted Request Management</span>
+          <h2>Smarter request review with human oversight.</h2>
+          <p>AI-assisted analysis helps authorized personnel review service requests more efficiently by recommending categories, priority levels, and potentially related requests.</p>
+          <div class="human-review">
+            <span>&#10003;</span>
+            <p><strong>AI recommendations are advisory only.</strong> The final category, priority, approval, and work assignment are decided by authorized Holy Trinity College personnel.</p>
+          </div>
+        </div>
+        <div class="ai-capabilities">
+          <article><span>01</span><div><h3>Request Classification</h3><p>Recommends the most appropriate service category based on the submitted concern.</p></div></article>
+          <article><span>02</span><div><h3>Priority Recommendation</h3><p>Evaluates request details to recommend an appropriate urgency level.</p></div></article>
+          <article><span>03</span><div><h3>Related Request Detection</h3><p>Identifies potentially similar or duplicate requests for review.</p></div></article>
+          <article><span>04</span><div><h3>Service Insights</h3><p>Supports request monitoring and service-management analysis.</p></div></article>
+        </div>
+      </section>
+
+      <section class="workflow-section" id="workflow">
+        <div class="section-shell">
+          <div class="section-heading">
+            <span>Service Workflow</span>
+            <h2>From request submission to verified resolution</h2>
+            <p>Each stage has a responsible role and a corresponding system record.</p>
+          </div>
+          <ol class="workflow-list">
+            <li><span>01</span><small>Requester</small><h3>Submit</h3><p>Enter a concern and receive a generated Service Request ID.</p></li>
+            <li><span>02</span><small>AI + Administrator</small><h3>Review</h3><p>Inspect suggested category, priority, and possible duplicates.</p></li>
+            <li><span>03</span><small>Department Head</small><h3>Approve</h3><p>Approve or reject requests requiring authorization.</p></li>
+            <li><span>04</span><small>Administrator</small><h3>Assign</h3><p>Create a work order and assign service personnel.</p></li>
+            <li><span>05</span><small>Technician</small><h3>Resolve</h3><p>Record actions, materials, progress, and completion.</p></li>
+          </ol>
+        </div>
+      </section>
+    </div>
+
+    <section class="workspace-section" id="workspace" hidden>
+      <div class="workspace-shell">
+        <aside class="workspace-sidebar" id="workspaceSidebar">
+          <div class="workspace-brand">
+            <img src="images/htclogo.png" alt="Holy Trinity College Logo">
+            <div><strong>HTC Service Portal</strong><small>Role Workspace</small></div>
+          </div>
+
+          <div class="workspace-user">
+
+  <div class="workspace-profile-photo-wrap">
+
+    <div
+      class="workspace-avatar"
+      id="workspaceAvatar"
+      aria-label="Profile photo"
+    >
+      GU
+    </div>
+
+    <input
+      id="profilePhotoInput"
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      hidden
+    >
+
+  </div>
+
+
+  <div class="workspace-user-details">
+
+    <small>Signed in as</small>
+
+    <strong id="workspaceUserName">
+      Guest User
+    </strong>
+
+    <span id="workspaceUserEmail">
+      user@online.htcgsc.edu.ph
+    </span>
+
+    <div class="workspace-profile-actions">
+
+      <button
+        class="workspace-profile-action"
+        id="profilePhotoChangeTextButton"
+        type="button"
+      >
+        Change Photo
+      </button>
+
+      <button
+        class="workspace-profile-action danger"
+        id="profilePhotoRemoveButton"
+        type="button"
+        hidden
+      >
+        Remove
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+<div class="workspace-role-card"><small>Assigned Role</small><strong id="workspaceRoleName">Role</strong></div>
+          <nav class="workspace-navigation" id="workspaceNavigation" aria-label="Role workspace navigation"></nav>
+          <button class="workspace-signout" id="signOutButton" type="button">Sign Out</button>
+        </aside>
+
+        <div class="workspace-main">
+          <header class="workspace-header">
+
+  <div class="workspace-heading-wrap">
+
+    <button
+      class="sidebar-toggle"
+      id="sidebarToggle"
+      type="button"
+      aria-label="Toggle workspace navigation"
+      aria-controls="workspaceSidebar"
+      aria-expanded="false"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      >
+        <path d="M4 6h16"></path>
+        <path d="M4 12h16"></path>
+        <path d="M4 18h16"></path>
+      </svg>
+    </button>
+
+    <div>
+      <span id="workspaceBreadcrumb">
+        Service Portal / Workspace
+      </span>
+
+      <h2 id="workspacePageTitle">
+        Overview
+      </h2>
+    </div>
+
+  </div>
+
+  <div class="workspace-header-actions">
+
+    <div class="workspace-date-display">
+      <small>Today</small>
+      <strong id="workspaceDate"></strong>
+    </div>
+
+    <button
+      class="icon-button notification-button"
+      id="notificationButton"
+      type="button"
+      aria-label="Show notifications"
+      aria-controls="notificationPanel"
+      aria-expanded="false"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="21"
+        height="21"
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+        <path d="M10 21h4"></path>
+      </svg>
+
+      <span
+        class="notification-count"
+        id="notificationCount"
+        hidden
+      >
+        0
+      </span>
+    </button>
+
+    <aside
+      class="notification-panel"
+      id="notificationPanel"
+      hidden
+      aria-label="Notifications"
+    >
+      <div class="notification-panel-heading">
+
+        <div>
+          <small>Account Updates</small>
+          <strong>Notifications</strong>
+        </div>
+
+        <button
+          class="notification-panel-close"
+          id="closeNotificationPanel"
+          type="button"
+          aria-label="Close notifications"
+        >
+          &times;
+        </button>
+
+      </div>
+
+      <div
+        id="notificationList"
+        class="notification-list"
+      ></div>
+
+    </aside>
+
+  </div>
+
+</header>
+
+<!-- REQUESTER -->
+          <div class="role-interface" data-role="requester" hidden>
+            <section
+  class="workspace-view"
+  data-view="requester-overview"
+>
+
+  <div class="welcome-banner">
+
+    <div>
+      <small>Requester Workspace</small>
+
+      <h3>
+        Welcome,
+        <span data-user-name>User</span>
+      </h3>
+
+      <p>
+        Submit campus service concerns and monitor records connected to your account.
+      </p>
+    </div>
+
+    <button
+      class="button button-light"
+      type="button"
+      data-open-request-modal
+    >
+      + New Service Request
+    </button>
+
+  </div>
+
+
+  <div class="dashboard-grid four">
+
+    <article class="stat-card">
+      <div class="stat-icon">SR</div>
+
+      <div>
+        <small>My Requests</small>
+        <strong id="requesterTotalMetric">00</strong>
+        <p>Requests linked to your account</p>
+      </div>
+    </article>
+
+
+    <article class="stat-card">
+      <div class="stat-icon amber">PD</div>
+
+      <div>
+        <small>Pending / Review</small>
+        <strong id="requesterPendingMetric">00</strong>
+        <p>Awaiting authorized action</p>
+      </div>
+    </article>
+
+
+    <article class="stat-card">
+      <div class="stat-icon blue">IP</div>
+
+      <div>
+        <small>In Progress</small>
+        <strong id="requesterProgressMetric">00</strong>
+        <p>Currently being serviced</p>
+      </div>
+    </article>
+
+
+    <article class="stat-card">
+      <div class="stat-icon green">OK</div>
+
+      <div>
+        <small>Completed</small>
+        <strong id="requesterCompletedMetric">00</strong>
+        <p>Resolved concerns</p>
+      </div>
+    </article>
+
+  </div>
+
+
+  <div class="dashboard-split">
+
+    <article class="panel-card">
+
+      <div class="panel-title">
+        <div>
+          <small>Quick Actions</small>
+          <h3>Manage your requests</h3>
+        </div>
+      </div>
+
+
+      <div class="quick-action-grid">
+
+        <button
+          class="quick-action"
+          type="button"
+          data-open-request-modal
+        >
+          <span class="quick-action-icon" aria-hidden="true">
+
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <path d="M12 5v14"></path>
+              <path d="M5 12h14"></path>
+            </svg>
+
+          </span>
+
+          <strong>Submit Request</strong>
+          <small>Report a new concern</small>
+        </button>
+
+
+        <button
+          class="quick-action"
+          type="button"
+          data-workspace-link="requester-records"
+        >
+          <span class="quick-action-icon" aria-hidden="true">
+
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="m20 20-4-4"></path>
+            </svg>
+
+          </span>
+
+          <strong>Track Request</strong>
+          <small>View request status</small>
+        </button>
+
+
+        <button
+          class="quick-action"
+          type="button"
+          data-open-notifications
+        >
+          <span class="quick-action-icon" aria-hidden="true">
+
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+              <path d="M10 21h4"></path>
+            </svg>
+
+          </span>
+
+          <strong>Notifications</strong>
+          <small>See recent updates</small>
+        </button>
+
+      </div>
+
+    </article>
+
+
+    <article class="panel-card">
+
+      <div class="panel-title">
+
+        <div>
+          <small>Latest Activity</small>
+          <h3>My recent requests</h3>
+        </div>
+
+        <button
+          class="panel-text-action"
+          type="button"
+          data-workspace-link="requester-records"
+        >
+          View all
+        </button>
+
+      </div>
+
+      <div
+        class="compact-list"
+        id="requesterRecentList"
+      ></div>
+
+    </article>
+
+  </div>
+
+</section>
+
+            <section class="workspace-view" data-view="requester-new" hidden>
+              <div class="empty-action-card">
+                <div class="empty-icon">&#43;</div>
+                <span class="section-label">Service Request</span>
+                <h3>Create a new service request</h3>
+                <p>Use the modal form to enter requester details, category, concern details, location, priority preference, report date, and an optional attachment.</p>
+                <button class="button button-primary" type="button" data-open-request-modal>+ New Service Request</button>
+              </div>
+            </section>
+
+            <section class="workspace-view" data-view="requester-records" hidden>
+              <div class="panel-card ai-result-card" id="latestAiCard" hidden>
+                <div class="ai-result-heading"><div><small>Latest AI Recommendation</small><h3>AI-assisted request review</h3></div><span class="advisory-chip">ADVISORY</span></div>
+                <div class="ai-result-grid">
+                  <div><small>Suggested Category</small><strong id="latestAiCategory">&mdash;</strong></div>
+                  <div><small>Suggested Priority</small><strong id="latestAiPriority">&mdash;</strong></div>
+                  <div><small>Possible Duplicate</small><strong id="latestAiDuplicate">&mdash;</strong></div>
+                </div>
+                <p>AI recommendations are advisory only. The final decision is made by authorized school personnel.</p>
+              </div>
+
+                            <div class="panel-card requester-drafts-card">
+                <div class="table-heading">
+                  <div><small>Saved Work</small><h3>My Drafts</h3></div>
+                  <span class="record-count" id="requesterDraftCount">0 Drafts</span>
+                </div>
+                <p class="helper-text">Resume an unfinished service request or remove a draft you no longer need.</p>
+                <div class="compact-list" id="requesterDraftList" aria-live="polite"></div>
+                <div class="table-empty" id="requesterDraftEmptyState" hidden>
+                  <strong>No saved drafts</strong>
+                  <span>Your unfinished service requests will appear here.</span>
+                </div>
+              </div>
+<div class="table-card panel-card">
+                <div class="table-heading">
+                  <div><small>Requester Records</small><h3>My Service Requests</h3></div>
+                  <button class="button button-small button-primary" type="button" data-open-request-modal>+ New Request</button>
+                </div>
+                <div class="table-tools">
+                  <label class="search-control"><span><svg viewBox="0 0 24 24" width="16" height="16" focusable="false" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><input id="requestSearchInput" type="search" placeholder="Search by ID, title, category, or location" aria-label="Search my requests"></label>
+                  <label class="filter-control"><span>Status</span><select id="requestStatusFilter" aria-label="Filter requests by status"><option value="all">All statuses</option><option>Pending</option><option>For Review</option><option>Awaiting Approval</option><option>Approved</option><option>Assigned</option><option>In Progress</option><option>Completed</option><option>Rejected</option></select></label>
+                  <span class="record-count" id="requestRecordCount">0 Records</span>
+                </div>
+                <div class="table-scroll">
+                  <table>
+                    <thead><tr><th>Request ID</th><th>Request Title</th><th>Category</th><th>Location</th><th>Priority</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+                    <tbody id="serviceRequestTableBody"></tbody>
+                  </table>
+                </div>
+                <div class="table-empty" id="requestEmptyState" hidden><strong>No matching requests</strong><span>Try changing the search text or status filter.</span></div>
+              </div>
+            </section>
+          </div>
+
+          <!-- ADMINISTRATOR -->
+          <div class="role-interface" data-role="administrator" hidden>
+            <section class="workspace-view" data-view="administrator-overview">
+              <div class="welcome-banner admin-banner">
+                <div><small>Service Administrator / Coordinator</small><h3>Operations dashboard</h3><p>Review service requests, evaluate AI recommendations, and coordinate work assignments.</p></div>
+                <button class="button button-light" type="button" data-workspace-link="administrator-review">Open Request Queue</button>
+              </div>
+              <div class="dashboard-grid four">
+                <article class="stat-card"><div class="stat-icon">RQ</div><div><small>Request Queue</small><strong id="adminQueueMetric">00</strong><p>Requests needing review</p></div></article>
+                <article class="stat-card"><div class="stat-icon amber">AP</div><div><small>Awaiting Approval</small><strong id="adminApprovalMetric">00</strong><p>Forwarded for authorization</p></div></article>
+                <article class="stat-card"><div class="stat-icon red">HI</div><div><small>High Priority</small><strong id="adminHighMetric">00</strong><p>High or urgent requests</p></div></article>
+                <article class="stat-card"><div class="stat-icon blue">WO</div><div><small>Work Orders</small><strong id="adminWorkOrderMetric">00</strong><p>Current work records</p></div></article>
+              </div>
+              <div class="dashboard-split">
+                <article class="panel-card"><div class="panel-title"><div><small>AI Recommendations</small><h3>Items needing human review</h3></div><span class="advisory-chip">ADVISORY</span></div><div class="compact-list" id="adminAiSummary"></div></article>
+                <article class="panel-card"><div class="panel-title"><div><small>Service Operations</small><h3>Management Overview</h3></div></div><div class="entity-chips"><span>Service Requests</span><span>AI Recommendations</span><span>Work Orders</span><span>Assignments</span><span>Personnel</span></div></article>
+              </div>
+            </section>
+
+            <section class="workspace-view" data-view="administrator-review" hidden>
+              <div class="table-card panel-card">
+                <div class="table-heading"><div><small>Request Management</small><h3>Review Queue &amp; AI Recommendations</h3></div><span class="record-count" id="adminReviewCount">0 Records</span></div>
+                <div class="table-tools"><label class="search-control"><span><svg viewBox="0 0 24 24" width="16" height="16" focusable="false" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><input id="adminRequestSearch" type="search" placeholder="Search request queue" aria-label="Search request queue"></label><span class="helper-text">Review AI suggestions before forwarding a request.</span></div>
+                <div class="table-scroll">
+                  <table><thead><tr><th>Request ID</th><th>Title</th><th>AI Category</th><th>AI Priority</th><th>Duplicate Check</th><th>Status</th><th>Action</th></tr></thead><tbody id="adminReviewTableBody"></tbody></table>
+                </div>
+              </div>
+            </section>
+
+            <section class="workspace-view" data-view="administrator-work-orders" hidden>
+              <div class="content-grid form-and-table">
+                <div class="panel-card form-panel">
+                  <div class="panel-title"><div><small>Work Order Assignment</small><h3>Create / Update Work Order</h3></div><span class="entity-badge">Administrator</span></div>
+                  <form class="record-form workspace-form" id="workOrderForm" novalidate>
+                    <div class="form-grid">
+                      <div class="field-group"><label for="workOrderId">Work Order ID</label><input id="workOrderId" type="text" placeholder="Auto-generated for new record" pattern="WO-[0-9]{4}-[0-9]{4}" aria-describedby="workOrderIdHelp"><small id="workOrderIdHelp">Leave blank to create a new work order.</small></div>
+                      <div class="field-group"><label for="workOrderRequestId">Service Request ID *</label><input id="workOrderRequestId" type="text" placeholder="SR-2026-000001" pattern="SR-[0-9]{4}-[0-9]{6}" required></div>
+                      <div class="field-group"><label for="assignedTechnician">Assigned Technician / Personnel *</label><select id="assignedTechnician" required><option value="">No personnel data loaded</option></select></div>
+                      <div class="field-group"><label for="serviceUnit">Department / Service Unit *</label><select id="serviceUnit" required><option value="">Select service unit</option><option>Information Technology Office</option><option>Facilities Management</option><option>Electrical Services</option><option>Maintenance Services</option></select></div>
+                      <div class="field-group full-width"><label for="workDescription">Work Description *</label><textarea id="workDescription" rows="3" minlength="10" maxlength="500" placeholder="Describe the work to be performed." required></textarea></div>
+                      <div class="field-group"><label for="workStatus">Work Status *</label><select id="workStatus" required><option>Assigned</option><option>In Progress</option><option>On Hold</option><option>Completed</option></select></div>
+                      <div class="field-group"><label for="completionDate">Completion Date</label><input id="completionDate" type="date"></div>
+                      <div class="field-group full-width"><label for="actionTaken">Action Taken</label><textarea id="actionTaken" rows="2" maxlength="500" placeholder="Record actions already performed, if any."></textarea></div>
+                      <div class="field-group full-width"><label for="materialsUsed">Materials / Resources Used</label><textarea id="materialsUsed" rows="2" maxlength="300" placeholder="Example: LAN cable, RJ45 connector, replacement switch"></textarea></div>
+                      <div class="field-group full-width"><label for="technicianRemarks">Technician Remarks</label><textarea id="technicianRemarks" rows="2" maxlength="300" placeholder="Optional notes, observations, or follow-up requirements"></textarea></div>
+                    </div>
+                    <div class="form-actions"><button class="button button-secondary" type="reset">Clear</button><button class="button button-primary" type="submit">Save Work Order</button></div>
+                  </form>
+                </div>
+
+                <div class="table-card panel-card">
+                  <div class="table-heading"><div><small>Work Order Records</small><h3>Current Work Orders</h3></div><span class="record-count" id="workOrderRecordCount">0 Records</span></div>
+                  <div class="table-scroll"><table><thead><tr><th>Work Order ID</th><th>Request ID</th><th>Assigned Personnel</th><th>Service Unit</th><th>Status</th><th>Completion</th><th>Action</th></tr></thead><tbody id="workOrderTableBody"></tbody></table></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="workspace-view" data-view="administrator-access" hidden>
+              <div class="content-grid form-and-table">
+                <div class="panel-card form-panel">
+                  <div class="panel-title"><div><small>Personnel Access Management</small><h3>Personnel Access Management</h3></div><span class="entity-badge">Administrator</span></div>
+                  <form class="record-form workspace-form" id="personnelAccessForm" novalidate>
+                    <div class="form-grid">
+
+                      <div class="field-group full-width">
+                        <label for="personnelTargetId">Select Existing Personnel *</label>
+                        <select id="personnelTargetId" required>
+                          <option value="">Select personnel account</option>
+                        </select>
+                        <small>Choose an existing school personnel account to manage its department and system role.</small>
+                      </div>
+
+                      <div class="field-group">
+                        <label for="personnelName">Personnel Name</label>
+                        <input id="personnelName" type="text" readonly>
+                      </div>
+
+                      <div class="field-group">
+                        <label for="personnelEmail">School Email</label>
+                        <input id="personnelEmail" type="email" readonly>
+                      </div>
+
+                      <div class="field-group">
+                        <label for="personnelTypeDisplay">Personnel Type</label>
+                        <input id="personnelTypeDisplay" type="text" readonly>
+                      </div>
+
+                      <div class="field-group">
+                        <label for="personnelStatusDisplay">Account Status</label>
+                        <input id="personnelStatusDisplay" type="text" readonly>
+                      </div>
+
+                      <div class="field-group">
+                        <label for="personnelDepartment">Department *</label>
+                        <select id="personnelDepartment" required>
+                          <option value="">Select department</option>
+                        </select>
+                      </div>
+
+                      <div class="field-group">
+                        <label for="personnelRole">System Role *</label>
+                        <select id="personnelRole" required>
+                          <option value="">Select system role</option>
+                          <option value="1">Requester</option>
+                          <option value="2">Service Administrator / Coordinator</option>
+                          <option value="3">Department Head / Authorized Approver</option>
+                          <option value="4">Service Personnel / Technician</option>
+                        </select>
+                      </div>
+
+                      <div class="field-group full-width">
+                        <small>
+                          System roles determine authorized workspace access. Account status is shown for reference and is not changed by this form.
+                        </small>
+                      </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                      <button class="button button-secondary" type="reset">
+                        Clear Selection
+                      </button>
+                      <button class="button button-primary" type="submit">
+                        Save Access Changes
+                      </button>
+                    </div>
+                  </form>
+                </div>
+                <div class="table-card panel-card"><div class="table-heading"><div><small>Personnel Records</small><h3>School Personnel</h3></div><span class="record-count" id="personnelRecordCount">0 Records</span></div><div class="table-scroll"><table><thead><tr><th>Personnel ID</th><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Status</th></tr></thead><tbody id="personnelTableBody"></tbody></table></div></div>
+              </div>
+            </section>
+          </div>
+
+          <!-- APPROVER -->
+          <div class="role-interface" data-role="approver" hidden>
+            <section class="workspace-view" data-view="approver-overview">
+              <div class="welcome-banner approver-banner"><div><small>Department Head / Authorized Approver</small><h3>Approval dashboard</h3><p>Review requests requiring authorization and record the final approval decision.</p></div><button class="button button-light" type="button" data-workspace-link="approver-queue">Review Requests</button></div>
+              <div class="dashboard-grid three">
+                <article class="stat-card"><div class="stat-icon amber">AP</div><div><small>Awaiting Approval</small><strong id="approverPendingMetric">00</strong><p>Requests needing a decision</p></div></article>
+                <article class="stat-card"><div class="stat-icon green">OK</div><div><small>Approved</small><strong id="approverApprovedMetric">00</strong><p>Approved requests</p></div></article>
+                <article class="stat-card"><div class="stat-icon red">NO</div><div><small>Rejected</small><strong id="approverRejectedMetric">00</strong><p>Rejected requests</p></div></article>
+              </div>
+              <div class="info-card"><h3>Human authorization remains final</h3><p>AI recommendations are visible for context, but the Department Head / Authorized Approver records the actual approval decision.</p></div>
+            </section>
+
+            <section class="workspace-view" data-view="approver-queue" hidden>
+              <div class="table-card panel-card">
+                <div class="table-heading"><div><small>APPROVAL</small><h3>Requests for Approval</h3></div><span class="record-count" id="approvalRecordCount">0 Records</span></div>
+                <div class="table-scroll"><table><thead><tr><th>Request ID</th><th>Title</th><th>Category</th><th>Priority</th><th>AI Note</th><th>Status</th><th>Decision</th></tr></thead><tbody id="approvalTableBody"></tbody></table></div>
+              </div>
+            </section>
+
+            <section class="workspace-view" data-view="approver-history" hidden>
+              <div class="table-card panel-card"><div class="table-heading"><div><small>Decision Records</small><h3>Approval History</h3></div><span class="record-count" id="approvalHistoryCount">0 Records</span></div><div class="table-scroll"><table><thead><tr><th>Request ID</th><th>Decision</th><th>Decision Date</th><th>Remarks</th></tr></thead><tbody id="approvalHistoryTableBody"></tbody></table></div></div>
+            </section>
+          </div>
+
+          <!-- TECHNICIAN -->
+          <div class="role-interface" data-role="technician" hidden>
+            <section class="workspace-view" data-view="technician-overview">
+              <div class="welcome-banner technician-banner"><div><small>Service Personnel / Technician</small><h3>Assigned service work</h3><p>View assigned work orders and record progress, materials, actions, and completion details.</p></div><button class="button button-light" type="button" data-workspace-link="technician-assigned">View Assignments</button></div>
+              <div class="dashboard-grid four">
+                <article class="stat-card"><div class="stat-icon">WO</div><div><small>Assigned Work</small><strong id="technicianAssignedMetric">00</strong><p>Work orders in your queue</p></div></article>
+                <article class="stat-card"><div class="stat-icon blue">IP</div><div><small>In Progress</small><strong id="technicianProgressMetric">00</strong><p>Active work</p></div></article>
+                <article class="stat-card"><div class="stat-icon amber">OH</div><div><small>On Hold</small><strong id="technicianHoldMetric">00</strong><p>Waiting for follow-up</p></div></article>
+                <article class="stat-card"><div class="stat-icon green">OK</div><div><small>Completed</small><strong id="technicianCompletedMetric">00</strong><p>Finished work records</p></div></article>
+              </div>
+              <div class="info-card"><h3>Technician access</h3><p>This workspace only exposes assigned work orders, progress updates, and work history. Administrative and approval tools remain hidden.</p></div>
+            </section>
+
+            <section class="workspace-view" data-view="technician-assigned" hidden>
+              <div class="table-card panel-card">
+                <div class="table-heading"><div><small>Assigned Work Orders</small><h3>Assigned Work Orders</h3></div><span class="record-count" id="technicianWorkCount">0 Records</span></div>
+                <div class="table-scroll"><table><thead><tr><th>Work Order ID</th><th>Request ID</th><th>Work Description</th><th>Service Unit</th><th>Assigned To</th><th>Status</th><th>Action</th></tr></thead><tbody id="technicianWorkTableBody"></tbody></table></div>
+              </div>
+            </section>
+
+            <section class="workspace-view" data-view="technician-update" hidden>
+              <div class="content-grid form-and-table">
+                <div class="panel-card form-panel">
+                  <div class="panel-title"><div><small>Work Progress Update</small><h3>Update Service Work</h3></div><span class="entity-badge">Technician</span></div>
+                  <form class="record-form workspace-form" id="progressUpdateForm" novalidate>
+                    <div class="form-grid">
+                      <div class="field-group"><label for="progressWorkOrderId">Work Order ID *</label><input id="progressWorkOrderId" type="text" placeholder="WO-2026-0019" pattern="WO-[0-9]{4}-[0-9]{4}" required></div>
+                      <div class="field-group"><label for="progressRequestId">Service Request ID *</label><input id="progressRequestId" type="text" placeholder="SR-2026-000001" pattern="SR-[0-9]{4}-[0-9]{6}" required></div>
+                      <div class="field-group"><label for="progressTechnician">Assigned Technician / Personnel *</label><input id="progressTechnician" type="text" minlength="3" required></div>
+                      <div class="field-group"><label for="progressServiceUnit">Department / Service Unit *</label><select id="progressServiceUnit" required><option value="">Select service unit</option><option>Information Technology Office</option><option>Facilities Management</option><option>Electrical Services</option><option>Maintenance Services</option></select></div>
+                      <div class="field-group full-width"><label for="progressWorkDescription">Work Description *</label><textarea id="progressWorkDescription" rows="3" minlength="10" maxlength="500" required></textarea></div>
+                      <div class="field-group"><label for="progressStatusInput">Work Status *</label><select id="progressStatusInput" required><option>Assigned</option><option>In Progress</option><option>On Hold</option><option>Completed</option></select></div>
+                      <div class="field-group"><label for="progressCompletionDate">Completion Date</label><input id="progressCompletionDate" type="date"></div>
+                      <div class="field-group full-width"><label for="progressActionTaken">Action Taken *</label><textarea id="progressActionTaken" rows="3" minlength="5" maxlength="500" placeholder="Describe the action performed." required></textarea></div>
+                      <div class="field-group full-width"><label for="progressMaterials">Materials / Resources Used</label><textarea id="progressMaterials" rows="2" maxlength="300" placeholder="List materials or resources used"></textarea></div>
+                      <div class="field-group full-width"><label for="progressRemarks">Technician Remarks</label><textarea id="progressRemarks" rows="2" maxlength="300" placeholder="Optional remarks or follow-up notes"></textarea></div>
+                    </div>
+                    <div class="form-actions"><button class="button button-secondary" type="reset">Reset</button><button class="button button-primary" type="submit">Update Work Order</button></div>
+                  </form>
+                </div>
+                <div class="panel-card"><div class="panel-title"><div><small>Work History</small><h3>Recent Technician Updates</h3></div></div><div class="compact-list" id="technicianHistoryList"></div></div>
+              </div>
+            </section>
+
+            <section class="workspace-view" data-view="technician-history" hidden>
+              <div class="table-card panel-card"><div class="table-heading"><div><small>Completed / Updated Work</small><h3>Work History</h3></div><span class="record-count" id="technicianHistoryCount">0 Records</span></div><div class="table-scroll"><table><thead><tr><th>Work Order ID</th><th>Request ID</th><th>Status</th><th>Action Taken</th><th>Completion</th><th>Remarks</th></tr></thead><tbody id="technicianHistoryTableBody"></tbody></table></div></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="siteFooter">
+    <div class="section-shell footer-main">
+      <div class="footer-brand">
+        <div class="footer-logos"><img src="images/wildcatslogo.png" alt="Wildcats Logo"><img src="images/htclogo.png" alt="Holy Trinity College Logo"></div>
+        <div><strong>AI-Based Service Request &amp; Work Order Management System</strong><span>Holy Trinity College of General Santos City</span></div>
+      </div>
+      <div class="footer-links"><div><strong>Quick Links</strong><a href="#home">Home</a><a href="#services">Services</a><a href="#ai-assistance">AI Assistance</a><a href="#workflow">Workflow</a></div><div><strong>Support</strong><span>Service Office</span><span>IT Support</span><span>Contact Administration</span></div></div>
+    </div>
+    <div class="section-shell footer-bottom"><span>&copy; 2026 Holy Trinity College of General Santos City. All Rights Reserved.</span><span>Excellence in Service, Commitment to Community.</span></div>
+  </footer>
+
+  <!-- AUTHENTICATION MODAL -->
+  <div class="modal" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginTitle" hidden>
+    <div class="modal-backdrop" data-close-modal="loginModal"></div>
+    <div class="modal-card modal-card-auth" role="document">
+      <button class="modal-close" type="button" aria-label="Close authentication dialog" data-close-modal="loginModal">&times;</button>
+      <div class="auth-brand">
+        <img src="images/htclogo.png" alt="Holy Trinity College Logo" class="modal-logo">
+        <div><span class="section-label">Secure Account Access</span><h2 id="loginTitle">Holy Trinity College Service Portal</h2><p>Sign in or create your account to access campus service management features.</p></div>
+      </div>
+
+      <div class="auth-tabs" role="tablist" aria-label="Authentication options">
+        <button class="auth-tab active" id="authSignInTab" type="button" role="tab" aria-selected="true" aria-controls="loginForm">Sign In</button>
+        <button class="auth-tab" id="authRegisterTab" type="button" role="tab" aria-selected="false" aria-controls="registrationForm">Create Account</button>
+      </div>
+
+      <div class="auth-message" id="authMessage" role="status" aria-live="polite"></div>
+
+      <form class="record-form auth-form" id="loginForm" novalidate>
+        <div class="auth-form-heading"><h3>Welcome back</h3><p>Sign in to your Holy Trinity College Service Portal account.</p></div>
+        <div class="field-group"><label for="loginEmail">School Email *</label><input id="loginEmail" type="email" autocomplete="email" maxlength="120" placeholder="name@online.htcgsc.edu.ph" required></div>
+        <div class="field-group"><label for="loginPassword">Password *</label><div class="password-control"><input id="loginPassword" type="password" minlength="8" maxlength="72" autocomplete="current-password" placeholder="Enter your password" required><button id="togglePasswordButton" type="button" aria-label="Show password">Show</button></div></div>
+        <label class="remember-control"><input id="rememberMe" type="checkbox"> Remember my school email on this device</label>
+        <button class="button button-primary button-full" id="loginSubmitButton" type="submit"><span>Sign In</span></button>
+        <button class="auth-text-link" id="openRegistrationButton" type="button">No account yet? Create an account</button>
+      </form>
+
+      <form class="record-form auth-form" id="registrationForm" novalidate hidden>
+        <div class="auth-form-heading"><h3>Create your account</h3><p>Register using your official Holy Trinity College school account.</p></div>
+        <div class="form-grid auth-register-grid">
+          <div class="field-group"><label for="registerFirstName">First Name *</label><input id="registerFirstName" type="text" maxlength="70" autocomplete="given-name" placeholder="Juan" required></div>
+          <div class="field-group"><label for="registerMiddleName">Middle Name</label><input id="registerMiddleName" type="text" maxlength="70" autocomplete="additional-name" placeholder="Dela Cruz"></div>
+          <div class="field-group"><label for="registerLastName">Last Name *</label><input id="registerLastName" type="text" maxlength="70" autocomplete="family-name" placeholder="Santos" required></div>
+          <div class="field-group"><label for="registerSuffix">Suffix</label><select id="registerSuffix"><option value="">None</option><option>Jr.</option><option>Sr.</option><option>II</option><option>III</option><option>IV</option></select></div>
+          <div class="field-group"><label for="registerEmail">School Email *</label><input id="registerEmail" type="email" maxlength="120" autocomplete="email" placeholder="name@online.htcgsc.edu.ph" required><small>Use your @online.htcgsc.edu.ph account.</small></div>
+          <div class="field-group"><label for="registerContactNumber">Contact Number</label><input id="registerContactNumber" type="tel" inputmode="tel" maxlength="13" autocomplete="tel" placeholder="09XXXXXXXXX"></div>
+          <div class="field-group"><label for="registerDepartment">Department / Program *</label><select id="registerDepartment" required>
+            <option value="">Select department or program</option><option value="6">College of Engineering and Technology Education</option><option value="7">College Department</option><option value="8">Basic Education Department</option><option value="1">Information Technology Office</option><option value="9">Registrar's Office</option><option value="5">Administration Office</option><option value="2">Facilities Management</option><option value="3">Electrical Services</option><option value="4">Maintenance Services</option><option value="10">Other School Office</option>
+          </select></div>
+          <div class="field-group"><label for="registerAffiliation">School Personnel Type *</label><select id="registerAffiliation" required><option value="">Select personnel type</option><option>Faculty</option><option>Staff</option><option>Administrative Personnel</option><option>Department Personnel</option><option>Office Personnel</option><option>Service Personnel</option><option>Authorized School Personnel</option></select></div>
+          <div class="field-group"><label for="registerPassword">Password *</label><div class="password-control"><input id="registerPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" placeholder="Create a strong password" required><button id="toggleRegisterPassword" type="button" aria-label="Show password">Show</button></div><div class="password-strength" aria-live="polite"><span id="passwordStrengthBar"></span></div><small id="passwordStrengthText">Use uppercase, lowercase, number, and special character.</small></div>
+          <div class="field-group"><label for="registerConfirmPassword">Confirm Password *</label><div class="password-control"><input id="registerConfirmPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" placeholder="Repeat your password" required><button id="toggleConfirmPassword" type="button" aria-label="Show password">Show</button></div></div>
+        </div>
+        <div class="authorization-notice" id="authorizationNotice"><strong>Account Verification</strong><p>Your official HTC school email must be verified. System access and permissions are assigned securely from authorized institutional records; users cannot select their own system role.</p></div>
+        <button class="button button-primary button-full" id="registrationSubmitButton" type="submit"><span>Create Account</span></button>
+        <button class="auth-text-link" id="backToLoginButton" type="button">Already registered? Sign in</button>
+      </form>
+
+      <section
+  class="record-form auth-form"
+  id="verificationPanel"
+  hidden
+  aria-live="polite"
+>
+  <div class="auth-form-heading">
+    <div
+      id="verificationStatusIcon"
+      class="verification-status-icon"
+      aria-hidden="true"
+    >
+      &#9993;
+    </div>
+
+    <h3 id="verificationPanelTitle">
+      Check Your Email
+    </h3>
+
+    <p id="verificationPanelMessage">
+      Your account was created. Open the verification message sent to your
+      Holy Trinity College school email before signing in.
+    </p>
+  </div>
+
+  <div
+    class="authorization-notice"
+    id="verificationStatusNotice"
+  >
+    <strong id="verificationEmailDisplay">
+      Verification email sent
+    </strong>
+
+    <p id="verificationStatusDescription">
+      The verification link expires in 60 minutes and can be used only once.
+    </p>
+  </div>
+
+  <button
+    class="button button-primary button-full"
+    id="resendVerificationButton"
+    type="button"
+  >
+    <span>Resend Verification Email</span>
+  </button>
+
+  <button
+    class="button button-primary button-full"
+    id="verificationSignInButton"
+    type="button"
+    hidden
+  >
+    <span>Sign In to Service Portal</span>
+  </button>
+
+  <button
+    class="auth-text-link"
+    id="verificationBackToLogin"
+    type="button"
+  >
+    Continue to Sign In
+  </button>
+</section>
+
+    </div>
+  </div>
+
+  <!-- SERVICE REQUEST MODAL -->
+  <div class="modal" id="serviceRequestModal" role="dialog" aria-modal="true" aria-labelledby="serviceRequestModalTitle" hidden>
+    <div class="modal-backdrop" data-close-modal="serviceRequestModal"></div>
+    <div class="modal-card modal-card-wide" role="document">
+      <div class="modal-topbar"><div><span class="section-label">Service Request</span><h2 id="serviceRequestModalTitle">Submit a Service Request</h2><p>Fields marked with * are required.</p></div><button class="modal-close inline" type="button" aria-label="Close service request form" data-close-modal="serviceRequestModal">&times;</button></div>
+      <form class="record-form" id="serviceRequestForm" novalidate>
+        <div class="form-section-heading"><span>1</span><div><strong>Requester Information</strong><small>Verified from your signed-in account.</small></div></div>
+        <div class="form-grid">
+          <div class="field-group"><label for="requesterName">Requester Name *</label><input id="requesterName" type="text" minlength="3" maxlength="70" autocomplete="name" required readonly aria-readonly="true"></div>
+          <div class="field-group"><label for="requesterEmail">Email Address *</label><input id="requesterEmail" type="email" maxlength="120" autocomplete="email" required readonly aria-readonly="true"></div>
+          <div class="field-group"><label for="requesterTypeInput">Requester Type *</label><select id="requesterTypeInput" required disabled aria-disabled="true"><option value="">Select requester type</option><option>Faculty</option><option>Staff</option><option>Administrative Personnel</option><option>Department Personnel</option><option>Office Personnel</option><option>Service Personnel</option><option>Authorized School Personnel</option></select></div>
+          <div class="field-group"><label for="requestDepartment">Department / Program *</label><select id="requestDepartment" required disabled aria-disabled="true"><option value="">Select department or program</option><option>College of Engineering and Technology Education</option><option>College Department</option><option>Basic Education Department</option><option>Information Technology Office</option><option>Registrar's Office</option><option>Administration Office</option><option>Other School Office</option></select></div>
+        </div>
+
+        <div class="form-section-heading"><span>2</span><div><strong>Request Details</strong><small>Describe the concern clearly.</small></div></div>
+        <div class="form-grid">
+          <div class="field-group"><label for="requestCategory">Request Category *</label><select id="requestCategory" required><option value="">Select category</option><option value="AUTO">Use system recommendation</option><option>IT &amp; Computer</option><option>Internet &amp; Network</option><option>Electrical</option><option>Facilities</option><option>Equipment</option><option>Maintenance</option></select></div>
+          <div class="field-group"><label for="requestPriority">Preferred Priority *</label><select id="requestPriority" required><option value="">Select priority</option><option>Low</option><option>Medium</option><option>High</option><option>Urgent</option></select></div>
+          <div class="field-group full-width"><label for="requestTitle">Request Title *</label><input id="requestTitle" type="text" minlength="5" maxlength="150" placeholder="Example: No internet connection in Laboratory 2" required></div>
+          <div class="field-group full-width"><label for="requestDescription">Detailed Description *</label><textarea id="requestDescription" rows="5" minlength="15" maxlength="5000" placeholder="Describe what happened, when it started, and how it affects the area." aria-describedby="requestCharacterHelp" required></textarea><small id="requestCharacterHelp" class="character-help"><span id="requestCharacterCount">0</span>/5000 characters</small></div>
+          <div class="field-group"><label for="requestLocation">Location / Room *</label><input id="requestLocation" type="text" minlength="2" maxlength="120" placeholder="Example: Laboratory 2" required></div>
+          <div class="field-group"><label for="requestDate">Date Reported *</label><input id="requestDate" type="date" required></div>
+          <div class="field-group full-width"><label for="requestAttachment">Attachment / Photo</label><input id="requestAttachment" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" aria-describedby="attachmentHelp"><small id="attachmentHelp">Optional. PNG, JPG, WEBP, or PDF up to 5 MB.</small></div>
+        </div>
+
+        <div class="form-note"><span>&#10022;</span><p><strong>AI-assisted review</strong> The system may recommend a category and priority and identify a potentially related request. AI recommendations are advisory only; final decisions remain with authorized Holy Trinity College personnel.</p></div>
+        <div class="form-actions sticky-actions"><button class="button button-secondary" type="reset">Reset Form</button><button class="button button-secondary" id="serviceRequestDraftButton" type="button">Save Draft</button><button class="button button-primary" id="serviceRequestSubmitButton" type="submit">Submit Request</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DETAILS MODAL -->
+  <div class="modal" id="detailsModal" role="dialog" aria-modal="true" aria-labelledby="detailsModalTitle" hidden>
+    <div class="modal-backdrop" data-close-modal="detailsModal"></div>
+    <div class="modal-card modal-card-medium" role="document">
+      <div class="modal-topbar"><div><span class="section-label" id="detailsModalLabel">Record Details</span><h2 id="detailsModalTitle">Details</h2></div><button class="modal-close inline" type="button" aria-label="Close details" data-close-modal="detailsModal">&times;</button></div>
+      <div class="detail-grid" id="detailsModalContent"></div>
+      <div class="modal-footer-actions"><button class="button button-secondary" type="button" data-close-modal="detailsModal">Close</button></div>
+    </div>
+  </div>
+
+  <!-- CONFIRMATION MODAL -->
+  <div class="modal" id="adminForwardModal" role="dialog"
+       aria-modal="true" aria-labelledby="adminForwardTitle" hidden>
+    <div class="modal-backdrop"
+         data-close-modal="adminForwardModal"></div>
+
+    <div class="modal-card" role="document">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Administrator Review</p>
+          <h2 id="adminForwardTitle">Forward Request</h2>
+        </div>
+
+        <button
+          class="modal-close"
+          type="button"
+          aria-label="Close"
+          data-close-modal="adminForwardModal">&times;</button>
+      </div>
+
+      <p id="adminForwardSummary">
+        Select the final routing information before forwarding.
+      </p>
+
+      <form id="adminForwardForm" novalidate>
+        <div class="field-group">
+          <label>Request</label>
+          <div id="adminForwardRequestLabel">-</div>
+        </div>
+
+        <div class="field-group">
+          <label>Requested Category</label>
+          <div id="adminForwardRequestedCategory">-</div>
+        </div>
+
+        <div class="field-group">
+          <label>AI Recommendation</label>
+          <div id="adminForwardAiRecommendation">
+            Awaiting AI analysis
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="adminForwardCategory">
+            Final Category *
+          </label>
+
+          <select id="adminForwardCategory" required>
+            <option value="">Loading categories...</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="adminForwardPriority">
+            Final Priority *
+          </label>
+
+          <select id="adminForwardPriority" required>
+            <option value="">Select priority</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="adminForwardDepartment">
+            Routed Department *
+          </label>
+
+          <select id="adminForwardDepartment" required>
+            <option value="">Loading departments...</option>
+          </select>
+        </div>
+
+        <small
+          class="field-error"
+          id="adminForwardError"
+          role="alert"></small>
+
+        <div class="confirm-actions">
+          <button
+            class="button button-secondary"
+            type="button"
+            data-close-modal="adminForwardModal">
+            Cancel
+          </button>
+
+          <button
+            class="button button-primary"
+            id="adminForwardSubmit"
+            type="submit"
+            disabled>
+            Forward Request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="modal" id="adminDuplicateModal" role="dialog"
+       aria-modal="true" aria-labelledby="adminDuplicateTitle" hidden>
+
+    <div class="modal-backdrop"
+         data-close-modal="adminDuplicateModal"></div>
+
+    <div class="modal-card" role="document">
+
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Administrator Review</p>
+          <h2 id="adminDuplicateTitle">Confirm Duplicate Request</h2>
+        </div>
+
+        <button
+          class="modal-close"
+          type="button"
+          aria-label="Close"
+          data-close-modal="adminDuplicateModal">&times;</button>
+      </div>
+
+      <p>
+        Confirm that this service request duplicates an existing request.
+      </p>
+
+      <form id="adminDuplicateForm" novalidate>
+
+        <div class="field-group">
+          <label>Duplicate Request</label>
+          <div id="adminDuplicateRequestLabel">-</div>
+        </div>
+
+        <div class="field-group">
+          <label for="adminDuplicateOriginal">
+            Original Request *
+          </label>
+
+          <select id="adminDuplicateOriginal" required>
+            <option value="">Loading requests...</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="adminDuplicateReason">
+            Confirmation Reason *
+          </label>
+
+          <textarea
+            id="adminDuplicateReason"
+            rows="4"
+            minlength="5"
+            maxlength="1000"
+            placeholder="Explain why this request is a duplicate."
+            required></textarea>
+        </div>
+
+        <small
+          class="field-error"
+          id="adminDuplicateError"
+          role="alert"></small>
+
+        <div class="confirm-actions">
+
+          <button
+            class="button button-secondary"
+            type="button"
+            data-close-modal="adminDuplicateModal">
+            Cancel
+          </button>
+
+          <button
+            class="button button-danger"
+            id="adminDuplicateSubmit"
+            type="submit"
+            disabled>
+            Confirm Duplicate
+          </button>
+
+        </div>
+      </form>
+
+    </div>
+  </div>
+  <div class="modal" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" hidden>
+    <div class="modal-backdrop" data-close-modal="confirmModal"></div>
+    <div class="modal-card modal-card-small confirmation-card" role="document">
+      <div class="confirm-icon" id="confirmIcon">?</div>
+      <h2 id="confirmTitle">Confirm action</h2>
+      <p id="confirmMessage">Are you sure?</p>
+      <div class="field-group confirm-remarks" id="confirmRemarksGroup" hidden><label for="confirmRemarks">Reason / Remarks *</label><textarea id="confirmRemarks" rows="3" minlength="5" maxlength="300" placeholder="Enter a clear reason for this decision."></textarea><small class="field-error" id="confirmRemarksError" role="alert"></small></div>
+      <div class="confirm-actions"><button class="button button-secondary" type="button" data-close-modal="confirmModal">Cancel</button><button class="button button-primary" id="confirmActionButton" type="button">Confirm</button></div>
+    </div>
+  </div>
+
+  <button class="back-to-top" id="backToTopButton" type="button" aria-label="Back to top" title="Back to top">&uarr;</button>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="false"></div>
+  <script src="js/script.js?v=20260917-step4-duplicate-ui1"></script>
+</body>
+</html>
+
+

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Email Verification | HTC Service Portal</title>
+
+  <style>
+    :root {
+      --htc-green: #005b35;
+      --htc-green-dark: #003820;
+      --htc-green-mid: #0b7545;
+      --htc-green-soft: #eaf5ef;
+      --htc-gold: #f4c400;
+      --htc-gold-soft: #fff8d9;
+
+      --bg-light: #f5f8f6;
+      --surface: #ffffff;
+
+      --text-dark: #17231d;
+      --text-muted: #66736c;
+
+      --border: #dce6e0;
+
+      --red: #b23d3d;
+      --red-soft: #fcecec;
+
+      --amber: #a96d00;
+      --amber-soft: #fff3d6;
+
+      --shadow-lg:
+        0 28px 70px rgba(0, 35, 20, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+
+      font-family:
+        Inter,
+        "Segoe UI",
+        Arial,
+        Helvetica,
+        sans-serif;
+
+      color: var(--text-dark);
+
+      background:
+        radial-gradient(
+          circle at 85% 12%,
+          rgba(244, 196, 0, 0.16),
+          transparent 24%
+        ),
+        radial-gradient(
+          circle at 12% 88%,
+          rgba(0, 91, 53, 0.12),
+          transparent 30%
+        ),
+        linear-gradient(
+          145deg,
+          #f9fbfa,
+          var(--bg-light)
+        );
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 34px 20px;
+    }
+
+    .verification-shell {
+      width: 100%;
+      max-width: 610px;
+    }
+
+    .verification-card {
+      overflow: hidden;
+
+      background: var(--surface);
+
+      border:
+        1px solid
+        rgba(0, 91, 53, 0.14);
+
+      border-radius: 26px;
+
+      box-shadow: var(--shadow-lg);
+    }
+
+    .school-banner {
+      position: relative;
+
+      padding: 25px 30px 27px;
+
+      color: #ffffff;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--htc-green-dark),
+          var(--htc-green)
+        );
+
+      text-align: center;
+    }
+
+    .school-banner::after {
+      content: "";
+
+      position: absolute;
+
+      left: 0;
+      right: 0;
+      bottom: 0;
+
+      height: 5px;
+
+      background:
+        linear-gradient(
+          90deg,
+          var(--htc-gold),
+          #ffe56a,
+          var(--htc-gold)
+        );
+    }
+
+    .school-logos {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      gap: 12px;
+
+      margin-bottom: 14px;
+    }
+
+    .school-logos img {
+      width: 54px;
+      height: 54px;
+
+      object-fit: contain;
+
+      background: #ffffff;
+
+      border-radius: 50%;
+
+      padding: 3px;
+
+      box-shadow:
+        0 5px 14px
+        rgba(0, 0, 0, 0.16);
+    }
+
+    .school-name {
+      margin: 0;
+
+      font-size: 15px;
+      font-weight: 800;
+
+      letter-spacing: 1.6px;
+
+      text-transform: uppercase;
+    }
+
+    .system-name {
+      margin: 7px auto 0;
+
+      max-width: 470px;
+
+      color:
+        rgba(255, 255, 255, 0.82);
+
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .verification-content {
+      padding: 39px 38px 35px;
+
+      text-align: center;
+    }
+
+    .status-icon {
+      width: 92px;
+      height: 92px;
+
+      margin: 0 auto 23px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 50%;
+
+      background: var(--htc-green-soft);
+
+      border: 8px solid #f6fbf8;
+
+      color: var(--htc-green);
+
+      font-size: 43px;
+      font-weight: 900;
+
+      box-shadow:
+        0 10px 25px
+        rgba(0, 91, 53, 0.12);
+    }
+
+    .status-icon.pending {
+      background: var(--amber-soft);
+      border-color: #fffaf0;
+      color: var(--amber);
+    }
+
+    .status-icon.error {
+      background: var(--red-soft);
+      border-color: #fff7f7;
+      color: var(--red);
+    }
+
+    .verification-label {
+      display: inline-flex;
+
+      margin-bottom: 10px;
+
+      padding: 6px 11px;
+
+      border-radius: 999px;
+
+      background: var(--htc-green-soft);
+
+      color: var(--htc-green);
+
+      font-size: 11px;
+      font-weight: 800;
+
+      letter-spacing: 1px;
+
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 13px;
+
+      color: var(--htc-green-dark);
+
+      font-size:
+        clamp(27px, 5vw, 36px);
+
+      line-height: 1.15;
+    }
+
+    .status-message {
+      max-width: 480px;
+
+      margin: 0 auto;
+
+      color: var(--text-muted);
+
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .status-information {
+      margin: 27px 0 25px;
+
+      padding: 18px 19px;
+
+      border:
+        1px solid
+        var(--border);
+
+      border-left:
+        4px solid
+        var(--htc-green);
+
+      border-radius: 13px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #fbfdfc,
+          var(--htc-green-soft)
+        );
+
+      text-align: left;
+    }
+
+    .status-information strong {
+      display: block;
+
+      margin-bottom: 6px;
+
+      color: var(--htc-green-dark);
+
+      font-size: 14px;
+    }
+
+    .status-information p {
+      margin: 0;
+
+      color: var(--text-muted);
+
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .portal-button {
+      width: 100%;
+      min-height: 53px;
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      gap: 9px;
+
+      padding: 13px 22px;
+
+      border: 1px solid var(--htc-green);
+      border-radius: 12px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--htc-green),
+          var(--htc-green-mid)
+        );
+
+      color: #ffffff;
+
+      font-size: 15px;
+      font-weight: 800;
+
+      text-decoration: none;
+
+      box-shadow:
+        0 9px 22px
+        rgba(0, 91, 53, 0.18);
+
+      transition:
+        transform 170ms ease,
+        box-shadow 170ms ease,
+        background 170ms ease;
+    }
+
+    .portal-button:hover {
+      transform: translateY(-2px);
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--htc-green-dark),
+          var(--htc-green)
+        );
+
+      box-shadow:
+        0 13px 27px
+        rgba(0, 91, 53, 0.24);
+    }
+
+    .portal-button:focus-visible {
+      outline:
+        3px solid
+        rgba(244, 196, 0, 0.55);
+
+      outline-offset: 4px;
+    }
+
+    .gold-detail {
+      width: 46px;
+      height: 4px;
+
+      margin: 29px auto 14px;
+
+      border-radius: 999px;
+
+      background: var(--htc-gold);
+    }
+
+    .close-note {
+      margin: 0;
+
+      color: #89958e;
+
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    .verification-footer {
+      padding: 15px 25px;
+
+      border-top:
+        1px solid
+        var(--border);
+
+      background: #fafcfb;
+
+      color: #7b8981;
+
+      font-size: 11px;
+
+      text-align: center;
+    }
+
+    @media (max-width: 580px) {
+      body {
+        padding: 18px 14px;
+      }
+
+      .school-banner {
+        padding: 22px 20px 24px;
+      }
+
+      .verification-content {
+        padding: 31px 22px 29px;
+      }
+
+      .school-logos img {
+        width: 47px;
+        height: 47px;
+      }
+
+      .status-icon {
+        width: 82px;
+        height: 82px;
+
+        font-size: 38px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="verification-shell">
+
+    <section
+      class="verification-card"
+      aria-live="polite"
+    >
+
+      <header class="school-banner">
+
+        <div class="school-logos">
+          <img
+            src="images/wildcatslogo.png"
+            alt="Holy Trinity College Wildcats Logo"
+          >
+
+          <img
+            src="images/htclogo.png"
+            alt="Holy Trinity College Seal"
+          >
+        </div>
+
+        <p class="school-name">
+          Holy Trinity College
+        </p>
+
+        <p class="system-name">
+          AI-Based Service Request &amp;
+          Work Order Management System
+        </p>
+
+      </header>
+
+      <div class="verification-content">
+
+        <div
+          class="status-icon"
+          id="statusIcon"
+          aria-hidden="true"
+        >
+          &#10003;
+        </div>
+
+        <span
+          class="verification-label"
+          id="verificationLabel"
+        >
+          Account Verification
+        </span>
+
+        <h1 id="statusTitle">
+          Email Successfully Verified
+        </h1>
+
+        <p
+          class="status-message"
+          id="statusMessage"
+        >
+          Your Holy Trinity College school email
+          has been successfully verified.
+        </p>
+
+        <div
+          class="status-information"
+          id="statusInformation"
+        >
+          <strong id="statusBoxTitle">
+            Verification complete
+          </strong>
+
+          <p id="statusBoxMessage">
+            Your account is ready.
+            You may now return to the Service Portal
+            and sign in.
+          </p>
+        </div>
+
+        <a
+          class="portal-button"
+          href="./"
+          id="returnPortalButton"
+        >
+          <span>Return to Service Portal</span>
+          <span aria-hidden="true">&#8594;</span>
+        </a>
+
+        <div class="gold-detail"></div>
+
+        <p class="close-note">
+          Verification is complete.
+          You may safely close this browser tab.
+        </p>
+
+      </div>
+
+      <footer class="verification-footer">
+        Holy Trinity College of General Santos City
+        &bull;
+        Service Portal
+      </footer>
+
+    </section>
+
+  </main>
+
+  <script>
+    (() => {
+      const STORAGE_KEY =
+        "htcEmailVerificationComplete";
+
+      const params =
+        new URLSearchParams(
+          window.location.search
+        );
+
+      const result =
+        params.get("status") || "error";
+
+      const icon =
+        document.getElementById(
+          "statusIcon"
+        );
+
+      const label =
+        document.getElementById(
+          "verificationLabel"
+        );
+
+      const title =
+        document.getElementById(
+          "statusTitle"
+        );
+
+      const message =
+        document.getElementById(
+          "statusMessage"
+        );
+
+      const information =
+        document.getElementById(
+          "statusInformation"
+        );
+
+      const boxTitle =
+        document.getElementById(
+          "statusBoxTitle"
+        );
+
+      const boxMessage =
+        document.getElementById(
+          "statusBoxMessage"
+        );
+
+      const returnButton =
+        document.getElementById(
+          "returnPortalButton"
+        );
+
+      function setReturnDestination(status) {
+        returnButton.href =
+          "./?verified=" +
+          encodeURIComponent(status);
+      }
+
+      function setSuccess() {
+        icon.className =
+          "status-icon";
+
+        icon.innerHTML =
+          "&#10003;";
+
+        label.textContent =
+          "Account Verification";
+
+        title.textContent =
+          "Email Successfully Verified";
+
+        message.textContent =
+          "Your Holy Trinity College school email has been successfully verified.";
+
+        information.style.borderLeftColor =
+          "#005b35";
+
+        boxTitle.textContent =
+          "Verification complete";
+
+        boxMessage.textContent =
+          "Your account is ready. You may now return to the Service Portal and sign in.";
+
+        setReturnDestination(
+          "success"
+        );
+
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            String(Date.now())
+          );
+        } catch (error) {
+          console.warn(
+            "Unable to notify another Service Portal tab."
+          );
+        }
+      }
+
+      function setPending() {
+        icon.className =
+          "status-icon pending";
+
+        icon.textContent =
+          "!";
+
+        label.textContent =
+          "Account Authorization";
+
+        title.textContent =
+          "Email Verified";
+
+        message.textContent =
+          "Your Holy Trinity College school email has been successfully verified.";
+
+        information.style.borderLeftColor =
+          "#a96d00";
+
+        boxTitle.textContent =
+          "Authorization pending";
+
+        boxMessage.textContent =
+          "Your account is waiting for authorization before system access can be granted.";
+
+        setReturnDestination(
+          "pending"
+        );
+      }
+
+      function setInvalid() {
+        icon.className =
+          "status-icon error";
+
+        icon.textContent =
+          "!";
+
+        label.textContent =
+          "Verification Status";
+
+        title.textContent =
+          "Verification Link Unavailable";
+
+        message.textContent =
+          "This verification link is invalid, expired, or has already been used.";
+
+        information.style.borderLeftColor =
+          "#b23d3d";
+
+        boxTitle.textContent =
+          "Verification could not continue";
+
+        boxMessage.textContent =
+          "Return to the Service Portal if you need to request another verification email.";
+
+        setReturnDestination(
+          "invalid"
+        );
+      }
+
+      function setError() {
+        icon.className =
+          "status-icon error";
+
+        icon.textContent =
+          "!";
+
+        label.textContent =
+          "Verification Status";
+
+        title.textContent =
+          "Unable to Verify Email";
+
+        message.textContent =
+          "The Service Portal could not complete your email verification.";
+
+        information.style.borderLeftColor =
+          "#b23d3d";
+
+        boxTitle.textContent =
+          "Please try again";
+
+        boxMessage.textContent =
+          "Return to the Service Portal and request another verification email if necessary.";
+
+        setReturnDestination(
+          "error"
+        );
+      }
+
+      if (result === "success") {
+        setSuccess();
+      } else if (result === "pending") {
+        setPending();
+      } else if (result === "invalid") {
+        setInvalid();
+      } else {
+        setError();
+      }
+    })();
+  </script>
+
+</body>
+</html>
