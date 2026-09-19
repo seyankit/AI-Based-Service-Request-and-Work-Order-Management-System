@@ -69,6 +69,7 @@ const state = {
   approvalHistory: [],
   technicianHistory: [],
   notifications: [],
+  pendingAssignmentWorkOrderId: null,
 };
 
 /* =========================
@@ -273,7 +274,16 @@ function mapWorkOrderFromApi(record) {
     requestTitle: record.requestTitle || "",
     category: record.category || "",
     requestLocation: record.requestLocation || "",
-    assignedPersonnel: "Not assigned",
+    departmentId: record.departmentId ?? null,
+    assignmentId: record.assignmentId ?? null,
+    assignmentSequence: record.assignmentSequence ?? null,
+    technicianId: record.technicianId ?? null,
+    assignedPersonnel:
+      record.technicianName || record.assignedPersonnel || "Not assigned",
+    technicianEmail: record.technicianEmail || "",
+    assignedAt: record.assignedAt || "",
+    assignmentAcknowledgedAt: record.assignmentAcknowledgedAt || "",
+    assignmentNotes: record.assignmentNotes || "",
     serviceUnit: record.departmentName || "",
     workDescription: record.workDescription || "",
     status: record.status || "Created",
@@ -2124,6 +2134,12 @@ function renderWorkOrderTable() {
 
     actions.append(makeRowAction("View", "view-work-order", workOrder.id));
 
+    if (workOrder.status === "Created" && !workOrder.assignmentId) {
+      actions.append(
+        makeRowAction("Assign", "assign-work-order", workOrder.id, "primary"),
+      );
+    }
+
     actionCell.appendChild(actions);
 
     [
@@ -2997,6 +3013,17 @@ function showWorkOrderDetails(workOrder) {
     },
 
     {
+      label: "Assigned At",
+      value: formatDate(workOrder.assignedAt),
+    },
+
+    {
+      label: "Assignment Notes",
+      value: workOrder.assignmentNotes || "No assignment notes",
+      full: true,
+    },
+
+    {
       label: "Service Unit",
       value: workOrder.serviceUnit,
     },
@@ -3600,6 +3627,7 @@ function setSubmitting(form, submitting) {
       registrationForm: "Creating Account...",
       serviceRequestForm: "Submitting...",
       workOrderForm: "Saving...",
+      workOrderAssignmentForm: "Assigning...",
       personnelAccessForm: "Saving...",
       progressUpdateForm: "Updating...",
     };
@@ -5018,6 +5046,130 @@ async function handleWorkOrderSubmit(event) {
     setSubmitting(form, false);
   }
 }
+
+async function openWorkOrderAssignment(workOrder) {
+  if (!workOrder || workOrder.status !== "Created" || workOrder.assignmentId) {
+    return;
+  }
+
+  const form = byId("workOrderAssignmentForm");
+  const technicianSelect = byId("assignmentTechnician");
+  if (!form || !technicianSelect) return;
+
+  try {
+    if (!state.personnel.length) {
+      await loadAdministratorPersonnel();
+    }
+
+    const departmentId = Number(workOrder.departmentId);
+    const eligible = state.personnel
+      .filter(
+        (person) =>
+          Number(person.roleId) === 4 &&
+          String(person.status || "").toLowerCase() === "active" &&
+          Number(person.departmentId) === departmentId,
+      )
+      .sort((left, right) => left.name.localeCompare(right.name));
+
+    if (!eligible.length) {
+      showToast(
+        "No active technicians are available in this work order department.",
+        "error",
+      );
+      return;
+    }
+
+    const workOrderId = Number(workOrder.databaseId);
+    if (!Number.isInteger(workOrderId) || workOrderId <= 0) {
+      showToast("The work-order identifier is unavailable.", "error");
+      return;
+    }
+
+    form.dataset.workOrderId = String(workOrderId);
+    state.pendingAssignmentWorkOrderId = workOrderId;
+    byId("assignmentWorkOrderNumber").value = workOrder.id || "";
+    byId("assignmentDepartment").value = workOrder.serviceUnit || "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select an active technician";
+    technicianSelect.replaceChildren(
+      placeholder,
+      ...eligible.map((person) => {
+        const option = document.createElement("option");
+        option.value = String(person.id);
+        option.textContent = person.email
+          ? `${person.name} - ${person.email}`
+          : person.name;
+        return option;
+      }),
+    );
+    byId("assignmentNotes").value = "";
+    openModal("workOrderAssignmentModal", "#assignmentTechnician");
+  } catch (error) {
+    console.error("Unable to prepare work-order assignment:", error);
+    showToast(error.message || "Unable to load technician options.", "error");
+  }
+}
+
+async function handleWorkOrderAssignmentSubmit(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const workOrderId = Number(form.dataset.workOrderId || state.pendingAssignmentWorkOrderId);
+  const technicianId = Number(byId("assignmentTechnician")?.value);
+  const notes = byId("assignmentNotes")?.value.trim() || "";
+
+  if (!Number.isInteger(workOrderId) || workOrderId <= 0) {
+    showToast("The work-order identifier is unavailable.", "error");
+    return;
+  }
+  if (!Number.isInteger(technicianId) || technicianId <= 0) {
+    showToast("Select an active technician.", "error");
+    byId("assignmentTechnician")?.focus();
+    return;
+  }
+  if (notes && (notes.length < 3 || notes.length > 1000)) {
+    showToast("Assignment notes must contain 3 to 1000 characters when provided.", "error");
+    byId("assignmentNotes")?.focus();
+    return;
+  }
+
+  setSubmitting(form, true);
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch(API_ENDPOINTS.workOrders, {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        [csrf.headerName]: csrf.token,
+      },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        action: "assign",
+        workOrderId,
+        technicianId,
+        assignmentNotes: notes,
+      }),
+    });
+    const data = await readJsonResponse(response);
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Unable to assign the technician.");
+    }
+    showToast(data.message || "Technician assigned successfully.", "success");
+    closeModal("workOrderAssignmentModal");
+    form.reset();
+    state.pendingAssignmentWorkOrderId = null;
+    await loadWorkOrders();
+    renderAll();
+  } catch (error) {
+    console.error("Work-order assignment failed:", error);
+    showToast(error.message || "Unable to assign the technician.", "error");
+  } finally {
+    setSubmitting(form, false);
+  }
+}
+
 function handleProgressUpdateSubmit(event) {
   event.preventDefault();
 
@@ -5759,6 +5911,10 @@ function handleWorkOrderTableAction(event) {
     showWorkOrderDetails(workOrder);
   }
 
+  if (button.dataset.action === "assign-work-order") {
+    openWorkOrderAssignment(workOrder);
+  }
+
   if (button.dataset.action === "edit-work-order") {
     populateWorkOrderForm(workOrder);
 
@@ -6249,6 +6405,8 @@ function initializeEvents() {
 
   on(byId("workOrderForm"), "submit", handleWorkOrderSubmit);
 
+  on(byId("workOrderAssignmentForm"), "submit", handleWorkOrderAssignmentSubmit);
+
   on(byId("personnelAccessForm"), "submit", handlePersonnelSubmit);
 
   on(byId("personnelTargetId"), "change", (event) => {
@@ -6352,6 +6510,12 @@ function initializeEvents() {
   on(byId("workOrderForm"), "reset", (event) =>
     resetValidationState(event.currentTarget),
   );
+
+  on(byId("workOrderAssignmentForm"), "reset", (event) => {
+    state.pendingAssignmentWorkOrderId = null;
+    delete event.currentTarget.dataset.workOrderId;
+    resetValidationState(event.currentTarget);
+  });
 
   /* =========================
      TECHNICIAN FORM RESET

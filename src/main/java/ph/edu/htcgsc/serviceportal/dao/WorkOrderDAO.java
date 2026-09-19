@@ -17,10 +17,12 @@ import java.util.Map;
 
 import static ph.edu.htcgsc.serviceportal.dao.WorkflowStore.activeActor;
 import static ph.edu.htcgsc.serviceportal.dao.WorkflowStore.audit;
+import static ph.edu.htcgsc.serviceportal.dao.WorkflowStore.insert;
 import static ph.edu.htcgsc.serviceportal.dao.WorkflowStore.query;
+import static ph.edu.htcgsc.serviceportal.dao.WorkflowStore.update;
 import static ph.edu.htcgsc.serviceportal.dao.WorkflowStore.workHistory;
 
-/** Administrator work-order creation and read access for Phase 4A. */
+/** Administrator work-order creation, assignment, and read access. */
 public final class WorkOrderDAO {
     private static final int ADMINISTRATOR_ROLE_ID = 2;
     private static final ZoneId PORTAL_TIME_ZONE = ZoneId.of("Asia/Manila");
@@ -50,6 +52,34 @@ public final class WorkOrderDAO {
             String requestNumber,
             String workDescription,
             LocalDate targetCompletionDate
+    ) { }
+
+    public enum AssignmentFailure {
+        WORK_ORDER_NOT_FOUND,
+        TECHNICIAN_NOT_FOUND,
+        WORK_ORDER_NOT_CREATED,
+        ALREADY_ASSIGNED,
+        TECHNICIAN_NOT_ELIGIBLE,
+        TECHNICIAN_DEPARTMENT_MISMATCH
+    }
+
+    public static final class AssignmentException extends Exception {
+        private final AssignmentFailure failure;
+
+        public AssignmentException(AssignmentFailure failure, String message) {
+            super(message);
+            this.failure = failure;
+        }
+
+        public AssignmentFailure failure() {
+            return failure;
+        }
+    }
+
+    public record AssignmentInput(
+            long workOrderId,
+            int technicianId,
+            String assignmentNotes
     ) { }
 
     public List<Map<String, Object>> list(
@@ -85,7 +115,15 @@ public final class WorkOrderDAO {
                         wo.Completed_At AS completedAt,
                         wo.Verified_At AS verifiedAt,
                         wo.Created_At AS createdAt,
-                        wo.Updated_At AS updatedAt
+                        wo.Updated_At AS updatedAt,
+                        assignment.Assignment_ID AS assignmentId,
+                        assignment.Assignment_Sequence AS assignmentSequence,
+                        assignment.Technician_ID AS technicianId,
+                        CONCAT(technician.First_Name, ' ', technician.Last_Name) AS technicianName,
+                        technician.Email AS technicianEmail,
+                        assignment.Assigned_At AS assignedAt,
+                        assignment.Acknowledged_At AS assignmentAcknowledgedAt,
+                        assignment.Assignment_Notes AS assignmentNotes
                     FROM WORK_ORDER wo
                     JOIN SERVICE_REQUEST sr ON sr.Request_ID = wo.Request_ID
                     JOIN DEPARTMENT department ON department.Department_ID = wo.Department_ID
@@ -93,6 +131,17 @@ public final class WorkOrderDAO {
                         ON requested_category.Category_ID = sr.Requested_Category_ID
                     LEFT JOIN SERVICE_CATEGORY final_category
                         ON final_category.Category_ID = sr.Final_Category_ID
+                    LEFT JOIN WORK_ORDER_ASSIGNMENT assignment
+                        ON assignment.Work_Order_ID = wo.Work_Order_ID
+                        AND assignment.Is_Current = TRUE
+                        AND assignment.Assignment_ID = (
+                            SELECT MAX(current_assignment.Assignment_ID)
+                            FROM WORK_ORDER_ASSIGNMENT current_assignment
+                            WHERE current_assignment.Work_Order_ID = wo.Work_Order_ID
+                              AND current_assignment.Is_Current = TRUE
+                        )
+                    LEFT JOIN SCHOOL_PERSONNEL technician
+                        ON technician.Personnel_ID = assignment.Technician_ID
                     %s
                     ORDER BY wo.Created_At DESC, wo.Work_Order_ID DESC
                     %s
@@ -100,6 +149,95 @@ public final class WorkOrderDAO {
             return workOrderId == null
                     ? query(connection, sql)
                     : query(connection, sql, workOrderId);
+        }
+    }
+
+    public Map<String, Object> assign(
+            int actor,
+            int role,
+            AssignmentInput input
+    ) throws SQLException, AssignmentException {
+        requireAdministrator(role);
+        if (input == null) throw new IllegalArgumentException("Assignment input is required.");
+        if (input.workOrderId() <= 0) throw new IllegalArgumentException("The work-order ID must be positive.");
+        if (input.technicianId() <= 0) throw new IllegalArgumentException("The technician ID must be positive.");
+        String notes = input.assignmentNotes() == null || input.assignmentNotes().isBlank()
+                ? null
+                : WorkflowPolicy.text(input.assignmentNotes(), "Assignment notes", 3, 1000);
+
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int actorDepartment = activeActor(connection, actor, role);
+                Map<String, Object> workOrder = lockWorkOrder(connection, input.workOrderId());
+                if (workOrder == null) {
+                    throw new AssignmentException(AssignmentFailure.WORK_ORDER_NOT_FOUND,
+                            "The requested work order was not found.");
+                }
+                String currentStatus = string(workOrder, "status");
+                try {
+                    WorkflowPolicy.assignment(currentStatus);
+                } catch (IllegalStateException exception) {
+                    throw new AssignmentException(AssignmentFailure.WORK_ORDER_NOT_CREATED,
+                            exception.getMessage());
+                }
+
+                Map<String, Object> technician = lockTechnician(connection, input.technicianId());
+                if (technician == null) {
+                    throw new AssignmentException(AssignmentFailure.TECHNICIAN_NOT_FOUND,
+                            "The selected technician was not found.");
+                }
+                if (number(technician, "roleId") != 4
+                        || !"Active".equals(string(technician, "accountStatus"))) {
+                    throw new AssignmentException(AssignmentFailure.TECHNICIAN_NOT_ELIGIBLE,
+                            "The selected technician is not an active service technician.");
+                }
+                if (number(technician, "departmentId") != number(workOrder, "departmentId")) {
+                    throw new AssignmentException(AssignmentFailure.TECHNICIAN_DEPARTMENT_MISMATCH,
+                            "The selected technician must belong to the work order department.");
+                }
+                if (actorDepartment <= 0) {
+                    throw new SecurityException("Your account no longer has permission for this action.");
+                }
+                if (!query(connection,
+                        "SELECT Assignment_ID AS assignmentId FROM WORK_ORDER_ASSIGNMENT "
+                                + "WHERE Work_Order_ID=? AND Is_Current=TRUE FOR UPDATE",
+                        input.workOrderId()).isEmpty()) {
+                    throw new AssignmentException(AssignmentFailure.ALREADY_ASSIGNED,
+                            "This work order already has a current technician assignment.");
+                }
+
+                long assignmentId = insert(connection,
+                        "INSERT INTO WORK_ORDER_ASSIGNMENT "
+                                + "(Work_Order_ID,Assignment_Sequence,Technician_ID,Assigned_By,Assignment_Notes,Is_Current) "
+                                + "VALUES(?,1,?,?,?,TRUE)",
+                        input.workOrderId(), input.technicianId(), actor, notes);
+                if (update(connection,
+                        "UPDATE WORK_ORDER SET Work_Status='Assigned' "
+                                + "WHERE Work_Order_ID=? AND Work_Status='Created'",
+                        input.workOrderId()) != 1) {
+                    throw new IllegalStateException("The work order changed. Refresh and try again.");
+                }
+                String remarks = "Initial technician assignment recorded.";
+                long requestId = number(workOrder, "requestId");
+                workHistory(connection, input.workOrderId(), "Created", "Assigned", "Assigned", actor, remarks);
+                audit(connection, actor, role, requestId, input.workOrderId(), "WORK_ORDER_ASSIGNED",
+                        "Work order " + string(workOrder, "workOrderNumber") + " assigned.", remarks);
+                WorkflowStore.notify(connection, input.technicianId(), actor, requestId, input.workOrderId(),
+                        "TECHNICIAN_ASSIGNED", "Work order assigned",
+                        "Work order " + string(workOrder, "workOrderNumber") + " has been assigned to you.",
+                        "WORK_ORDER_ASSIGNMENT:" + assignmentId);
+
+                Map<String, Object> assigned = loadWorkOrder(connection, input.workOrderId());
+                connection.commit();
+                return assigned;
+            } catch (AssignmentException | RuntimeException exception) {
+                rollback(connection);
+                throw exception;
+            } catch (SQLException exception) {
+                rollback(connection);
+                throw exception;
+            }
         }
     }
 
@@ -193,6 +331,80 @@ public final class WorkOrderDAO {
         return rows.isEmpty() ? null : rows.get(0);
     }
 
+    private Map<String, Object> lockWorkOrder(Connection connection, long workOrderId) throws SQLException {
+        List<Map<String, Object>> rows = query(connection,
+                "SELECT wo.Work_Order_ID AS workOrderId, wo.Work_Order_Number AS workOrderNumber, "
+                        + "wo.Request_ID AS requestId, wo.Department_ID AS departmentId, "
+                        + "wo.Work_Status AS status FROM WORK_ORDER wo WHERE wo.Work_Order_ID=? FOR UPDATE",
+                workOrderId);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    private Map<String, Object> lockTechnician(Connection connection, int technicianId) throws SQLException {
+        List<Map<String, Object>> rows = query(connection,
+                "SELECT sp.Personnel_ID AS technicianId, sp.Department_ID AS departmentId, "
+                        + "sp.Account_Status AS accountStatus, role.Role_ID AS roleId "
+                        + "FROM SCHOOL_PERSONNEL sp LEFT JOIN PERSONNEL_ROLE_ASSIGNMENT role "
+                        + "ON role.Personnel_ID=sp.Personnel_ID WHERE sp.Personnel_ID=? FOR UPDATE",
+                technicianId);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    private Map<String, Object> loadWorkOrder(Connection connection, long workOrderId) throws SQLException {
+        return query(connection, """
+                SELECT
+                    wo.Work_Order_ID AS workOrderId,
+                    wo.Work_Order_Number AS workOrderNumber,
+                    wo.Request_ID AS requestId,
+                    sr.Request_Number AS requestNumber,
+                    sr.Request_Title AS requestTitle,
+                    sr.Request_Description AS requestDescription,
+                    sr.Request_Location AS requestLocation,
+                    COALESCE(final_category.Category_Name, requested_category.Category_Name) AS category,
+                    wo.Department_ID AS departmentId,
+                    department.Department_Name AS departmentName,
+                    wo.Created_By AS createdBy,
+                    wo.Work_Description AS workDescription,
+                    wo.Work_Status AS status,
+                    wo.Target_Start_Date AS targetStartDate,
+                    wo.Target_Completion_Date AS targetCompletionDate,
+                    wo.Acknowledged_At AS acknowledgedAt,
+                    wo.Actual_Start_At AS actualStartAt,
+                    wo.Completion_Summary AS completionSummary,
+                    wo.Completed_At AS completedAt,
+                    wo.Verified_At AS verifiedAt,
+                    wo.Created_At AS createdAt,
+                    wo.Updated_At AS updatedAt,
+                    assignment.Assignment_ID AS assignmentId,
+                    assignment.Assignment_Sequence AS assignmentSequence,
+                    assignment.Technician_ID AS technicianId,
+                    CONCAT(technician.First_Name, ' ', technician.Last_Name) AS technicianName,
+                    technician.Email AS technicianEmail,
+                    assignment.Assigned_At AS assignedAt,
+                    assignment.Acknowledged_At AS assignmentAcknowledgedAt,
+                    assignment.Assignment_Notes AS assignmentNotes
+                FROM WORK_ORDER wo
+                JOIN SERVICE_REQUEST sr ON sr.Request_ID = wo.Request_ID
+                JOIN DEPARTMENT department ON department.Department_ID = wo.Department_ID
+                LEFT JOIN SERVICE_CATEGORY requested_category
+                    ON requested_category.Category_ID = sr.Requested_Category_ID
+                LEFT JOIN SERVICE_CATEGORY final_category
+                    ON final_category.Category_ID = sr.Final_Category_ID
+                LEFT JOIN WORK_ORDER_ASSIGNMENT assignment
+                    ON assignment.Work_Order_ID = wo.Work_Order_ID
+                    AND assignment.Is_Current = TRUE
+                    AND assignment.Assignment_ID = (
+                        SELECT MAX(current_assignment.Assignment_ID)
+                        FROM WORK_ORDER_ASSIGNMENT current_assignment
+                        WHERE current_assignment.Work_Order_ID = wo.Work_Order_ID
+                          AND current_assignment.Is_Current = TRUE
+                    )
+                LEFT JOIN SCHOOL_PERSONNEL technician
+                    ON technician.Personnel_ID = assignment.Technician_ID
+                WHERE wo.Work_Order_ID=?
+                """, workOrderId).stream().findFirst().orElseThrow();
+    }
+
     private boolean existingWorkOrder(Connection connection, long requestId) throws SQLException {
         return !query(connection, "SELECT Work_Order_ID AS workOrderId FROM WORK_ORDER "
                 + "WHERE Request_ID=? FOR UPDATE", requestId).isEmpty();
@@ -262,7 +474,8 @@ public final class WorkOrderDAO {
     }
 
     private static long number(Map<String, Object> row, String key) {
-        return ((Number) row.get(key)).longValue();
+        Object value = row.get(key);
+        return value == null ? 0 : ((Number) value).longValue();
     }
 
     private static Integer nullableInteger(Map<String, Object> row, String key) {

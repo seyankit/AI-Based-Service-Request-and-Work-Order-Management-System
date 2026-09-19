@@ -25,6 +25,11 @@ public final class WorkflowPolicy {
         };
     }
 
+    /** Initial administrator assignment is the only transition added for Phase 4B. */
+    public static Transition assignment(String current) {
+        return checked(current, Set.of("Created"), "Assigned", "Assigned", 0);
+    }
+
     private static Transition checked(String current, Set<String> allowed, String next, String type, int percentage) {
         if (!allowed.contains(current)) throw new IllegalStateException("This action is not allowed while the work order is " + current + ".");
         return new Transition(next, type, percentage);

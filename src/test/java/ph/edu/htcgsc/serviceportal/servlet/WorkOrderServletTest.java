@@ -43,6 +43,120 @@ class WorkOrderServletTest {
                             "{\"requestId\":1,\"workDescription\":\"Replace the damaged network cable.\"}"),
                     postResponse.proxy());
             assertEquals(HttpServletResponse.SC_FORBIDDEN, postResponse.status);
+
+            RecordingResponse putResponse = new RecordingResponse();
+            new WorkOrderServlet().doPut(
+                    request(17, role, "csrf-token",
+                            "{\"action\":\"assign\",\"workOrderId\":1,\"technicianId\":4}"),
+                    putResponse.proxy());
+            assertEquals(HttpServletResponse.SC_FORBIDDEN, putResponse.status);
+        }
+    }
+
+    @Test
+    void unauthenticatedAssignmentIsRejected() throws Exception {
+        RecordingResponse response = new RecordingResponse();
+
+        new WorkOrderServlet().doPut(
+                request(null, null, null,
+                        "{\"action\":\"assign\",\"workOrderId\":1,\"technicianId\":4}"),
+                response.proxy());
+
+        assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.status);
+    }
+
+    @Test
+    void administratorAssignmentUsesSessionIdentityAndExactInput() throws Exception {
+        RecordingResponse response = new RecordingResponse();
+        WorkOrderDAO.AssignmentInput[] captured = { null };
+        int[] actorAndRole = { 0, 0 };
+        WorkOrderServlet servlet = new WorkOrderServlet(
+                (actor, role, workOrderId) -> List.of(),
+                (actor, role, input) -> Map.of(),
+                (actor, role, input) -> {
+                    actorAndRole[0] = actor;
+                    actorAndRole[1] = role;
+                    captured[0] = input;
+                    return Map.of("workOrderId", 12, "status", "Assigned");
+                });
+
+        servlet.doPut(request(17, 2, "csrf-token",
+                "{\"action\":\"assign\",\"workOrderId\":12,\"technicianId\":44,"
+                        + "\"assignmentNotes\":\"  Replace switch  \",\"actorId\":999,"
+                        + "\"status\":\"Completed\",\"departmentId\":88}"), response.proxy());
+
+        assertEquals(HttpServletResponse.SC_OK, response.status);
+        assertEquals(17, actorAndRole[0]);
+        assertEquals(2, actorAndRole[1]);
+        assertEquals(12L, captured[0].workOrderId());
+        assertEquals(44, captured[0].technicianId());
+        assertEquals("Replace switch", captured[0].assignmentNotes());
+        assertTrue(response.body().contains("Assigned"));
+    }
+
+    @Test
+    void assignmentValidationRejectsMalformedActionAndIdentifiers() throws Exception {
+        for (String body : new String[] {
+                "{invalid",
+                "{\"action\":\"reject\",\"workOrderId\":1,\"technicianId\":4}",
+                "{\"action\":\"assign\",\"workOrderId\":0,\"technicianId\":4}",
+                "{\"action\":\"assign\",\"workOrderId\":1,\"technicianId\":0}",
+                "{\"action\":\"assign\",\"workOrderId\":1,\"technicianId\":4,\"assignmentNotes\":\"x\"}"
+        }) {
+            RecordingResponse response = new RecordingResponse();
+            new WorkOrderServlet(
+                    (actor, role, workOrderId) -> List.of(),
+                    (actor, role, input) -> Map.of(),
+                    (actor, role, input) -> Map.of()).doPut(
+                    request(17, 2, "csrf-token", body), response.proxy());
+            assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.status);
+        }
+    }
+
+    @Test
+    void assignmentSecurityChecksRejectMissingCsrfAndWrongContentType() throws Exception {
+        String body = "{\"action\":\"assign\",\"workOrderId\":1,\"technicianId\":4}";
+        RecordingResponse csrf = new RecordingResponse();
+        new WorkOrderServlet().doPut(request(17, 2, null, body), csrf.proxy());
+        assertEquals(HttpServletResponse.SC_FORBIDDEN, csrf.status);
+
+        RecordingResponse contentType = new RecordingResponse();
+        new WorkOrderServlet().doPut(request(17, 2, "csrf-token", body, "text/plain"), contentType.proxy());
+        assertEquals(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, contentType.status);
+    }
+
+    @Test
+    void assignmentFailuresMapToNotFoundAndConflict() throws Exception {
+        for (WorkOrderDAO.AssignmentFailure failure : new WorkOrderDAO.AssignmentFailure[] {
+                WorkOrderDAO.AssignmentFailure.WORK_ORDER_NOT_FOUND,
+                WorkOrderDAO.AssignmentFailure.TECHNICIAN_NOT_FOUND
+        }) {
+            RecordingResponse response = new RecordingResponse();
+            new WorkOrderServlet(
+                    (actor, role, workOrderId) -> List.of(),
+                    (actor, role, input) -> Map.of(),
+                    (actor, role, input) -> {
+                        throw new WorkOrderDAO.AssignmentException(failure, "Assignment rejected.");
+                    }).doPut(request(17, 2, "csrf-token",
+                    "{\"action\":\"assign\",\"workOrderId\":1,\"technicianId\":4}"), response.proxy());
+            assertEquals(HttpServletResponse.SC_NOT_FOUND, response.status);
+        }
+
+        for (WorkOrderDAO.AssignmentFailure failure : new WorkOrderDAO.AssignmentFailure[] {
+                WorkOrderDAO.AssignmentFailure.WORK_ORDER_NOT_CREATED,
+                WorkOrderDAO.AssignmentFailure.ALREADY_ASSIGNED,
+                WorkOrderDAO.AssignmentFailure.TECHNICIAN_NOT_ELIGIBLE,
+                WorkOrderDAO.AssignmentFailure.TECHNICIAN_DEPARTMENT_MISMATCH
+        }) {
+            RecordingResponse response = new RecordingResponse();
+            new WorkOrderServlet(
+                    (actor, role, workOrderId) -> List.of(),
+                    (actor, role, input) -> Map.of(),
+                    (actor, role, input) -> {
+                        throw new WorkOrderDAO.AssignmentException(failure, "Assignment rejected.");
+                    }).doPut(request(17, 2, "csrf-token",
+                    "{\"action\":\"assign\",\"workOrderId\":1,\"technicianId\":4}"), response.proxy());
+            assertEquals(HttpServletResponse.SC_CONFLICT, response.status);
         }
     }
 

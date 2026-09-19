@@ -1022,6 +1022,26 @@
     </div>
   </div>
 
+  <!-- WORK ORDER ASSIGNMENT MODAL -->
+  <div class="modal" id="workOrderAssignmentModal" role="dialog" aria-modal="true" aria-labelledby="workOrderAssignmentTitle" hidden>
+    <div class="modal-backdrop" data-close-modal="workOrderAssignmentModal"></div>
+    <div class="modal-card modal-card-medium" role="document">
+      <div class="modal-topbar">
+        <div><span class="section-label">Initial Assignment</span><h2 id="workOrderAssignmentTitle">Assign Technician</h2></div>
+        <button class="modal-close inline" type="button" aria-label="Close assignment" data-close-modal="workOrderAssignmentModal">&times;</button>
+      </div>
+      <form class="record-form" id="workOrderAssignmentForm" novalidate>
+        <div class="form-grid">
+          <div class="field-group"><label for="assignmentWorkOrderNumber">Work Order</label><input id="assignmentWorkOrderNumber" type="text" readonly></div>
+          <div class="field-group"><label for="assignmentDepartment">Service Unit</label><input id="assignmentDepartment" type="text" readonly></div>
+          <div class="field-group full-width"><label for="assignmentTechnician">Technician *</label><select id="assignmentTechnician" required><option value="">Select an active technician</option></select></div>
+          <div class="field-group full-width"><label for="assignmentNotes">Assignment Notes</label><textarea id="assignmentNotes" rows="3" maxlength="1000" placeholder="Optional assignment instructions."></textarea></div>
+        </div>
+        <div class="form-actions"><button class="button button-secondary" type="button" data-close-modal="workOrderAssignmentModal">Cancel</button><button class="button button-primary" type="submit">Assign Technician</button></div>
+      </form>
+    </div>
+  </div>
+
   <!-- CONFIRMATION MODAL -->
   <div class="modal" id="adminForwardModal" role="dialog"
        aria-modal="true" aria-labelledby="adminForwardTitle" hidden>
@@ -1222,4 +1242,3 @@
   <script src="js/script.js?v=20260917-step4-duplicate-ui1"></script>
 </body>
 </html>
-

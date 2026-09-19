@@ -3,6 +3,7 @@ package ph.edu.htcgsc.serviceportal.util;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class WorkflowPolicyTest {
@@ -66,5 +67,20 @@ class WorkflowPolicyTest {
                 IllegalArgumentException.class,
                 () -> WorkflowPolicy.text("x".repeat(1001), "Decision remarks", 3, 1000)
         );
+    }
+
+    @Test
+    void initialAssignmentMovesCreatedToAssigned() {
+        assertEquals(new WorkflowPolicy.Transition("Assigned", "Assigned", 0),
+                WorkflowPolicy.assignment("Created"));
+    }
+
+    @Test
+    void initialAssignmentRejectsEveryOtherWorkOrderState() {
+        for (String status : new String[] {
+                "Assigned", "Acknowledged", "In Progress", "On Hold", "Completed", "Verified"
+        }) {
+            assertThrows(IllegalStateException.class, () -> WorkflowPolicy.assignment(status));
+        }
     }
 }

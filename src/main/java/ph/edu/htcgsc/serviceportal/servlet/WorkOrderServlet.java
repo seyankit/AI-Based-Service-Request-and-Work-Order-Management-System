@@ -38,18 +38,32 @@ public final class WorkOrderServlet extends HttpServlet {
                 throws Exception;
     }
 
+    @FunctionalInterface
+    interface WorkOrderAssigner {
+        Map<String, Object> assign(int actor, int role, WorkOrderDAO.AssignmentInput input)
+                throws Exception;
+    }
+
     private final WorkOrderLister workOrderLister;
     private final WorkOrderCreator workOrderCreator;
+    private final WorkOrderAssigner workOrderAssigner;
 
     public WorkOrderServlet() {
         WorkOrderDAO workOrderDAO = new WorkOrderDAO();
         this.workOrderLister = workOrderDAO::list;
         this.workOrderCreator = workOrderDAO::create;
+        this.workOrderAssigner = workOrderDAO::assign;
     }
 
     WorkOrderServlet(WorkOrderLister workOrderLister, WorkOrderCreator workOrderCreator) {
+        this(workOrderLister, workOrderCreator, (actor, role, input) -> Map.of());
+    }
+
+    WorkOrderServlet(WorkOrderLister workOrderLister, WorkOrderCreator workOrderCreator,
+                     WorkOrderAssigner workOrderAssigner) {
         this.workOrderLister = workOrderLister;
         this.workOrderCreator = workOrderCreator;
+        this.workOrderAssigner = workOrderAssigner;
     }
 
     private record CreateRequest(
@@ -57,6 +71,13 @@ public final class WorkOrderServlet extends HttpServlet {
             String requestNumber,
             String workDescription,
             String targetCompletionDate
+    ) { }
+
+    private record AssignmentRequest(
+            String action,
+            Long workOrderId,
+            Integer technicianId,
+            String assignmentNotes
     ) { }
 
     @Override
@@ -215,6 +236,103 @@ public final class WorkOrderServlet extends HttpServlet {
             LOGGER.log(Level.SEVERE, "Work-order creation failed.", exception);
             sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Unable to create the work order.");
+        }
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        prepareJsonResponse(response);
+        Integer actor = authenticatedActor(request, response);
+        if (actor == null) return;
+
+        Integer role = SessionUtil.getRoleId(request);
+        if (role == null || role != ADMINISTRATOR_ROLE_ID) {
+            sendError(response, HttpServletResponse.SC_FORBIDDEN,
+                    "Service Administrator access is required.");
+            return;
+        }
+        if (!CsrfUtil.isRequestTokenValid(request)) {
+            sendError(response, HttpServletResponse.SC_FORBIDDEN,
+                    "The security token is missing or invalid. Refresh the page and try again.");
+            return;
+        }
+        if (!isJsonRequest(request)) {
+            sendError(response, HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    "Content-Type must be application/json.");
+            return;
+        }
+        if (request.getContentLengthLong() > MAXIMUM_BODY_LENGTH) {
+            sendError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
+                    "The assignment request is too large.");
+            return;
+        }
+
+        AssignmentRequest body;
+        try {
+            body = gson.fromJson(request.getReader(), AssignmentRequest.class);
+        } catch (JsonParseException exception) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Malformed JSON request.");
+            return;
+        }
+        if (body == null) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "A JSON request body is required.");
+            return;
+        }
+        if (!"assign".equals(body.action())) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "The assignment action must be assign.");
+            return;
+        }
+        if (body.workOrderId() == null || body.workOrderId() <= 0) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "The work-order ID must be positive.");
+            return;
+        }
+        if (body.technicianId() == null || body.technicianId() <= 0) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "The technician ID must be positive.");
+            return;
+        }
+
+        String notes = body.assignmentNotes() == null ? null : body.assignmentNotes().trim();
+        if (notes != null && !notes.isEmpty() && (notes.length() < 3 || notes.length() > 1000)) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "Assignment notes must contain 3 to 1000 characters when provided.");
+            return;
+        }
+        if (notes != null && notes.isEmpty()) notes = null;
+
+        try {
+            Map<String, Object> workOrder = workOrderAssigner.assign(
+                    actor,
+                    role,
+                    new WorkOrderDAO.AssignmentInput(body.workOrderId(), body.technicianId(), notes));
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("success", true);
+            result.put("message", "Technician assigned successfully.");
+            result.put("workOrder", workOrder);
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write(gson.toJson(result));
+        } catch (WorkOrderDAO.AssignmentException exception) {
+            int status = switch (exception.failure()) {
+                case WORK_ORDER_NOT_FOUND, TECHNICIAN_NOT_FOUND -> HttpServletResponse.SC_NOT_FOUND;
+                case WORK_ORDER_NOT_CREATED, ALREADY_ASSIGNED, TECHNICIAN_NOT_ELIGIBLE,
+                        TECHNICIAN_DEPARTMENT_MISMATCH -> HttpServletResponse.SC_CONFLICT;
+            };
+            sendError(response, status, exception.getMessage());
+        } catch (IllegalStateException exception) {
+            sendError(response, HttpServletResponse.SC_CONFLICT, exception.getMessage());
+        } catch (IllegalArgumentException exception) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST, exception.getMessage());
+        } catch (SecurityException exception) {
+            sendError(response, HttpServletResponse.SC_FORBIDDEN,
+                    "Work-order assignment access is not permitted.");
+        } catch (Exception exception) {
+            LOGGER.log(Level.SEVERE, "Work-order assignment failed.", exception);
+            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Unable to assign the technician.");
         }
     }
 
