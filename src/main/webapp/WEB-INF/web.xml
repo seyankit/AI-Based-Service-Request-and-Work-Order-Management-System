@@ -125,6 +125,10 @@
     <servlet-name>WorkOrderServlet</servlet-name>
     <servlet-class>ph.edu.htcgsc.serviceportal.servlet.WorkOrderServlet</servlet-class>
   </servlet>
+  <servlet>
+    <servlet-name>WorkOrderProgressServlet</servlet-name>
+    <servlet-class>ph.edu.htcgsc.serviceportal.servlet.WorkOrderProgressServlet</servlet-class>
+  </servlet>
   <servlet-mapping>
     <servlet-name>HealthServlet</servlet-name>
     <url-pattern>/api/health</url-pattern>
@@ -209,6 +213,10 @@
   <servlet-mapping>
     <servlet-name>WorkOrderServlet</servlet-name>
     <url-pattern>/api/work-orders</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>WorkOrderProgressServlet</servlet-name>
+    <url-pattern>/api/work-order-progress</url-pattern>
   </servlet-mapping>
   <session-config>
     <session-timeout>30</session-timeout>
