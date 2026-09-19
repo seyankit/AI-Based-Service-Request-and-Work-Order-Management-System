@@ -32,6 +32,7 @@ const API_ENDPOINTS = Object.freeze({
   serviceRequestAttachments: "api/service-request-attachments",
   personnel: "api/personnel",
   approvals: "api/approvals",
+  workOrders: "api/work-orders",
   serviceRequestReviews: "api/service-request-reviews",
   serviceRequestDuplicates: "api/service-request-duplicates",
 });
@@ -261,6 +262,29 @@ function mapAdministratorReviewFromApi(item) {
   };
 }
 
+function mapWorkOrderFromApi(record) {
+  return {
+    databaseId: record.workOrderId ?? null,
+    id: record.workOrderNumber || "Work Order",
+    requestDatabaseId: record.requestId ?? null,
+    requestId:
+      record.requestNumber ||
+      (record.requestId != null ? `Request #${record.requestId}` : ""),
+    requestTitle: record.requestTitle || "",
+    category: record.category || "",
+    requestLocation: record.requestLocation || "",
+    assignedPersonnel: "Not assigned",
+    serviceUnit: record.departmentName || "",
+    workDescription: record.workDescription || "",
+    status: record.status || "Created",
+    targetCompletionDate: record.targetCompletionDate || "",
+    completionDate: record.completedAt || "",
+    completionSummary: record.completionSummary || "",
+    createdAt: record.createdAt || "",
+    updatedAt: record.updatedAt || "",
+  };
+}
+
 async function loadAdministratorServiceRequestReviews() {
   try {
     const response = await fetch(
@@ -392,6 +416,40 @@ async function loadAdministratorPersonnel() {
     throw error;
   }
 }
+
+async function loadWorkOrders() {
+  if (state.activeRole !== "administrator") {
+    state.workOrders = [];
+    renderWorkOrderTable();
+    return [];
+  }
+
+  try {
+    const response = await fetch(API_ENDPOINTS.workOrders, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    const data = await readJsonResponse(response);
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Unable to load work orders.");
+    }
+    state.workOrders = Array.isArray(data.workOrders)
+      ? data.workOrders.map(mapWorkOrderFromApi)
+      : [];
+    renderWorkOrderTable();
+    renderAdminMetrics();
+    return state.workOrders;
+  } catch (error) {
+    state.workOrders = [];
+    renderWorkOrderTable();
+    renderAdminMetrics();
+    console.error("Work-order retrieval failed:", error);
+    throw error;
+  }
+}
+
 async function getCsrfToken() {
   const response = await fetch(API_ENDPOINTS.csrfToken, {
     method: "GET",
@@ -2064,11 +2122,7 @@ function renderWorkOrderTable() {
 
     const actions = createElement("div", "row-actions");
 
-    actions.append(
-      makeRowAction("View", "view-work-order", workOrder.id),
-
-      makeRowAction("Edit", "edit-work-order", workOrder.id, "primary"),
-    );
+    actions.append(makeRowAction("View", "view-work-order", workOrder.id));
 
     actionCell.appendChild(actions);
 
@@ -2960,20 +3014,21 @@ function showWorkOrderDetails(workOrder) {
     },
 
     {
-      label: "Action Taken",
-      value: workOrder.actionTaken || "No action recorded yet",
-      full: true,
+      label: "Target Completion",
+      value: formatDate(workOrder.targetCompletionDate),
     },
 
     {
-      label: "Materials / Resources",
-      value: workOrder.materials || "None recorded",
-      full: true,
-    },
-
-    {
-      label: "Completion Date",
+      label: "Completed At",
       value: formatDate(workOrder.completionDate),
+    },
+
+    {
+      label: "Completion Summary",
+      value:
+        workOrder.completionSummary ||
+        "No completion summary recorded yet",
+      full: true,
     },
 
     {
@@ -3245,9 +3300,17 @@ function validateIdPattern(input, prefix) {
   const value = input.value.trim().toUpperCase();
   input.value = value;
   if (!value && !input.required) return setFieldSuccess(input);
-  const pattern = new RegExp(`^${prefix}-\\d{4}-\\d{4}$`);
+  const pattern =
+    prefix === "SR"
+      ? /^SR-\d{4}-\d{6}$/
+      : /^WO-\d{4}-\d{4}$/;
   if (!pattern.test(value))
-    return setFieldError(input, `Use the format ${prefix}-YYYY-NNNN.`);
+    return setFieldError(
+      input,
+      prefix === "SR"
+        ? "Use the format SR-YYYY-NNNNNN."
+        : "Use the format WO-YYYY-NNNN.",
+    );
   return setFieldSuccess(input);
 }
 
@@ -4009,6 +4072,11 @@ async function restoreServerSession() {
           error,
         );
       }
+      try {
+        await loadWorkOrders();
+      } catch (error) {
+        console.warn("Administrator work orders could not be restored.", error);
+      }
     }
 
     if (account.role === "approver") {
@@ -4221,6 +4289,14 @@ async function handleLoginSubmit(event) {
       } catch (error) {
         showToast(
           "Signed in successfully, but personnel records could not be loaded.",
+          "error",
+        );
+      }
+      try {
+        await loadWorkOrders();
+      } catch (error) {
+        showToast(
+          "Signed in successfully, but work orders could not be loaded.",
           "error",
         );
       }
@@ -4884,17 +4960,63 @@ async function handlePersonnelSubmit(event) {
    FORM: TECHNICIAN UPDATE
 ========================= */
 
-/*
- * Work-order persistence is not implemented yet.
- * Keep the form disabled rather than creating browser-only records.
- */
-function handleWorkOrderSubmit(event) {
+/* =========================
+   FORM: WORK ORDER CREATION
+========================= */
+async function handleWorkOrderSubmit(event) {
   event.preventDefault();
 
-  showToast(
-    "Work-order management is not connected to the backend yet. No work order was created.",
-    "error",
-  );
+  const form = event.currentTarget;
+  const requestInput = byId("workOrderRequestId");
+  const descriptionInput = byId("workDescription");
+  const requestNumber = requestInput.value.trim().toUpperCase();
+  const description = descriptionInput.value.trim();
+
+  requestInput.setCustomValidity("");
+  descriptionInput.setCustomValidity("");
+
+  if (!/^SR-\d{4}-\d{6}$/.test(requestNumber)) {
+    requestInput.setCustomValidity("Use the format SR-YYYY-NNNNNN.");
+    requestInput.reportValidity();
+    return;
+  }
+  if (description.length < 10 || description.length > 2000) {
+    descriptionInput.setCustomValidity(
+      "Work description must contain 10 to 2000 characters.",
+    );
+    descriptionInput.reportValidity();
+    return;
+  }
+
+  setSubmitting(form, true);
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch(API_ENDPOINTS.workOrders, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        [csrf.headerName]: csrf.token,
+      },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        requestNumber,
+        workDescription: description,
+      }),
+    });
+    const data = await readJsonResponse(response);
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Unable to create the work order.");
+    }
+    showToast("Work order created successfully.", "success");
+    await loadWorkOrders();
+    form.reset();
+    renderAll();
+  } catch (error) {
+    console.error("Work-order creation failed:", error);
+    showToast(error.message || "Unable to create the work order.", "error");
+  } finally {
+    setSubmitting(form, false);
+  }
 }
 function handleProgressUpdateSubmit(event) {
   event.preventDefault();

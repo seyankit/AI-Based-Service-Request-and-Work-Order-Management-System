@@ -686,19 +686,11 @@
             <section class="workspace-view" data-view="administrator-work-orders" hidden>
               <div class="content-grid form-and-table">
                 <div class="panel-card form-panel">
-                  <div class="panel-title"><div><small>Work Order Assignment</small><h3>Create / Update Work Order</h3></div><span class="entity-badge">Administrator</span></div>
+                  <div class="panel-title"><div><small>Work Order Creation</small><h3>Create Work Order</h3></div><span class="entity-badge">Administrator</span></div>
                   <form class="record-form workspace-form" id="workOrderForm" novalidate>
                     <div class="form-grid">
-                      <div class="field-group"><label for="workOrderId">Work Order ID</label><input id="workOrderId" type="text" placeholder="Auto-generated for new record" pattern="WO-[0-9]{4}-[0-9]{4}" aria-describedby="workOrderIdHelp"><small id="workOrderIdHelp">Leave blank to create a new work order.</small></div>
                       <div class="field-group"><label for="workOrderRequestId">Service Request ID *</label><input id="workOrderRequestId" type="text" placeholder="SR-2026-000001" pattern="SR-[0-9]{4}-[0-9]{6}" required></div>
-                      <div class="field-group"><label for="assignedTechnician">Assigned Technician / Personnel *</label><select id="assignedTechnician" required><option value="">No personnel data loaded</option></select></div>
-                      <div class="field-group"><label for="serviceUnit">Department / Service Unit *</label><select id="serviceUnit" required><option value="">Select service unit</option><option>Information Technology Office</option><option>Facilities Management</option><option>Electrical Services</option><option>Maintenance Services</option></select></div>
                       <div class="field-group full-width"><label for="workDescription">Work Description *</label><textarea id="workDescription" rows="3" minlength="10" maxlength="500" placeholder="Describe the work to be performed." required></textarea></div>
-                      <div class="field-group"><label for="workStatus">Work Status *</label><select id="workStatus" required><option>Assigned</option><option>In Progress</option><option>On Hold</option><option>Completed</option></select></div>
-                      <div class="field-group"><label for="completionDate">Completion Date</label><input id="completionDate" type="date"></div>
-                      <div class="field-group full-width"><label for="actionTaken">Action Taken</label><textarea id="actionTaken" rows="2" maxlength="500" placeholder="Record actions already performed, if any."></textarea></div>
-                      <div class="field-group full-width"><label for="materialsUsed">Materials / Resources Used</label><textarea id="materialsUsed" rows="2" maxlength="300" placeholder="Example: LAN cable, RJ45 connector, replacement switch"></textarea></div>
-                      <div class="field-group full-width"><label for="technicianRemarks">Technician Remarks</label><textarea id="technicianRemarks" rows="2" maxlength="300" placeholder="Optional notes, observations, or follow-up requirements"></textarea></div>
                     </div>
                     <div class="form-actions"><button class="button button-secondary" type="reset">Clear</button><button class="button button-primary" type="submit">Save Work Order</button></div>
                   </form>
@@ -1230,5 +1222,4 @@
   <script src="js/script.js?v=20260917-step4-duplicate-ui1"></script>
 </body>
 </html>
-
 
