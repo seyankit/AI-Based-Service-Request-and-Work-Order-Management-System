@@ -31,6 +31,7 @@ const API_ENDPOINTS = Object.freeze({
   profilePhoto: "api/profile/photo",
   serviceRequestAttachments: "api/service-request-attachments",
   personnel: "api/personnel",
+  approvals: "api/approvals",
   serviceRequestReviews: "api/service-request-reviews",
   serviceRequestDuplicates: "api/service-request-duplicates",
 });
@@ -303,6 +304,55 @@ async function loadAdministratorServiceRequestReviews() {
 
     console.error("Unable to load Administrator request queue:", error);
 
+    throw error;
+  }
+}
+
+async function loadApproverApprovals() {
+  if (state.activeRole !== "approver") {
+    state.approvals = [];
+    state.approvalHistory = [];
+    return;
+  }
+
+  try {
+    const statuses = ["Pending", "Approved", "Rejected"];
+    const responses = await Promise.all(
+      statuses.map((status) =>
+        fetch(`${API_ENDPOINTS.approvals}?status=${status}`, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          credentials: "same-origin",
+          cache: "no-store",
+        }),
+      ),
+    );
+    const results = await Promise.all(
+      responses.map((response) => readJsonResponse(response)),
+    );
+
+    results.forEach((data, index) => {
+      if (!responses[index].ok || !data.success) {
+        throw new Error(data.message || "Unable to load approval records.");
+      }
+    });
+
+    state.approvals = results[0].approvals || [];
+    state.approvalHistory = [
+      ...(results[1].approvals || []),
+      ...(results[2].approvals || []),
+    ];
+
+    renderApproverMetrics();
+    renderApprovalTable();
+    renderApprovalHistory();
+  } catch (error) {
+    state.approvals = [];
+    state.approvalHistory = [];
+    renderApproverMetrics();
+    renderApprovalTable();
+    renderApprovalHistory();
+    console.error("Unable to load approval records:", error);
     throw error;
   }
 }
@@ -2129,7 +2179,15 @@ function renderApprovalTable() {
   body.replaceChildren();
 
   pendingApprovals().forEach((approval) => {
-    const request = findRequest(approval.requestId);
+    const request = findRequest(approval.requestId) || {
+      databaseId: approval.requestId,
+      id: approval.requestNumber || `Request #${approval.requestId}`,
+      title: approval.title || "Service request",
+      priority: approval.priority || "",
+      aiCategory: approval.category || "",
+      aiPriority: "",
+      status: approval.currentStatus || "Awaiting Approval",
+    };
 
     if (!request) {
       return;
@@ -3934,6 +3992,14 @@ async function restoreServerSession() {
       }
     }
 
+    if (account.role === "approver") {
+      try {
+        await loadApproverApprovals();
+      } catch (error) {
+        console.warn("Approval records could not be restored.", error);
+      }
+    }
+
     if (account.role === "administrator") {
       try {
         await loadAdministratorPersonnel();
@@ -3941,6 +4007,17 @@ async function restoreServerSession() {
         console.warn(
           "Administrator personnel records could not be restored.",
           error,
+        );
+      }
+    }
+
+    if (account.role === "approver") {
+      try {
+        await loadApproverApprovals();
+      } catch (error) {
+        showToast(
+          "Signed in successfully, but approval records could not be loaded.",
+          "error",
         );
       }
     }
@@ -5338,11 +5415,46 @@ async function flagDuplicate(event, request) {
   }
 }
 
-function decideApproval(requestId, decision, remarks = "") {
-  showToast(
-    "Service-request approval decisions are not connected to the backend yet. No record was changed.",
-    "error",
+async function decideApproval(requestId, decision, remarks = "") {
+  const approval = state.approvals.find(
+    (item) =>
+      String(item.requestNumber || item.requestId) === String(requestId),
   );
+
+  if (!approval) {
+    showToast("The approval record is no longer available.", "error");
+    return;
+  }
+
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch(API_ENDPOINTS.approvals, {
+      method: "PUT",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        [csrf.headerName]: csrf.token,
+      },
+      credentials: "same-origin",
+      cache: "no-store",
+      body: JSON.stringify({
+        approvalId: Number(approval.approvalId),
+        decision,
+        remarks,
+      }),
+    });
+    const data = await readJsonResponse(response);
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Unable to record the approval decision.");
+    }
+
+    showToast(`${approval.requestNumber} was ${decision.toLowerCase()}.`, "success");
+    await loadApproverApprovals();
+  } catch (error) {
+    console.error("Approval decision failed:", error);
+    showToast(error.message || "Unable to record the approval decision.", "error");
+  }
 }
 
 /* =========================
@@ -5412,14 +5524,68 @@ function handleApprovalTableAction(event) {
     return;
   }
 
-  const request = findRequest(button.dataset.id);
+  const approval = state.approvals.find(
+    (item) =>
+      String(item.requestNumber || item.requestId) ===
+      String(button.dataset.id),
+  );
 
-  if (!request) {
+  if (!approval) {
+    showToast("The approval record is no longer available.", "error");
     return;
   }
 
+  const requestLabel =
+    approval.requestNumber || `Request #${approval.requestId}`;
+
   if (button.dataset.action === "view-approval") {
-    showRequestDetails(request);
+    showDetails(requestLabel, "Approval Request", [
+      {
+        label: "Request Number",
+        value: requestLabel,
+      },
+      {
+        label: "Title",
+        value: approval.title || "Service request",
+        full: true,
+      },
+      {
+        label: "Requester",
+        value: approval.requesterName || "Not available",
+      },
+      {
+        label: "Department",
+        value: approval.departmentName || "Not available",
+      },
+      {
+        label: "Location",
+        value: approval.location || "Not available",
+      },
+      {
+        label: "Category",
+        value: approval.category || "Not available",
+      },
+      {
+        label: "Priority",
+        value: approval.priority || "Not available",
+        badge: true,
+      },
+      {
+        label: "Status",
+        value: approval.currentStatus || "Awaiting Approval",
+        badge: true,
+      },
+      {
+        label: "Decision",
+        value: approval.decision || "Pending",
+        badge: true,
+      },
+      {
+        label: "Description",
+        value: approval.description || "No description provided.",
+        full: true,
+      },
+    ]);
 
     return;
   }
@@ -5427,28 +5593,25 @@ function handleApprovalTableAction(event) {
   if (button.dataset.action === "approve-request") {
     openConfirm({
       title: "Approve this request?",
-
-      message: `${request.id} will be recorded as Approved and may proceed to work-order assignment.`,
-
+      message: `${requestLabel} will be recorded as Approved and may proceed to work-order assignment.`,
       confirmLabel: "Approve Request",
-
-      onConfirm: () => decideApproval(request.id, "Approved"),
+      requireRemarks: true,
+      onConfirm: (remarks) =>
+        decideApproval(requestLabel, "Approved", remarks),
     });
+
+    return;
   }
 
   if (button.dataset.action === "reject-request") {
     openConfirm({
       title: "Reject this request?",
-
-      message: `${request.id} will be recorded as Rejected in the approval history.`,
-
+      message: `${requestLabel} will be recorded as Rejected in the approval history.`,
       confirmLabel: "Reject Request",
-
       type: "danger",
-
       requireRemarks: true,
-
-      onConfirm: (remarks) => decideApproval(request.id, "Rejected", remarks),
+      onConfirm: (remarks) =>
+        decideApproval(requestLabel, "Rejected", remarks),
     });
   }
 }

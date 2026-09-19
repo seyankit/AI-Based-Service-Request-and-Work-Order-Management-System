@@ -117,6 +117,10 @@
     <servlet-name>ServiceRequestDuplicateServlet</servlet-name>
     <servlet-class>ph.edu.htcgsc.serviceportal.servlet.ServiceRequestDuplicateServlet</servlet-class>
   </servlet>
+  <servlet>
+    <servlet-name>ApprovalServlet</servlet-name>
+    <servlet-class>ph.edu.htcgsc.serviceportal.servlet.ApprovalServlet</servlet-class>
+  </servlet>
   <servlet-mapping>
     <servlet-name>HealthServlet</servlet-name>
     <url-pattern>/api/health</url-pattern>
@@ -193,6 +197,10 @@
   <servlet-mapping>
     <servlet-name>ServiceRequestDuplicateServlet</servlet-name>
     <url-pattern>/api/service-request-duplicates</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ApprovalServlet</servlet-name>
+    <url-pattern>/api/approvals</url-pattern>
   </servlet-mapping>
   <session-config>
     <session-timeout>30</session-timeout>
