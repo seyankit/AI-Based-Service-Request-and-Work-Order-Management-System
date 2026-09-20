@@ -34,7 +34,7 @@ full-system-migration
 
 Current verified checkpoint:
 
-ca80532 Complete technician work order progress workflow
+d932dc7 Complete technician frontend workflow integration
 
 Do not work from obsolete or duplicate project folders.
 
@@ -54,14 +54,15 @@ Completed and frozen:
 - Phase 4A — Work Order Creation / Administrator Work Order Details
 - Phase 4B — Initial Technician Assignment
 - Phase 5A — Technician Backend Workflow
+- Phase 5B — Technician Frontend Integration
+- Phase 5 — Technician Work-Progress Workflow (overall)
 
 Current next phase:
 
-- Phase 5B — Technician Frontend Integration
+- Phase 6 — Notifications + History + Audit Integration
 
 Remaining:
 
-- Phase 6 — Notifications + History + Audit Integration
 - Phase 7 — Python AI Integration
 - Phase 8 — Dashboard + Reports
 - Phase 9 — Security Review / Hardening
@@ -787,7 +788,7 @@ Phase 4A Create Work Order form:
 
 Technician selection belongs to Phase 4B.
 
-Progress fields belong to Phase 5B frontend integration; the Phase 5A backend is complete/frozen.
+Progress fields are integrated through Phase 5B; the Phase 5A backend is complete/frozen.
 
 Do not expose future workflow controls prematurely.
 
@@ -1405,13 +1406,13 @@ Codex / Cline
 
 Status:
 
-PARTIALLY COMPLETE — Phase 5A is frozen; Phase 5B frontend integration is pending.
+COMPLETE / FROZEN — Phase 5A backend (ca80532) and Phase 5B frontend integration (d932dc7) are complete and frozen.
 
 Objective:
 
 assigned technician executes the Work Order lifecycle.
 
-Schema/policy lifecycle (verification remains outside Phase 5A):
+Schema/policy lifecycle (verification remains outside Phase 5):
 
 Assigned
 → Acknowledged
@@ -1427,7 +1428,7 @@ Technician must only access Work Orders currently assigned to their authenticate
 
 Never accept the acting Technician_ID from the browser.
 
-Phase 5 capabilities (backend complete in Phase 5A; frontend pending in Phase 5B):
+Phase 5 capabilities (backend implemented in Phase 5A; frontend integrated in Phase 5B):
 
 - technician queue
 - assigned Work Order details
@@ -1566,7 +1567,11 @@ Do not reopen the frozen backend without a demonstrated dependency defect.
 
 Status:
 
-PLANNED — CURRENT NEXT SUB-PHASE
+COMPLETE / FROZEN
+
+Frozen checkpoint:
+
+d932dc7 Complete technician frontend workflow integration
 
 Objective:
 
@@ -1577,15 +1582,94 @@ Active files:
 - src/main/webapp/index.html
 - src/main/webapp/js/script.js
 
-Use the existing state, fetch, CSRF, toast, modal, and render helpers.
-
-Reload authoritative backend data after successful mutations.
+Implementation used the existing state, fetch, CSRF, toast, modal, and render helpers.
 
 Do not activate workflows.js or create a parallel frontend.
 
-Reassignment remains deferred. Verification remains outside Phase 5A and requires an authorized actor/policy to be established before implementation.
+Verified behavior:
 
-Phase 5 as a whole is not complete while Phase 5B frontend integration is pending.
+- Role 4 technician queue through /api/work-order-progress
+- authoritative detail loading
+- status-derived explicit workflow actions
+- CSRF-protected technician mutations
+- Assigned → Acknowledged
+- Acknowledged → In Progress
+- same-status progress updates
+- In Progress → On Hold
+- On Hold progress updates
+- On Hold → In Progress (resume)
+- In Progress → Completed
+- authoritative refresh after mutation
+- progress/history rendering
+- Completed work orders become read-only
+- completed queue rows expose View only
+- technician dashboard metrics update from the authoritative queue
+- no Verify / Close / Reassign technician controls
+- SERVICE_REQUEST remains Approved
+- verification remains outside Phase 5
+- reassignment remains deferred
+
+Runtime Phase 5B verification fixture:
+
+- Work Order: WO-2026-0002
+- Service Request: SR-2026-000006
+
+Verified lifecycle:
+
+Assigned
+→ Acknowledged
+→ In Progress
+→ 40% Progress
+→ On Hold
+→ 60% Progress
+→ Resumed
+→ 80% Progress
+→ Completed
+
+Final runtime invariants for this fixture:
+
+- Progress_Rows = 8
+- History_Rows = 7
+- Work_Status = Completed
+- Request_Status = Approved
+- Latest_Update = Completed
+- Latest_Percentage = 100
+- Verified_By = NULL
+- Verified_At = NULL
+
+These IDs and row counts are local verification examples only.
+
+Never hardcode them.
+
+Regression fixed during Phase 5B testing:
+
+- an administrator Request View regression was discovered during Phase 5B testing
+- the bug existed before Phase 5B
+- fixed in the frontend by using existing administrator-authorized queue data instead of the requester-only service-request detail endpoint
+- requester authorization was not weakened
+
+Phase 5B does not implement:
+
+- verification
+- closure
+- reassignment (deferred)
+- requester-visible progress
+- requester verification
+- SMTP changes
+- AI
+- reports
+
+Verified test/build baseline at d932dc7:
+
+- Java 17
+- Maven 3.9.16
+- 86 tests passed; 0 failures, 0 errors, 0 skipped
+- mvn clean package: BUILD SUCCESS
+- node --check src/main/webapp/js/script.js: PASS
+- browser/runtime: VERIFIED
+- database invariants: VERIFIED
+
+Do not reopen the frozen frontend integration without a demonstrated dependency defect.
 
 ---
 
@@ -2024,7 +2108,9 @@ PHASE 5
 
 Phase 5A — Technician Backend Workflow: COMPLETE / FROZEN (ca80532)
 
-Phase 5B — Technician Frontend Integration: current next sub-phase
+Phase 5B — Technician Frontend Integration: COMPLETE / FROZEN (d932dc7)
+
+Phase 5 — Technician Work-Progress Workflow: COMPLETE / FROZEN
 
 Kilo Architect
 
