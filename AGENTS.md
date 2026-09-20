@@ -60,12 +60,12 @@ Completed and frozen:
 - Phase 6B1 - Work Order History Timeline
 - Phase 6B2 - Requester and Department Head History Presentation Cleanup
 - Phase 6B - History Presentation (overall)
+- Phase 6C — Audit Viewer
+- Phase 6 — Notifications + History + Audit Integration (overall)
 
 Current next phase:
 
-- Phase 6C - Audit Viewer
-
-Phase 6 — Notifications + History + Audit Integration remains IN PROGRESS.
+- Phase 7 — Python AI Integration
 
 Remaining:
 
@@ -1687,7 +1687,7 @@ Copilot / Cline
 
 Status:
 
-IN PROGRESS
+COMPLETE / FROZEN
 
 Objective:
 
@@ -1907,52 +1907,77 @@ Phase 6B completion:
 
 Next phase:
 
-Phase 6C - Audit Viewer. It will focus on administrative/security audit evidence using the existing `AUDIT_LOG` architecture.
+Phase 7 — Python AI Integration.
 
 ## PHASE 6C — Audit Viewer
 
 Status:
 
-PLANNED - CURRENT NEXT SUB-PHASE
+COMPLETE / FROZEN
 
-Review:
+Implementation checkpoint:
 
-- REQUEST_STATUS_HISTORY
-- WORK_ORDER_HISTORY
-- WORK_ORDER_PROGRESS
-- AUDIT_LOG
-- NOTIFICATION
+5dc443c Complete audit viewer integration
 
-Possible events include:
+Implemented a read-only Administrator Audit Viewer:
 
-- request submitted
-- approval required
-- request approved
-- request rejected
-- Work Order created
-- technician assigned
-- technician reassigned
-- technician acknowledged assignment
-- work started
-- progress updated
-- work put On Hold
-- work resumed
-- work completed
-- verification
-- request/work closure if supported
+- GET /api/audit-logs requires an authenticated session and Role 2 Service Administrator / Coordinator only; Roles 1, 3, and 4 receive HTTP 403, while unauthenticated callers receive HTTP 401
+- actor and role are session-derived; active-account verification remains server-side
+- prepared-statement reads, presentation-safe DTOs, validation, opaque Base64URL cursor pagination, and deterministic Created_At DESC, Audit_ID DESC ordering
+- default page size 50; maximum page size 100; successful responses always include nextCursor
+- final pages return nextCursor=null; additional pages return an opaque cursor string
+- filters: actionType, outcome, actorId, requestId, workOrderId, from, and to; invalid parameters return HTTP 400
+- unknown request/work-order filters return HTTP 200 with entries=[] and nextCursor=null, preventing resource-existence probing
 
-Do not duplicate records already generated correctly by previous phases.
+Presentation-safe fields include audit ID, timestamp, action/outcome, entity, request/work-order references, actor ID/name/role, and summary. The viewer never exposes Details_JSON, Client_IP, User_Agent, Correlation_ID, passwords, hashes, session IDs, tokens, credentials, or SMTP/API secrets.
 
-Notification recipients must be supported by real workflow requirements.
+Main implementation files:
 
-Do not guess recipients.
+- NEW: src/main/java/ph/edu/htcgsc/serviceportal/dao/AuditLogDAO.java
+- NEW: src/main/java/ph/edu/htcgsc/serviceportal/servlet/AuditLogServlet.java
+- NEW: src/test/java/ph/edu/htcgsc/serviceportal/servlet/AuditLogServletTest.java
+- NEW: database/021_audit_viewer_index.sql
+- MODIFIED: src/main/webapp/WEB-INF/web.xml, src/main/webapp/index.html, src/main/webapp/js/script.js, src/main/webapp/css/style.css
 
-Database notifications and email notifications are separate concerns.
+Database migration and runtime verification:
 
-Do not automatically add SMTP mail for every database notification unless explicitly required.
+- 021_audit_viewer_index.sql contains CREATE INDEX IX_AUDIT_CREATED ON AUDIT_LOG (Created_At, Audit_ID)
+- the runtime migration was manually applied successfully; SHOW INDEX confirmed Created_At sequence 1 and Audit_ID sequence 2
+- the earlier experimental CREATE INDEX IF NOT EXISTS statement was not retained
+
+Frontend:
+
+- Administrator-only navigation and workspace; responsive Action, Outcome, Request ID, Work Order ID, From, and To filters; Apply Filters, Clear Filters, and Load Older cursor continuation
+- audit state clears on logout, account switch, and session replacement; stale responses are discarded
+- safe createElement/textContent rendering; no localStorage persistence, polling, SSE, WebSocket, or audit event created by viewing records
+- scoped Audit Viewer CSS prevents filter overflow/clipping with six-column wide and reduced-column smaller layouts
+- formatDateTime(...) provides local readable timestamps with a safe dash for invalid values; action labels are presentation-only conversions such as WORK_ORDER_COMPLETED to Work Order Completed
+- request and work-order references display on separate lines; table-scroll and readable wrapping are preserved
+
+Runtime verification passed:
+
+- migration/index, health/MySQL, and Administrator Audit Viewer checks passed
+- 40 existing AUDIT_LOG records loaded; unfiltered GET /api/audit-logs returned HTTP 200, limit 50, entries, nextCursor=null, and newest-first ordering
+- sensitive-field exclusion passed
+- workOrderId=6 returned 10 records for SR-2026-000006 / WO-2026-0002; unknown workOrderId=999999 returned HTTP 200 with entries=[] and nextCursor=null
+- malformed limit=abc returned HTTP 400; wrong role returned HTTP 403; unauthenticated access returned HTTP 401
+
+Validation:
+
+- Java 17
+- node --check: PASS
+- mvn clean test: 125 tests, 0 failures, 0 errors, 0 skipped
+- mvn clean package: BUILD SUCCESS; WAR generated successfully
+- git diff --check: PASS
+
+Phase 6 boundaries preserved:
+
+- Phase 6A notifications; requester history; Department Head approval authorization; Administrator and Technician timelines remain unchanged
+- no reassignment, verification, or closure changes
+- workflows.js remains inactive and unchanged
+- the Audit Viewer is read-only and audit logs are not merged into user-facing workflow history
 
 ---
-
 # PHASE 7 — Python AI Integration
 
 Preferred architecture:
@@ -2358,7 +2383,9 @@ Phase 6B2 - Requester and Department Head History Presentation Cleanup: COMPLETE
 
 Phase 6B - History Presentation: COMPLETE / FROZEN
 
-Phase 6C - Audit Viewer: current next phase
+Phase 6C — Audit Viewer: COMPLETE / FROZEN (5dc443c)
+
+Phase 6 — Notifications + History + Audit Integration: COMPLETE / FROZEN
 
 Copilot/Cline
 
