@@ -34,7 +34,7 @@ full-system-migration
 
 Current verified checkpoint:
 
-3b79f12 Complete notification center workflow
+475690e Add work order history timeline
 
 Do not work from obsolete or duplicate project folders.
 
@@ -57,10 +57,11 @@ Completed and frozen:
 - Phase 5B — Technician Frontend Integration
 - Phase 5 — Technician Work-Progress Workflow (overall)
 - Phase 6A — Notifications
+- Phase 6B1 - Work Order History Timeline
 
 Current next phase:
 
-- Phase 6B — History Presentation
+- Phase 6B2 - Requester and Department Head History Presentation Cleanup
 
 Phase 6 — Notifications + History + Audit Integration remains IN PROGRESS.
 
@@ -1753,13 +1754,103 @@ Security notes:
 - foreign and nonexistent notification IDs are indistinguishable
 - notification write paths from prior workflow phases, SMTP, and database migrations were unchanged
 
-## PHASE 6B — History Presentation
+## PHASE 6B - History Presentation
 
 Status:
 
-PLANNED — CURRENT NEXT SUB-PHASE
+IN PROGRESS
 
 Present existing request, Work Order, and progress history cleanly without changing frozen Phase 6A notification behavior.
+
+### PHASE 6B1 - Work Order History Timeline
+
+Status:
+
+COMPLETE / FROZEN
+
+Implementation checkpoint:
+
+475690e Add work order history timeline
+
+Current HEAD before this documentation edit:
+
+475690e
+
+Implemented:
+
+- read-only `GET /api/work-order-history?workOrderId=<positive integer>`
+- Role 2 Service Administrator and Role 4 Service Personnel / Technician access only
+- actor and role identity derived only from the authenticated session; the client supplies only `workOrderId`
+- Role 2 authorization matching the existing administrator work-order scope
+- Role 4 authorization requiring an active technician account and current work-order assignment
+- matching generic HTTP 404 responses for foreign and missing technician work orders
+- HTTP 400 for missing, malformed, zero, or negative `workOrderId`; HTTP 401 when unauthenticated; HTTP 403 for an authenticated role outside the allowed roles
+- a normalized work-order timeline from `WORK_ORDER_HISTORY` and `WORK_ORDER_PROGRESS`
+- a separate `requestEvents` collection from `REQUEST_STATUS_HISTORY` for administrators only; technicians do not receive `requestEvents`
+
+Duplicate suppression and ordering:
+
+- `WORK_ORDER_PROGRESS` is canonical for the technician actions Acknowledged, Work Started / Started, On Hold, Resumed, and Completed when a corresponding progress event exists
+- `WORK_ORDER_HISTORY` remains the source for creation, assignment, verification, and unmatched lifecycle events
+- progress percentage updates remain sourced from `WORK_ORDER_PROGRESS`
+- no fuzzy timestamp matching is used
+- work-order events use deterministic chronological ordering; matching timestamps use source order and the source-specific numeric ID
+- request events order by `Changed_At ASC, History_ID ASC`
+
+Frontend:
+
+- active frontend change only in `src/main/webapp/js/script.js`; `API_ENDPOINTS.workOrderHistory` and a guarded same-origin, no-store GET loader were added
+- Administrator Work Order View appends a Work Order Timeline and a separate Request Timeline when request events exist
+- Technician detail uses the consolidated Work Order Timeline instead of relying only on the prior progress-only modal block
+- timeline responses are discarded after logout, account switch, modal close, or selected-work-order changes
+- rendering uses safe DOM creation and `textContent`; no new navigation page was required
+- `index.html` and `workflows.js` remain unchanged
+
+Main implementation files:
+
+- NEW: `src/main/java/ph/edu/htcgsc/serviceportal/dao/WorkOrderHistoryDAO.java`
+- NEW: `src/main/java/ph/edu/htcgsc/serviceportal/servlet/WorkOrderHistoryServlet.java`
+- NEW: `src/test/java/ph/edu/htcgsc/serviceportal/dao/WorkOrderHistoryDAOTest.java`
+- NEW: `src/test/java/ph/edu/htcgsc/serviceportal/servlet/WorkOrderHistoryServletTest.java`
+- MODIFIED: `src/main/webapp/WEB-INF/web.xml`
+- MODIFIED: `src/main/webapp/js/script.js`
+
+Validation:
+
+- Java 17
+- `node --check`: PASS
+- `mvn clean test`: 115 tests, 0 failures, 0 errors, 0 skipped
+- `mvn clean package`: BUILD SUCCESS; WAR generated successfully
+- `git diff --check`: PASS
+
+Runtime verification passed with Tomcat and MySQL using `WO-2026-0002` / `workOrderId 6`:
+
+- Administrator `GET /api/work-order-history` returned HTTP 200 with separate `workOrderEvents` and `requestEvents`
+- the work-order timeline displayed Created, Assigned, Acknowledged, Work Started, Progress 40%, On Hold, Progress 60%, Resumed, Progress 80%, and Completed without duplicate lifecycle events
+- the request timeline displayed Submitted, Awaiting Approval, and Approved
+- the Administrator frontend displayed both Work Order Timeline and Request Timeline
+- Technician `GET /api/work-order-history` returned HTTP 200 with work-order events, no `requestEvents`, and no requester approval/status exposure
+- a nonexistent technician work order returned HTTP 404; malformed `workOrderId` returned HTTP 400; Requester access returned HTTP 403; unauthenticated access returned HTTP 401
+- foreign and missing technician work-order responses remain non-enumerating
+
+Boundaries preserved:
+
+- Phase 6A notification behavior remains frozen
+- requester ownership and Department Head authorization were not changed
+- no reassignment, verification, closure, audit viewer, database migration, or runtime schema change was added
+- `AUDIT_LOG` remains Phase 6C
+
+### PHASE 6B2 - Requester and Department Head History Presentation Cleanup
+
+Status:
+
+PLANNED - CURRENT NEXT SUB-PHASE
+
+Scope:
+
+- improve requester-owned request-history presentation through existing authorized APIs without exposing work-order or technician data
+- improve and sort Department Head Approval History presentation while preserving session-derived department scope
+- add backend capability only if inspection establishes a genuine authorization-safe blocker
 
 ## PHASE 6C — Audit Viewer
 
@@ -2204,7 +2295,9 @@ PHASE 6
 
 Phase 6A — Notifications: COMPLETE / FROZEN (3b79f12)
 
-Phase 6B — History Presentation: current next sub-phase
+Phase 6B1 - Work Order History Timeline: COMPLETE / FROZEN (475690e)
+
+Phase 6B2 - Requester and Department Head History Presentation Cleanup: current next sub-phase
 
 Phase 6C — Audit Viewer: planned
 
