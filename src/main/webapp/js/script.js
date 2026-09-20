@@ -38,6 +38,7 @@ const API_ENDPOINTS = Object.freeze({
   auditLogs: "api/audit-logs",
   serviceRequestReviews: "api/service-request-reviews",
   serviceRequestDuplicates: "api/service-request-duplicates",
+  aiRecommendationAnalysis: "api/ai-recommendations/analyze",
   notifications: "api/notifications",
 });
 
@@ -96,6 +97,7 @@ const state = {
   auditError: "",
   auditLoadVersion: 0,
   auditFilters: {},
+  adminAnalysisRequestId: null,
 };
 
 /* =========================
@@ -286,6 +288,16 @@ function mapAdministratorReviewFromApi(item) {
     aiAnalysisMessage: ai.analysisMessage || "",
 
     aiRecommendationMethod: ai.recommendationMethod || "",
+
+    aiCategoryExplanation: ai.categoryExplanation || "",
+
+    aiPriorityExplanation: ai.priorityExplanation || "",
+
+    aiDuplicateExplanation: ai.duplicateExplanation || "",
+
+    aiModelName: ai.modelName || "",
+
+    aiModelVersion: ai.modelVersion || "",
   };
 }
 
@@ -2465,6 +2477,13 @@ function renderAdminReviewTable() {
 
     actions.append(
       makeRowAction("View", "view-admin-request", request.id),
+
+      makeRowAction(
+        "Run Advisory Analysis",
+        "analyze-request",
+        request.id,
+        "secondary",
+      ),
 
       makeRowAction("Forward", "forward-request", request.id, "primary"),
 
@@ -6110,13 +6129,16 @@ async function openForwardRequestModal(request) {
 
   const error = byId("adminForwardError");
 
+  const analysisButton = byId("adminRunAdvisoryAnalysis");
+
   if (
     !form ||
     !categorySelect ||
     !prioritySelect ||
     !departmentSelect ||
     !submitButton ||
-    !error
+    !error ||
+    !analysisButton
   ) {
     showToast("The Forward Request form is unavailable.", "error");
 
@@ -6129,8 +6151,9 @@ async function openForwardRequestModal(request) {
   byId("adminForwardRequestedCategory").textContent =
     request.requestedCategory || request.category || "Not specified";
 
-  byId("adminForwardAiRecommendation").textContent =
-    request.aiCategory || "Awaiting AI analysis";
+  renderAdminAdvisoryRecommendation(request);
+  analysisButton.disabled = state.adminAnalysisRequestId !== null;
+  analysisButton.onclick = () => runAdvisoryAnalysis(request, analysisButton);
 
   categorySelect.replaceChildren(new Option("Loading categories...", ""));
 
@@ -6209,6 +6232,122 @@ async function openForwardRequestModal(request) {
       loadError.message || "Unable to prepare the Forward Request form.";
 
     showToast(error.textContent, "error");
+  }
+}
+
+function renderAdminAdvisoryRecommendation(request) {
+  const heading = byId("adminForwardAiRecommendation");
+  const details = byId("adminForwardAiDetails");
+
+  if (!heading || !details) {
+    return;
+  }
+
+  heading.textContent = request.aiCategory || "Awaiting AI analysis";
+  details.replaceChildren();
+
+  const status = request.aiStatus || "Pending";
+  details.appendChild(
+    createElement(
+      "span",
+      "",
+      `Status: ${status}. ${request.aiRecommendationMethod || "AI recommendations are advisory only."}`,
+    ),
+  );
+
+  [request.aiCategoryExplanation, request.aiPriorityExplanation, request.aiDuplicateExplanation]
+    .filter(Boolean)
+    .forEach((explanation) => {
+      details.appendChild(createElement("span", "", explanation));
+    });
+}
+
+async function runAdvisoryAnalysis(request, button = null) {
+  const requestId = Number(request.databaseId);
+
+  if (!Number.isSafeInteger(requestId) || requestId <= 0) {
+    showToast("The database request identifier is unavailable.", "error");
+    return;
+  }
+
+  if (state.adminAnalysisRequestId !== null) {
+    return;
+  }
+
+  const account = state.currentAccount;
+  state.adminAnalysisRequestId = requestId;
+  const originalText = button?.textContent || "Run Advisory Analysis";
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Analyzing...";
+  }
+
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch(API_ENDPOINTS.aiRecommendationAnalysis, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        [csrf.headerName]: csrf.token,
+      },
+      credentials: "same-origin",
+      cache: "no-store",
+      body: JSON.stringify({ requestId }),
+    });
+    const data = await readJsonResponse(response);
+
+    if (state.currentAccount !== account || state.activeRole !== "administrator") {
+      return;
+    }
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Unable to run advisory analysis.");
+    }
+
+    const recommendation = data.recommendation || {};
+    if (!data.available) {
+      request.aiStatus = recommendation.analysisStatus || "Unavailable";
+      request.aiCategory = "Advisory analysis unavailable";
+      request.aiPriority = "Unavailable";
+      request.aiRecommendationMethod = "None";
+      request.aiCategoryExplanation = "";
+      request.aiPriorityExplanation = "";
+      request.aiDuplicateExplanation = "";
+      request.duplicateCheck = "No duplicate analysis available";
+      renderAdminAdvisoryRecommendation(request);
+      renderAdminReviewTable();
+      renderAdminAiSummary();
+      showToast(data.message || "Advisory analysis is currently unavailable.", "warning");
+    } else {
+      request.aiStatus = recommendation.analysisStatus || "Completed";
+      request.aiCategory = recommendation.recommendedCategoryName || "No AI category recommendation";
+      request.aiPriority = recommendation.recommendedPriority || "No AI priority recommendation";
+      request.aiRecommendationMethod = recommendation.recommendationMethod || "Rule-Based";
+      request.aiCategoryExplanation = recommendation.categoryExplanation || "";
+      request.aiPriorityExplanation = recommendation.priorityExplanation || "";
+      request.aiDuplicateExplanation = recommendation.duplicateExplanation || "";
+      request.duplicateCheck = recommendation.possibleDuplicateRequestNumber
+        ? `Possible duplicate: ${recommendation.possibleDuplicateRequestNumber}`
+        : "No duplicate indicated";
+      renderAdminAdvisoryRecommendation(request);
+      renderAdminReviewTable();
+      renderAdminAiSummary();
+      showToast("Advisory analysis is ready for review.", "success");
+    }
+  } catch (error) {
+    if (state.currentAccount === account && state.activeRole === "administrator") {
+      showToast(error.message || "Unable to run advisory analysis.", "error");
+    }
+  } finally {
+    if (state.adminAnalysisRequestId === requestId) {
+      state.adminAnalysisRequestId = null;
+    }
+    if (button && state.currentAccount === account) {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
   }
 }
 
@@ -6609,6 +6748,10 @@ function handleAdminTableAction(event) {
 
   if (button.dataset.action === "view-admin-request") {
     showRequestDetails(request);
+  }
+
+  if (button.dataset.action === "analyze-request") {
+    runAdvisoryAnalysis(request, button);
   }
 
   if (button.dataset.action === "forward-request") {
