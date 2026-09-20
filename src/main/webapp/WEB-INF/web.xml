@@ -133,6 +133,10 @@
     <servlet-name>WorkOrderHistoryServlet</servlet-name>
     <servlet-class>ph.edu.htcgsc.serviceportal.servlet.WorkOrderHistoryServlet</servlet-class>
   </servlet>
+  <servlet>
+    <servlet-name>AuditLogServlet</servlet-name>
+    <servlet-class>ph.edu.htcgsc.serviceportal.servlet.AuditLogServlet</servlet-class>
+  </servlet>
   <servlet-mapping>
     <servlet-name>HealthServlet</servlet-name>
     <url-pattern>/api/health</url-pattern>
@@ -225,6 +229,10 @@
   <servlet-mapping>
     <servlet-name>WorkOrderHistoryServlet</servlet-name>
     <url-pattern>/api/work-order-history</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>AuditLogServlet</servlet-name>
+    <url-pattern>/api/audit-logs</url-pattern>
   </servlet-mapping>
   <session-config>
     <session-timeout>30</session-timeout>

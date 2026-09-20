@@ -786,6 +786,24 @@
                 <div class="table-card panel-card"><div class="table-heading"><div><small>Personnel Records</small><h3>School Personnel</h3></div><span class="record-count" id="personnelRecordCount">0 Records</span></div><div class="table-scroll"><table><thead><tr><th>Personnel ID</th><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Status</th></tr></thead><tbody id="personnelTableBody"></tbody></table></div></div>
               </div>
             </section>
+
+            <section class="workspace-view" data-view="administrator-audit" hidden>
+              <div class="table-card panel-card audit-viewer-card">
+                <div class="table-heading"><div><small>Administrative Evidence</small><h3>Audit Viewer</h3></div><span class="record-count" id="auditRecordCount">0 Records</span></div>
+                <form class="table-tools audit-filter-toolbar" id="auditFilterForm">
+                  <label class="filter-control"><span>Action</span><input id="auditActionType" type="text" maxlength="60" placeholder="ACTION_TYPE" aria-label="Filter audit records by action type"></label>
+                  <label class="filter-control"><span>Outcome</span><select id="auditOutcome" aria-label="Filter audit records by outcome"><option value="">All outcomes</option><option value="SUCCESS">Success</option><option value="FAILURE">Failure</option><option value="DENIED">Denied</option></select></label>
+                  <label class="filter-control"><span>Request ID</span><input id="auditRequestId" type="number" min="1" step="1" inputmode="numeric" aria-label="Filter audit records by request ID"></label>
+                  <label class="filter-control"><span>Work Order ID</span><input id="auditWorkOrderId" type="number" min="1" step="1" inputmode="numeric" aria-label="Filter audit records by work order ID"></label>
+                  <label class="filter-control"><span>From</span><input id="auditFrom" type="datetime-local" aria-label="Filter audit records from date and time"></label>
+                  <label class="filter-control"><span>To</span><input id="auditTo" type="datetime-local" aria-label="Filter audit records to date and time"></label>
+                  <div class="row-actions audit-filter-actions"><button class="button button-primary button-small" type="submit">Apply Filters</button><button class="button button-secondary button-small" type="reset">Clear Filters</button></div>
+                </form>
+                <div class="table-scroll"><table class="audit-table"><thead><tr><th>Date / Time</th><th>Action</th><th>Outcome</th><th>Actor</th><th>Entity</th><th>Request / Work Order</th><th>Summary</th></tr></thead><tbody id="auditTableBody"></tbody></table></div>
+                <div class="table-empty" id="auditEmptyState" hidden><strong>No audit records found</strong><span>Try changing the selected filters.</span></div>
+                <div class="form-actions"><button class="button button-secondary button-small" id="auditLoadOlderButton" type="button" hidden>Load Older</button></div>
+              </div>
+            </section>
           </div>
 
           <!-- APPROVER -->

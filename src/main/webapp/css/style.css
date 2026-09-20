@@ -3860,3 +3860,86 @@ table tbody tr:hover { background: #edf7f1; }
   background-image: none;
   padding-right: 12px;
 }
+
+/* Phase 6C Audit Viewer */
+.audit-filter-toolbar {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(6, minmax(140px, 1fr));
+}
+
+.audit-filter-toolbar .filter-control {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.audit-filter-toolbar input,
+.audit-filter-toolbar select {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+}
+
+.audit-filter-actions {
+  grid-column: 1 / -1;
+}
+
+.audit-table {
+  min-width: 1080px;
+}
+
+.audit-table .audit-timestamp {
+  min-width: 175px;
+  white-space: nowrap;
+}
+
+.audit-table .audit-action {
+  min-width: 155px;
+}
+
+.audit-table .audit-actor {
+  min-width: 185px;
+}
+
+.audit-table .audit-entity {
+  min-width: 135px;
+}
+
+.audit-table .audit-reference-cell {
+  min-width: 155px;
+}
+
+.audit-table .audit-summary {
+  min-width: 270px;
+  overflow-wrap: anywhere;
+}
+
+.audit-references {
+  display: grid;
+  gap: 3px;
+}
+
+@media (max-width: 1120px) {
+  .audit-filter-toolbar {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .audit-filter-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .audit-filter-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .audit-filter-actions .button {
+    flex: 1 1 auto;
+  }
+}

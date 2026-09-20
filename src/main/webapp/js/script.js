@@ -35,6 +35,7 @@ const API_ENDPOINTS = Object.freeze({
   workOrders: "api/work-orders",
   workOrderProgress: "api/work-order-progress",
   workOrderHistory: "api/work-order-history",
+  auditLogs: "api/audit-logs",
   serviceRequestReviews: "api/service-request-reviews",
   serviceRequestDuplicates: "api/service-request-duplicates",
   notifications: "api/notifications",
@@ -89,6 +90,12 @@ const state = {
   notificationsLoading: false,
   pendingAssignmentWorkOrderId: null,
   workOrderTimelineVersion: 0,
+  auditEntries: [],
+  auditNextCursor: null,
+  auditLoading: false,
+  auditError: "",
+  auditLoadVersion: 0,
+  auditFilters: {},
 };
 
 /* =========================
@@ -888,6 +895,12 @@ const roleConfiguration = {
         icon: "\u25C6",
         label: "Personnel Access",
       },
+
+      {
+        view: "administrator-audit",
+        icon: "\u25A4",
+        label: "Audit Viewer",
+      },
     ],
   },
 
@@ -1445,6 +1458,12 @@ function openWorkspaceView(viewId) {
     return;
   }
 
+  const auditView = activeInterface.querySelector('[data-view="administrator-audit"]');
+  if (auditView && !auditView.hidden && viewId !== "administrator-audit") {
+    state.auditLoadVersion += 1;
+    state.auditLoading = false;
+  }
+
   all(".workspace-view", activeInterface).forEach((view) => {
     view.hidden = view.dataset.view !== viewId;
   });
@@ -1467,6 +1486,10 @@ function openWorkspaceView(viewId) {
   } / ${title}`;
 
   document.body.classList.remove("sidebar-open");
+
+  if (viewId === "administrator-audit" && state.activeRole === "administrator") {
+    void loadAuditEntries();
+  }
 
   byId("sidebarToggle")?.setAttribute("aria-expanded", "false");
 
@@ -1610,6 +1633,7 @@ function clearAuthenticatedWorkspace() {
   state.workOrderTimelineVersion += 1;
   state.approverApprovalVersion += 1;
   state.requestHistoryVersion += 1;
+  state.auditLoadVersion += 1;
   state.activeRole = null;
 
   state.userName = "";
@@ -1628,6 +1652,11 @@ function clearAuthenticatedWorkspace() {
   state.notifications = [];
   state.notificationUnreadCount = null;
   state.notificationsLoading = false;
+  state.auditEntries = [];
+  state.auditNextCursor = null;
+  state.auditLoading = false;
+  state.auditError = "";
+  state.auditFilters = {};
 
   renderPublicMetrics();
   renderPublicActivity();
@@ -2216,6 +2245,156 @@ function showLatestAiRecommendation(request) {
 /* =========================
    RENDER: ADMINISTRATOR
 ========================= */
+function isAuditSessionCurrent(session, version) {
+  return state.activeRole === "administrator" &&
+    state.currentAccount?.roleId === 2 &&
+    session.account === state.currentAccount &&
+    session.version === version;
+}
+
+function auditDateTimeToInstant(value, fieldName) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`${fieldName} must be a valid date and time.`);
+  }
+  return date.toISOString();
+}
+
+function readAuditFilters() {
+  const actionType = byId("auditActionType")?.value.trim() || "";
+  const outcome = byId("auditOutcome")?.value || "";
+  const requestId = byId("auditRequestId")?.value.trim() || "";
+  const workOrderId = byId("auditWorkOrderId")?.value.trim() || "";
+  const from = auditDateTimeToInstant(byId("auditFrom")?.value, "From");
+  const to = auditDateTimeToInstant(byId("auditTo")?.value, "To");
+  if (from && to && new Date(from) > new Date(to)) {
+    throw new Error("From must not be after To.");
+  }
+  return { actionType, outcome, requestId, workOrderId, from, to };
+}
+
+function auditQuery(filters, cursor) {
+  const query = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) query.set(key, value);
+  });
+  if (cursor) query.set("cursor", cursor);
+  return query.toString();
+}
+
+function formatAuditActor(entry) {
+  if (entry.actorName) return entry.actorRole ? `${entry.actorName} (${entry.actorRole})` : entry.actorName;
+  return entry.actorId ? `Personnel #${entry.actorId}` : "—";
+}
+
+function formatAuditEntity(entry) {
+  const type = entry.entityType || "Not specified";
+  return entry.entityId ? `${type} #${entry.entityId}` : type;
+}
+
+function formatAuditAction(actionType) {
+  if (!actionType) return "Not specified";
+  return String(actionType).toLowerCase().split("_").filter(Boolean)
+    .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`).join(" ") || "Not specified";
+}
+
+function createAuditReferences(entry) {
+  const references = createElement("div", "audit-references");
+  const request = entry.requestNumber || (entry.requestId ? `Request #${entry.requestId}` : "");
+  const workOrder = entry.workOrderNumber || (entry.workOrderId ? `Work Order #${entry.workOrderId}` : "");
+  if (request) references.appendChild(createElement("span", "", request));
+  if (workOrder) references.appendChild(createElement("span", "", workOrder));
+  if (!request && !workOrder) references.appendChild(createElement("span", "", "—"));
+  return references;
+}
+
+function renderAuditViewer() {
+  const body = byId("auditTableBody");
+  const empty = byId("auditEmptyState");
+  const count = byId("auditRecordCount");
+  const loadOlder = byId("auditLoadOlderButton");
+  if (!body || !empty || !count || !loadOlder) return;
+
+  body.replaceChildren();
+  state.auditEntries.forEach((entry) => {
+    const row = document.createElement("tr");
+    const outcome = document.createElement("td");
+    outcome.appendChild(createBadge(entry.outcome || "Unknown"));
+    const dateCell = createElement("td", "audit-timestamp", formatDateTime(entry.createdAt));
+    const actionCell = createElement("td", "audit-action", formatAuditAction(entry.actionType));
+    const actorCell = createElement("td", "audit-actor", formatAuditActor(entry));
+    const entityCell = createElement("td", "audit-entity", formatAuditEntity(entry));
+    const referencesCell = createElement("td", "audit-reference-cell");
+    referencesCell.appendChild(createAuditReferences(entry));
+    const summaryCell = createElement("td", "audit-summary", entry.summary || "No summary");
+    [
+      dateCell,
+      actionCell,
+      outcome,
+      actorCell,
+      entityCell,
+      referencesCell,
+      summaryCell,
+    ].forEach((cell) => row.appendChild(cell));
+    body.appendChild(row);
+  });
+
+  count.textContent = `${state.auditEntries.length} ${state.auditEntries.length === 1 ? "Record" : "Records"}`;
+  empty.hidden = state.auditLoading || Boolean(state.auditError) || state.auditEntries.length > 0;
+  loadOlder.hidden = !state.auditNextCursor;
+  loadOlder.disabled = state.auditLoading || !state.auditNextCursor;
+  loadOlder.textContent = state.auditLoading && state.auditNextCursor ? "Loading…" : "Load Older";
+}
+
+async function loadAuditEntries(append = false) {
+  if (state.activeRole !== "administrator" || !state.currentAccount) return;
+  if (state.auditLoading && append) return;
+  if (state.auditLoading) state.auditLoadVersion += 1;
+  const cursor = append ? state.auditNextCursor : null;
+  if (append && !cursor) return;
+  const requestVersion = ++state.auditLoadVersion;
+  const session = { account: state.currentAccount, version: requestVersion };
+  state.auditLoading = true;
+  state.auditError = "";
+  if (!append) {
+    state.auditEntries = [];
+    state.auditNextCursor = null;
+  }
+  renderAuditViewer();
+
+  try {
+    const query = auditQuery(state.auditFilters, cursor);
+    const response = await fetch(`${API_ENDPOINTS.auditLogs}${query ? `?${query}` : ""}`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    const data = await readJsonResponse(response);
+    if (!response.ok || !data?.success) throw new Error(data?.message || "Unable to load audit records.");
+    if (!isAuditSessionCurrent(session, requestVersion)) return;
+    const entries = Array.isArray(data.entries) ? data.entries : [];
+    if (append) {
+      const knownIds = new Set(state.auditEntries.map((entry) => entry.auditId));
+      state.auditEntries.push(...entries.filter((entry) => !knownIds.has(entry.auditId)));
+    } else {
+      state.auditEntries = entries;
+    }
+    state.auditNextCursor = typeof data.nextCursor === "string" && data.nextCursor ? data.nextCursor : null;
+  } catch (error) {
+    if (!isAuditSessionCurrent(session, requestVersion)) return;
+    state.auditError = error.message || "Unable to load audit records.";
+    state.auditNextCursor = null;
+    showToast(state.auditError, "error");
+  } finally {
+    if (isAuditSessionCurrent(session, requestVersion)) {
+      state.auditLoading = false;
+      renderAuditViewer();
+    }
+  }
+}
+
 function adminReviewRecords() {
   return state.adminReviewRequests;
 }
@@ -6856,6 +7035,27 @@ function initializeEvents() {
     if (button) {
       openWorkspaceView(button.dataset.workspaceView);
     }
+  });
+
+  on(byId("auditFilterForm"), "submit", (event) => {
+    event.preventDefault();
+    try {
+      state.auditFilters = readAuditFilters();
+      void loadAuditEntries();
+    } catch (error) {
+      showToast(error.message || "Audit filters are invalid.", "error");
+    }
+  });
+
+  on(byId("auditFilterForm"), "reset", () => {
+    queueMicrotask(() => {
+      state.auditFilters = {};
+      void loadAuditEntries();
+    });
+  });
+
+  on(byId("auditLoadOlderButton"), "click", () => {
+    void loadAuditEntries(true);
   });
 
   /* =========================
