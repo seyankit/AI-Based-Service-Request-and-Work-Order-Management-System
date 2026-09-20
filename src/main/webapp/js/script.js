@@ -33,6 +33,7 @@ const API_ENDPOINTS = Object.freeze({
   personnel: "api/personnel",
   approvals: "api/approvals",
   workOrders: "api/work-orders",
+  workOrderProgress: "api/work-order-progress",
   serviceRequestReviews: "api/service-request-reviews",
   serviceRequestDuplicates: "api/service-request-duplicates",
 });
@@ -68,6 +69,17 @@ const state = {
   approvals: [],
   approvalHistory: [],
   technicianHistory: [],
+  technicianWorkOrders: [],
+  technicianWorkOrder: null,
+  technicianWorkOrderId: null,
+  technicianAction: "",
+  technicianSessionVersion: 0,
+  technicianQueueVersion: 0,
+  technicianDetailVersion: 0,
+  technicianLoading: false,
+  technicianDetailLoading: false,
+  technicianSubmitting: false,
+  technicianQueueError: "",
   notifications: [],
   pendingAssignmentWorkOrderId: null,
 };
@@ -460,6 +472,208 @@ async function loadWorkOrders() {
   }
 }
 
+function mapTechnicianWorkOrderFromApi(record) {
+  const databaseId = Number(record?.workOrderId);
+  if (!Number.isSafeInteger(databaseId) || databaseId <= 0 ||
+      !Array.isArray(record.progressHistory) ||
+      record.progressHistory.some((entry) => !entry || !Number.isSafeInteger(Number(entry.progressId)))) {
+    throw new Error("The server returned invalid technician work-order data.");
+  }
+  return {
+    ...mapWorkOrderFromApi(record),
+    databaseId,
+    status: record.status || "",
+    requestDescription: record.requestDescription || "",
+    departmentName: record.departmentName || "",
+    technicianName: record.technicianName || "",
+    targetStartDate: record.targetStartDate || "",
+    acknowledgedAt: record.acknowledgedAt || "",
+    actualStartAt: record.actualStartAt || "",
+    completedAt: record.completedAt || "",
+    progressHistory: record.progressHistory,
+  };
+}
+
+function technicianSession() {
+  return { account: state.currentAccount, version: state.technicianSessionVersion };
+}
+
+function isTechnicianSessionCurrent(session) {
+  return state.activeRole === "technician" &&
+    state.currentAccount?.roleId === 4 &&
+    session.account === state.currentAccount &&
+    session.version === state.technicianSessionVersion;
+}
+
+function clearTechnicianSelection() {
+  state.technicianDetailVersion += 1;
+  state.technicianWorkOrder = null;
+  state.technicianWorkOrderId = null;
+  state.technicianDetailLoading = false;
+  if (byId("detailsModal")?.dataset.technicianWorkOrderId) {
+    closeModal("detailsModal");
+    byId("detailsModalContent").replaceChildren();
+    byId("detailsModalTitle").textContent = "Details";
+    delete byId("detailsModal").dataset.technicianWorkOrderId;
+  }
+  populateTechnicianUpdateForm(null);
+}
+
+function clearTechnicianWorkspace() {
+  state.technicianSessionVersion += 1;
+  state.technicianQueueVersion += 1;
+  state.technicianWorkOrders = [];
+  state.technicianHistory = [];
+  state.technicianLoading = false;
+  state.technicianSubmitting = false;
+  state.technicianQueueError = "";
+  clearTechnicianSelection();
+  renderTechnicianWorkspace();
+}
+
+function renderTechnicianWorkspace() {
+  const records = new Map(state.technicianWorkOrders.map((order) => [order.databaseId, order]));
+  if (state.technicianWorkOrder) {
+    records.set(state.technicianWorkOrder.databaseId, state.technicianWorkOrder);
+  }
+  const history = new Map();
+  records.forEach((order) => {
+    order.progressHistory.forEach((record) => {
+      history.set(`${order.databaseId}:${record.progressId}`, {
+        ...record, workOrderNumber: order.id, requestNumber: order.requestId,
+        workOrderId: order.databaseId,
+      });
+    });
+  });
+  state.technicianHistory = [...history.values()].sort((left, right) =>
+    (Date.parse(left.recordedAt) || 0) - (Date.parse(right.recordedAt) || 0) ||
+    Number(left.progressId) - Number(right.progressId));
+  renderTechnicianMetrics();
+  renderTechnicianWorkTable();
+  renderTechnicianHistory();
+  renderTechnicianProgressActions();
+}
+
+async function readTechnicianResponse(response) {
+  const data = await readJsonResponse(response);
+  if (!response.ok || data?.success !== true) {
+    const error = new Error(data?.message || "Unable to load or update technician work orders.");
+    error.status = response.status;
+    throw error;
+  }
+  return data;
+}
+
+function handleTechnicianRequestError(error, notify) {
+  if (error.status === 401) {
+    clearAuthenticatedWorkspace();
+  } else if (error.status === 403 || error.status === 404) {
+    const id = state.technicianWorkOrderId;
+    state.technicianWorkOrders = state.technicianWorkOrders.filter((order) => order.databaseId !== id);
+    clearTechnicianSelection();
+    renderTechnicianWorkspace();
+  }
+  if (notify || error.status === 401) showToast(error.message || "Unable to connect. Refresh and try again.", "error");
+}
+
+async function loadTechnicianWorkOrders(notify = true) {
+  const session = technicianSession();
+  if (!isTechnicianSessionCurrent(session)) return false;
+  const requestVersion = ++state.technicianQueueVersion;
+  const detailVersion = state.technicianDetailVersion;
+  const current = () => isTechnicianSessionCurrent(session) && requestVersion === state.technicianQueueVersion;
+  state.technicianLoading = true;
+  state.technicianQueueError = "";
+  renderTechnicianWorkspace();
+  try {
+    const response = await fetch(API_ENDPOINTS.workOrderProgress, {
+      method: "GET", headers: { Accept: "application/json" },
+      credentials: "same-origin", cache: "no-store",
+    });
+    const data = await readTechnicianResponse(response);
+    if (!current()) return false;
+    if (!Array.isArray(data.workOrders)) throw new Error("The server returned an invalid technician queue.");
+    state.technicianWorkOrders = data.workOrders.map(mapTechnicianWorkOrderFromApi);
+    const selected = state.technicianWorkOrder;
+    if (selected && detailVersion !== state.technicianDetailVersion) {
+      state.technicianWorkOrders = state.technicianWorkOrders.map((order) =>
+        order.databaseId === selected.databaseId ? selected : order);
+    }
+    return true;
+  } catch (error) {
+    if (!current()) return false;
+    state.technicianWorkOrders = [];
+    state.technicianQueueError = "Unable to load assignments. Select Refresh to try again.";
+    handleTechnicianRequestError(error, notify);
+    return false;
+  } finally {
+    if (current()) {
+      state.technicianLoading = false;
+      renderTechnicianWorkspace();
+    }
+  }
+}
+
+async function loadTechnicianWorkOrderDetails(workOrderId, notify = true) {
+  const session = technicianSession();
+  if (!isTechnicianSessionCurrent(session)) return null;
+  const id = Number(workOrderId);
+  clearTechnicianSelection();
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    if (notify) showToast("Select a work order with a valid database identifier.", "error");
+    renderTechnicianWorkspace();
+    return null;
+  }
+  state.technicianWorkOrderId = id;
+  state.technicianDetailLoading = true;
+  const requestVersion = state.technicianDetailVersion;
+  const current = () => isTechnicianSessionCurrent(session) &&
+    requestVersion === state.technicianDetailVersion && state.technicianWorkOrderId === id;
+  renderTechnicianProgressActions();
+  renderTechnicianHistory();
+  try {
+    const response = await fetch(`${API_ENDPOINTS.workOrderProgress}?workOrderId=${id}`, {
+      method: "GET", headers: { Accept: "application/json" },
+      credentials: "same-origin", cache: "no-store",
+    });
+    const data = await readTechnicianResponse(response);
+    if (!current()) return null;
+    const order = mapTechnicianWorkOrderFromApi(data.workOrder);
+    if (order.databaseId !== id) throw new Error("The server returned a different work order.");
+    state.technicianWorkOrder = order;
+    state.technicianWorkOrders = state.technicianWorkOrders.map((item) => item.databaseId === id ? order : item);
+    populateTechnicianUpdateForm(order);
+    return order;
+  } catch (error) {
+    if (!current()) return null;
+    clearTechnicianSelection();
+    if (error.status === 403 || error.status === 404) {
+      state.technicianWorkOrders = state.technicianWorkOrders.filter((order) => order.databaseId !== id);
+    }
+    handleTechnicianRequestError(error, notify);
+    renderTechnicianWorkspace();
+    return null;
+  } finally {
+    if (current()) {
+      state.technicianDetailLoading = false;
+      renderTechnicianProgressActions();
+      renderTechnicianWorkspace();
+    }
+  }
+}
+
+async function refreshTechnicianWorkspace() {
+  const session = technicianSession();
+  if (!isTechnicianSessionCurrent(session) || state.technicianSubmitting || state.technicianLoading) return;
+  const id = state.technicianWorkOrderId;
+  const detailVersion = state.technicianDetailVersion;
+  await loadTechnicianWorkOrders();
+  if (isTechnicianSessionCurrent(session) && !state.technicianSubmitting && id &&
+      detailVersion === state.technicianDetailVersion && id === state.technicianWorkOrderId) {
+    await loadTechnicianWorkOrderDetails(id);
+  }
+}
+
 async function getCsrfToken() {
   const response = await fetch(API_ENDPOINTS.csrfToken, {
     method: "GET",
@@ -473,7 +687,9 @@ async function getCsrfToken() {
   const data = await response.json();
 
   if (!response.ok || !data.success || !data.csrfToken) {
-    throw new Error(data.message || "Unable to obtain the security token.");
+    const error = new Error(data.message || "Unable to obtain the security token.");
+    error.status = response.status;
+    throw error;
   }
 
   return {
@@ -792,6 +1008,12 @@ function formatDate(value) {
     day: "numeric",
     year: "numeric",
   }).format(date);
+}
+
+function formatDateTime(value) {
+  if (value == null || String(value).trim() === "") return "\u2014";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "\u2014" : date.toLocaleString();
 }
 
 function normalizeText(value) {
@@ -1289,6 +1511,12 @@ function activateRoleWorkspace(role, name, email) {
     return;
   }
 
+  clearTechnicianWorkspace();
+  if (role === "technician" || state.activeRole === "technician") {
+    closeModal("detailsModal");
+    byId("detailsModalContent").replaceChildren();
+    byId("detailsModalTitle").textContent = "Details";
+  }
   state.activeRole = role;
 
   state.userName = name;
@@ -1330,10 +1558,6 @@ function activateRoleWorkspace(role, name, email) {
     byId("requesterEmail").readOnly = true;
   }
 
-  if (role === "technician") {
-    byId("progressTechnician").value = name;
-  }
-
   byId("publicContent").hidden = true;
 
   byId("workspace").hidden = false;
@@ -1355,6 +1579,7 @@ function activateRoleWorkspace(role, name, email) {
 }
 
 function clearAuthenticatedWorkspace() {
+  clearTechnicianWorkspace();
   state.activeRole = null;
 
   state.userName = "";
@@ -1400,6 +1625,7 @@ function clearAuthenticatedWorkspace() {
 async function signOut() {
   const button = byId("signOutButton");
 
+  if (state.activeRole === "technician") clearTechnicianWorkspace();
   if (button) {
     button.disabled = true;
     button.setAttribute("aria-busy", "true");
@@ -2357,19 +2583,19 @@ function renderApprovalHistory() {
    RENDER: TECHNICIAN
 ========================= */
 function renderTechnicianMetrics() {
-  const assigned = state.workOrders.filter(
-    (workOrder) => workOrder.status !== "Completed",
+  const assigned = state.technicianWorkOrders.filter(
+    (workOrder) => ["Assigned", "Acknowledged"].includes(workOrder.status),
   ).length;
 
-  const progress = state.workOrders.filter(
+  const progress = state.technicianWorkOrders.filter(
     (workOrder) => workOrder.status === "In Progress",
   ).length;
 
-  const hold = state.workOrders.filter(
+  const hold = state.technicianWorkOrders.filter(
     (workOrder) => workOrder.status === "On Hold",
   ).length;
 
-  const completed = state.workOrders.filter(
+  const completed = state.technicianWorkOrders.filter(
     (workOrder) => workOrder.status === "Completed",
   ).length;
 
@@ -2400,7 +2626,7 @@ function renderTechnicianWorkTable() {
 
   body.replaceChildren();
 
-  state.workOrders.forEach((workOrder) => {
+  state.technicianWorkOrders.forEach((workOrder) => {
     const row = document.createElement("tr");
 
     const idCell = document.createElement("td");
@@ -2415,11 +2641,11 @@ function renderTechnicianWorkTable() {
 
     const actions = createElement("div", "row-actions");
 
-    actions.append(
-      makeRowAction("View", "view-tech-work", workOrder.id),
-
-      makeRowAction("Update", "update-tech-work", workOrder.id, "primary"),
-    );
+    actions.append(makeRowAction("View", "view-tech-work", workOrder.databaseId));
+    if (technicianActionsForStatus(workOrder.status).length) {
+      actions.append(makeRowAction("Update", "update-tech-work", workOrder.databaseId, "primary"));
+    }
+    all("button", actions).forEach((button) => { button.disabled = state.technicianSubmitting; });
 
     actionCell.appendChild(actions);
 
@@ -2441,8 +2667,18 @@ function renderTechnicianWorkTable() {
     body.appendChild(row);
   });
 
-  byId("technicianWorkCount").textContent = `${state.workOrders.length} ${
-    state.workOrders.length === 1 ? "Record" : "Records"
+  if (!state.technicianWorkOrders.length) {
+    const row = createElement("tr");
+    const cell = createElement("td", "notification-empty", state.technicianLoading
+      ? "Loading assigned work orders..."
+      : state.technicianQueueError || "No work orders are currently assigned to you.");
+    cell.colSpan = 7;
+    row.appendChild(cell);
+    body.appendChild(row);
+  }
+  byId("technicianRefreshButton").disabled = state.technicianLoading || state.technicianSubmitting;
+  byId("technicianWorkCount").textContent = `${state.technicianWorkOrders.length} ${
+    state.technicianWorkOrders.length === 1 ? "Record" : "Records"
   }`;
 }
 
@@ -2463,46 +2699,52 @@ function renderTechnicianHistory() {
 
     const idCell = document.createElement("td");
 
-    idCell.appendChild(createElement("strong", "", record.workOrderId));
+    idCell.appendChild(createElement("strong", "", record.workOrderNumber));
 
     const statusCell = document.createElement("td");
 
-    statusCell.appendChild(createBadge(record.status));
+    statusCell.appendChild(createElement("span", "", `${record.previousStatus || "\u2014"} → ${record.newStatus || "\u2014"}`));
 
     [
       idCell,
 
-      createElement("td", "", record.requestId),
+      createElement("td", "", record.requestNumber),
+
+      createElement("td", "", record.updateType),
 
       statusCell,
 
-      createElement("td", "", record.actionTaken),
+      createElement("td", "", record.progressPercentage == null ? "\u2014" : `${record.progressPercentage}%`),
 
-      createElement("td", "", formatDate(record.completionDate)),
+      createElement("td", "", record.progressNotes),
 
-      createElement("td", "", record.remarks || "\u2014"),
+      createElement("td", "", formatDateTime(record.recordedAt)),
     ].forEach((cell) => row.appendChild(cell));
 
     body.appendChild(row);
   });
 
-  state.technicianHistory.slice(0, 4).forEach((record) => {
+  const selectedHistory = state.technicianWorkOrderId
+    ? state.technicianHistory.filter((record) => record.workOrderId === state.technicianWorkOrderId)
+    : state.technicianHistory;
+  selectedHistory.slice(-4).forEach((record) => {
     const item = createElement("div", "compact-item");
 
     const copy = createElement("div");
 
     copy.append(
-      createElement("strong", "", record.workOrderId),
+      createElement("strong", "", `${record.workOrderNumber} · ${record.updateType}`),
 
-      createElement("span", "", record.actionTaken),
+      createElement("span", "", record.progressNotes),
+      createElement("small", "", formatDateTime(record.recordedAt)),
     );
 
-    item.append(copy, createBadge(record.status));
+    item.append(copy, createBadge(record.newStatus));
 
     compact.appendChild(item);
   });
 
-  if (state.technicianHistory.length === 0) {
+  if (selectedHistory.length === 0) {
     compact.appendChild(
       createElement(
         "div",
@@ -2510,6 +2752,14 @@ function renderTechnicianHistory() {
         "No technician updates recorded yet.",
       ),
     );
+  }
+
+  if (state.technicianHistory.length === 0) {
+    const row = createElement("tr");
+    const cell = createElement("td", "notification-empty", "No technician updates recorded yet.");
+    cell.colSpan = 7;
+    row.appendChild(cell);
+    body.appendChild(row);
   }
 
   byId("technicianHistoryCount").textContent =
@@ -2617,9 +2867,7 @@ function renderAll() {
   renderApprovalTable();
   renderApprovalHistory();
 
-  renderTechnicianMetrics();
-  renderTechnicianWorkTable();
-  renderTechnicianHistory();
+  renderTechnicianWorkspace();
 
   renderNotifications();
 }
@@ -2843,7 +3091,16 @@ async function showRequestDetails(request) {
   let detailRequest;
 
   try {
-    detailRequest = await loadRequesterServiceRequestDetails(requestId);
+    if (state.activeRole === "administrator") {
+      detailRequest = state.adminReviewRequests.find(
+        (item) => Number(item.databaseId) === requestId,
+      );
+      if (!detailRequest) {
+        throw new Error("This request is no longer available in the Administrator queue.");
+      }
+    } else {
+      detailRequest = await loadRequesterServiceRequestDetails(requestId);
+    }
   } catch (error) {
     console.error("Request details error:", error);
     showToast(error.message || "Unable to load request details.", "error");
@@ -3353,6 +3610,7 @@ function validateControl(input) {
   )
     return true;
 
+  if (input.closest("#progressUpdateForm")) return validateTechnicianProgressControl(input);
   if (input.tagName === "SELECT") return validateSelect(input);
   if (input.type === "email") return validateEmail(input);
   if (
@@ -3749,27 +4007,123 @@ function populateWorkOrderForm(workOrder) {
   byId("technicianRemarks").value = workOrder.remarks;
 }
 
+const TECHNICIAN_ACTION_LABELS = Object.freeze({
+  acknowledge: "Acknowledge", start: "Start Work", progress: "Update Progress",
+  hold: "Put On Hold", resume: "Resume Work", complete: "Complete Work",
+});
+
+function technicianActionsForStatus(status) {
+  switch (status) {
+    case "Assigned": return ["acknowledge"];
+    case "Acknowledged": return ["start"];
+    case "In Progress": return ["progress", "hold", "complete"];
+    case "On Hold": return ["progress", "resume"];
+    default: return [];
+  }
+}
+
 function populateTechnicianUpdateForm(workOrder) {
-  byId("progressWorkOrderId").value = workOrder.id;
+  byId("progressWorkOrderId").value = workOrder?.id || "";
+  byId("progressRequestId").value = workOrder?.requestId || "";
+  byId("progressTechnician").value = workOrder?.technicianName || "";
+  byId("progressServiceUnit").value = workOrder?.departmentName || "";
+  byId("progressWorkDescription").value = workOrder?.workDescription || "";
+  byId("progressStatusInput").value = workOrder?.status || "";
+  byId("progressActionTaken").value = "";
+  byId("progressPercentageInput").value = "";
+  byId("progressCompletionSummary").value = "";
+  state.technicianAction = "";
+  resetValidationState(byId("progressUpdateForm"));
+  renderTechnicianProgressActions();
+}
 
-  byId("progressRequestId").value = workOrder.requestId;
+function renderTechnicianProgressActions() {
+  const order = state.technicianWorkOrder;
+  const actions = isTechnicianSessionCurrent(technicianSession()) && order && !state.technicianDetailLoading
+    ? technicianActionsForStatus(order.status) : [];
+  if (!actions.includes(state.technicianAction)) state.technicianAction = "";
+  const action = state.technicianAction;
+  const busy = state.technicianSubmitting || state.technicianLoading;
+  const container = byId("technicianProgressActions");
+  container.replaceChildren();
+  actions.forEach((value) => {
+    const button = createElement("button", `button button-small ${value === action ? "button-primary" : "button-secondary"}`, TECHNICIAN_ACTION_LABELS[value]);
+    button.type = "button";
+    button.dataset.techProgressAction = value;
+    button.setAttribute("aria-pressed", String(value === action));
+    button.disabled = busy;
+    container.appendChild(button);
+  });
+  byId("technicianSelectionMessage").textContent = state.technicianDetailLoading
+    ? "Loading work-order details..."
+    : !order ? "Select a work order from Assigned Work to view available actions."
+      : !actions.length ? "This work order is read-only. No technician actions are available."
+        : action ? `Selected action: ${TECHNICIAN_ACTION_LABELS[action]}. Add notes, then submit.`
+          : "Choose an action for this work order.";
+  byId("progressActionTaken").disabled = !action || busy;
+  for (const [value, fieldId, inputId] of [
+    ["progress", "progressPercentageField", "progressPercentageInput"],
+    ["complete", "progressCompletionSummaryField", "progressCompletionSummary"],
+  ]) {
+    byId(fieldId).hidden = action !== value;
+    byId(inputId).required = action === value;
+    byId(inputId).disabled = action !== value || busy;
+  }
+  const submit = byId("technicianProgressSubmit");
+  submit.hidden = !actions.length;
+  submit.dataset.defaultLabel = TECHNICIAN_ACTION_LABELS[action] || "Select an Action";
+  setSubmitting(byId("progressUpdateForm"), state.technicianSubmitting);
+  submit.disabled = !action || busy;
+  byId("progressUpdateForm").querySelector('button[type="reset"]').disabled = !order || busy;
+}
 
-  byId("progressTechnician").value =
-    workOrder.assignedPersonnel || state.userName;
+function selectTechnicianProgressAction(action) {
+  if (state.technicianSubmitting || state.technicianLoading || state.technicianDetailLoading ||
+      !isTechnicianSessionCurrent(technicianSession()) ||
+      !technicianActionsForStatus(state.technicianWorkOrder?.status).includes(action)) return;
+  state.technicianAction = action;
+  for (const id of ["progressPercentageInput", "progressCompletionSummary"]) {
+    byId(id).value = "";
+    clearFieldState(byId(id));
+  }
+  renderTechnicianProgressActions();
+  byId("progressActionTaken").focus();
+}
 
-  byId("progressServiceUnit").value = workOrder.serviceUnit;
-
-  byId("progressWorkDescription").value = workOrder.workDescription;
-
-  byId("progressStatusInput").value = workOrder.status;
-
-  byId("progressCompletionDate").value = workOrder.completionDate;
-
-  byId("progressActionTaken").value = workOrder.actionTaken;
-
-  byId("progressMaterials").value = workOrder.materials;
-
-  byId("progressRemarks").value = workOrder.remarks;
+function showTechnicianWorkOrderDetails(order) {
+  const fields = [
+    ["Work Order Number", order.id], ["Request Number", order.requestId],
+    ["Request Title", order.requestTitle], ["Request Description", order.requestDescription, true],
+    ["Location", order.requestLocation], ["Department", order.departmentName],
+    ["Technician", order.technicianName], ["Work Description", order.workDescription, true],
+    ["Current Status", order.status], ["Assigned At", formatDateTime(order.assignedAt)],
+    ["Acknowledged At", formatDateTime(order.acknowledgedAt)],
+    ["Assignment Acknowledged At", formatDateTime(order.assignmentAcknowledgedAt)],
+    ["Actual Start", formatDateTime(order.actualStartAt)],
+    ["Target Start", formatDate(order.targetStartDate)],
+    ["Target Completion", formatDate(order.targetCompletionDate)],
+    ["Completed At", formatDateTime(order.completedAt)],
+    ["Completion Summary", order.completionSummary, true],
+    ["Assignment Notes", order.assignmentNotes, true],
+  ].map(([label, value, full]) => ({ label, value: value || "\u2014", full }));
+  showDetails(order.id, "Assigned Work Order", fields);
+  byId("detailsModal").dataset.technicianWorkOrderId = String(order.databaseId);
+  const history = createElement("div", "detail-item full");
+  history.appendChild(createElement("h3", "", "Progress History"));
+  order.progressHistory.forEach((record) => {
+    const entry = createElement("div", "compact-item");
+    const copy = createElement("div");
+    copy.append(
+      createElement("strong", "", record.updateType),
+      createElement("span", "", `${record.previousStatus} → ${record.newStatus} · ${record.progressPercentage == null ? "\u2014" : `${record.progressPercentage}%`}`),
+      createElement("span", "", record.progressNotes),
+      createElement("small", "", formatDateTime(record.recordedAt)),
+    );
+    entry.appendChild(copy);
+    history.appendChild(entry);
+  });
+  if (!order.progressHistory.length) history.appendChild(createElement("p", "notification-empty", "No progress recorded yet."));
+  byId("detailsModalContent").appendChild(history);
 }
 
 function validateCompletionDate(statusInput, dateInput, actionInput = null) {
@@ -4075,6 +4429,8 @@ async function restoreServerSession() {
     state.currentAccount = account;
     activateRoleWorkspace(account.role, account.name, account.email);
 
+    if (account.role === "technician") await loadTechnicianWorkOrders();
+
     if (account.role === "administrator") {
       try {
         await loadAdministratorServiceRequestReviews();
@@ -4247,6 +4603,7 @@ async function handleLoginSubmit(event) {
   const email = normalizeEmail(byId("loginEmail").value);
   const password = byId("loginPassword").value;
 
+  if (state.activeRole === "technician") clearTechnicianWorkspace();
   setSubmitting(form, true);
 
   try {
@@ -4304,6 +4661,11 @@ async function handleLoginSubmit(event) {
     closeModal("loginModal");
 
     activateRoleWorkspace(account.role, account.name, account.email);
+
+    if (account.role === "technician") {
+      await loadTechnicianWorkOrders();
+      if (state.currentAccount !== account || state.activeRole !== "technician") return;
+    }
 
     if (account.role === "requester") {
       await loadRequesterServiceRequests();
@@ -5170,13 +5532,105 @@ async function handleWorkOrderAssignmentSubmit(event) {
   }
 }
 
-function handleProgressUpdateSubmit(event) {
-  event.preventDefault();
+function validateTechnicianProgressControl(input) {
+  if (input.disabled || input.readOnly) return true;
+  const value = input.value.trim();
+  if (input.id === "progressPercentageInput") {
+    const percentage = Number(value);
+    if (!/^\d+$/.test(value) || !Number.isInteger(percentage) || percentage < 1 || percentage > 99) {
+      return setFieldError(input, "Enter a whole-number percentage from 1 to 99.");
+    }
+  } else {
+    const minimum = input.id === "progressCompletionSummary" ? 10 : 5;
+    if (!hasMeaningfulText(value, minimum) || value.length > 2000) {
+      return setFieldError(input, `Enter ${minimum} to 2000 meaningful characters.`);
+    }
+  }
+  input.value = value;
+  return setFieldSuccess(input);
+}
 
-  showToast(
-    "Work-order progress updates are not connected to the backend yet. No record was changed.",
-    "error",
-  );
+async function handleProgressUpdateSubmit(event) {
+  event.preventDefault();
+  const session = technicianSession();
+  if (!isTechnicianSessionCurrent(session) || state.technicianSubmitting || state.technicianLoading) return;
+  const order = state.technicianWorkOrder;
+  const id = order?.databaseId;
+  const action = state.technicianAction;
+  if (!Number.isSafeInteger(id) || id <= 0 || state.technicianDetailLoading ||
+      id !== state.technicianWorkOrderId || !technicianActionsForStatus(order?.status).includes(action)) {
+    showToast("Open a work order and choose an available action first.", "error");
+    return;
+  }
+  const form = event.currentTarget;
+  if (!validateForm(form)) return;
+  const payload = { action, workOrderId: id, progressNotes: byId("progressActionTaken").value.trim() };
+  if (action === "progress") payload.progressPercentage = Number(byId("progressPercentageInput").value);
+  if (action === "complete") payload.completionSummary = byId("progressCompletionSummary").value.trim();
+  const body = JSON.stringify(payload);
+  if (new TextEncoder().encode(body).length > 8192) {
+    showToast("The update is too large. Shorten the notes or completion summary.", "error");
+    return;
+  }
+  const detailVersion = state.technicianDetailVersion;
+  const currentSelection = () => isTechnicianSessionCurrent(session) &&
+    id === state.technicianWorkOrderId && detailVersion === state.technicianDetailVersion;
+  state.technicianQueueVersion += 1;
+  state.technicianLoading = false;
+  state.technicianSubmitting = true;
+  renderTechnicianProgressActions();
+  renderTechnicianWorkTable();
+  let saved = false;
+  let putSent = false;
+  try {
+    const csrf = await getCsrfToken();
+    if (!currentSelection()) return;
+    putSent = true;
+    const response = await fetch(API_ENDPOINTS.workOrderProgress, {
+      method: "PUT", credentials: "same-origin",
+      headers: { Accept: "application/json", "Content-Type": "application/json", [csrf.headerName]: csrf.token },
+      body,
+    });
+    const data = await readTechnicianResponse(response);
+    if (!currentSelection()) return;
+    saved = true;
+    state.technicianAction = "";
+    showToast(data.message || "Work-order update saved.", "success");
+    const queueLoaded = await loadTechnicianWorkOrders(false);
+    if (!isTechnicianSessionCurrent(session)) return;
+    const detail = await loadTechnicianWorkOrderDetails(id, false);
+    if (!isTechnicianSessionCurrent(session)) return;
+    if (!queueLoaded || !detail) {
+      clearTechnicianSelection();
+      state.technicianWorkOrderId = id;
+      showToast("The update was saved, but refreshing the work order failed. Select Refresh or reopen it.", "warning");
+    }
+  } catch (error) {
+    if (!isTechnicianSessionCurrent(session)) return;
+    if (saved) {
+      clearTechnicianSelection();
+      state.technicianWorkOrderId = id;
+      showToast("The update was saved, but refreshing failed. Select Refresh or reopen the work order.", "warning");
+    } else {
+      handleTechnicianRequestError(error, true);
+      if (!isTechnicianSessionCurrent(session)) return;
+      if (error.status === 409) {
+        state.technicianAction = "";
+        await loadTechnicianWorkOrders(false);
+        if (isTechnicianSessionCurrent(session)) await loadTechnicianWorkOrderDetails(id, false);
+      } else if (putSent && (!error.status || error.status >= 500 || error.status === 200)) {
+        clearTechnicianSelection();
+        state.technicianWorkOrderId = id;
+        showToast("The save could not be confirmed. Refresh the work order before trying again.", "warning");
+      }
+    }
+  } finally {
+    if (isTechnicianSessionCurrent(session)) {
+      state.technicianSubmitting = false;
+      renderTechnicianProgressActions();
+      renderTechnicianWorkspace();
+    }
+  }
 }
 
 /* =========================
@@ -5928,30 +6382,24 @@ function handleWorkOrderTableAction(event) {
    EVENT DELEGATION:
    TECHNICIAN TABLE
 ========================= */
-function handleTechnicianTableAction(event) {
+async function handleTechnicianTableAction(event) {
   const button = event.target.closest("[data-action]");
 
-  if (!button) {
+  if (!button || state.technicianSubmitting ||
+      !["view-tech-work", "update-tech-work"].includes(button.dataset.action)) {
     return;
   }
 
-  const workOrder = findWorkOrder(button.dataset.id);
-
-  if (!workOrder) {
-    return;
-  }
-
-  if (button.dataset.action === "view-tech-work") {
-    showWorkOrderDetails(workOrder);
-  }
-
-  if (button.dataset.action === "update-tech-work") {
-    populateTechnicianUpdateForm(workOrder);
-
+  const session = technicianSession();
+  const action = button.dataset.action;
+  if (!isTechnicianSessionCurrent(session)) return;
+  if (action === "update-tech-work") {
     openWorkspaceView("technician-update");
-
-    byId("progressWorkOrderId")?.focus();
   }
+  const order = await loadTechnicianWorkOrderDetails(button.dataset.id);
+  if (!order || !isTechnicianSessionCurrent(session) || state.technicianWorkOrder !== order) return;
+  if (action === "view-tech-work") showTechnicianWorkOrderDetails(order);
+  else byId("technicianProgressActions").querySelector("button")?.focus();
 }
 
 /* =========================
@@ -6473,6 +6921,13 @@ function initializeEvents() {
 
   on(byId("technicianWorkTableBody"), "click", handleTechnicianTableAction);
 
+  on(byId("technicianRefreshButton"), "click", refreshTechnicianWorkspace);
+
+  on(byId("technicianProgressActions"), "click", (event) => {
+    const button = event.target.closest("[data-tech-progress-action]");
+    if (button) selectTechnicianProgressAction(button.dataset.techProgressAction);
+  });
+
   /* =========================
      CLEAR CUSTOM VALIDATION
   ========================= */
@@ -6496,9 +6951,6 @@ function initializeEvents() {
     event.target.setCustomValidity("");
   });
 
-  on(byId("progressCompletionDate"), "input", (event) => {
-    event.target.setCustomValidity("");
-  });
   on(byId("personnelAccessForm"), "reset", (event) => {
     window.setTimeout(() => {
       resetValidationState(event.currentTarget);
@@ -6521,12 +6973,8 @@ function initializeEvents() {
      TECHNICIAN FORM RESET
   ========================= */
   on(byId("progressUpdateForm"), "reset", (event) => {
-    resetValidationState(event.currentTarget);
-    window.setTimeout(() => {
-      if (state.activeRole === "technician") {
-        byId("progressTechnician").value = state.userName;
-      }
-    }, 0);
+    event.preventDefault();
+    if (!state.technicianSubmitting) populateTechnicianUpdateForm(state.technicianWorkOrder);
   });
 }
 

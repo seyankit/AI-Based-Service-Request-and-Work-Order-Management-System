@@ -806,9 +806,9 @@
           <!-- TECHNICIAN -->
           <div class="role-interface" data-role="technician" hidden>
             <section class="workspace-view" data-view="technician-overview">
-              <div class="welcome-banner technician-banner"><div><small>Service Personnel / Technician</small><h3>Assigned service work</h3><p>View assigned work orders and record progress, materials, actions, and completion details.</p></div><button class="button button-light" type="button" data-workspace-link="technician-assigned">View Assignments</button></div>
+              <div class="welcome-banner technician-banner"><div><small>Service Personnel / Technician</small><h3>Assigned service work</h3><p>View assigned work orders and record progress, action notes, and completion summaries.</p></div><button class="button button-light" type="button" data-workspace-link="technician-assigned">View Assignments</button></div>
               <div class="dashboard-grid four">
-                <article class="stat-card"><div class="stat-icon">WO</div><div><small>Assigned Work</small><strong id="technicianAssignedMetric">00</strong><p>Work orders in your queue</p></div></article>
+                <article class="stat-card"><div class="stat-icon">WO</div><div><small>Assigned Work</small><strong id="technicianAssignedMetric">00</strong><p>Assigned or acknowledged; not yet started</p></div></article>
                 <article class="stat-card"><div class="stat-icon blue">IP</div><div><small>In Progress</small><strong id="technicianProgressMetric">00</strong><p>Active work</p></div></article>
                 <article class="stat-card"><div class="stat-icon amber">OH</div><div><small>On Hold</small><strong id="technicianHoldMetric">00</strong><p>Waiting for follow-up</p></div></article>
                 <article class="stat-card"><div class="stat-icon green">OK</div><div><small>Completed</small><strong id="technicianCompletedMetric">00</strong><p>Finished work records</p></div></article>
@@ -818,7 +818,7 @@
 
             <section class="workspace-view" data-view="technician-assigned" hidden>
               <div class="table-card panel-card">
-                <div class="table-heading"><div><small>Assigned Work Orders</small><h3>Assigned Work Orders</h3></div><span class="record-count" id="technicianWorkCount">0 Records</span></div>
+                <div class="table-heading"><div><small>Assigned Work Orders</small><h3>Assigned Work Orders</h3></div><div class="row-actions"><span class="record-count" id="technicianWorkCount">0 Records</span><button class="button button-secondary button-small" id="technicianRefreshButton" type="button">Refresh</button></div></div>
                 <div class="table-scroll"><table><thead><tr><th>Work Order ID</th><th>Request ID</th><th>Work Description</th><th>Service Unit</th><th>Assigned To</th><th>Status</th><th>Action</th></tr></thead><tbody id="technicianWorkTableBody"></tbody></table></div>
               </div>
             </section>
@@ -828,19 +828,20 @@
                 <div class="panel-card form-panel">
                   <div class="panel-title"><div><small>Work Progress Update</small><h3>Update Service Work</h3></div><span class="entity-badge">Technician</span></div>
                   <form class="record-form workspace-form" id="progressUpdateForm" novalidate>
+                    <p id="technicianSelectionMessage" role="status">Select a work order from Assigned Work to view available actions.</p>
                     <div class="form-grid">
-                      <div class="field-group"><label for="progressWorkOrderId">Work Order ID *</label><input id="progressWorkOrderId" type="text" placeholder="WO-2026-0019" pattern="WO-[0-9]{4}-[0-9]{4}" required></div>
-                      <div class="field-group"><label for="progressRequestId">Service Request ID *</label><input id="progressRequestId" type="text" placeholder="SR-2026-000001" pattern="SR-[0-9]{4}-[0-9]{6}" required></div>
-                      <div class="field-group"><label for="progressTechnician">Assigned Technician / Personnel *</label><input id="progressTechnician" type="text" minlength="3" required></div>
-                      <div class="field-group"><label for="progressServiceUnit">Department / Service Unit *</label><select id="progressServiceUnit" required><option value="">Select service unit</option><option>Information Technology Office</option><option>Facilities Management</option><option>Electrical Services</option><option>Maintenance Services</option></select></div>
-                      <div class="field-group full-width"><label for="progressWorkDescription">Work Description *</label><textarea id="progressWorkDescription" rows="3" minlength="10" maxlength="500" required></textarea></div>
-                      <div class="field-group"><label for="progressStatusInput">Work Status *</label><select id="progressStatusInput" required><option>Assigned</option><option>In Progress</option><option>On Hold</option><option>Completed</option></select></div>
-                      <div class="field-group"><label for="progressCompletionDate">Completion Date</label><input id="progressCompletionDate" type="date"></div>
-                      <div class="field-group full-width"><label for="progressActionTaken">Action Taken *</label><textarea id="progressActionTaken" rows="3" minlength="5" maxlength="500" placeholder="Describe the action performed." required></textarea></div>
-                      <div class="field-group full-width"><label for="progressMaterials">Materials / Resources Used</label><textarea id="progressMaterials" rows="2" maxlength="300" placeholder="List materials or resources used"></textarea></div>
-                      <div class="field-group full-width"><label for="progressRemarks">Technician Remarks</label><textarea id="progressRemarks" rows="2" maxlength="300" placeholder="Optional remarks or follow-up notes"></textarea></div>
+                      <div class="field-group"><label for="progressWorkOrderId">Work Order Number</label><input id="progressWorkOrderId" type="text" readonly></div>
+                      <div class="field-group"><label for="progressRequestId">Service Request Number</label><input id="progressRequestId" type="text" readonly></div>
+                      <div class="field-group"><label for="progressTechnician">Assigned Technician / Personnel</label><input id="progressTechnician" type="text" readonly></div>
+                      <div class="field-group"><label for="progressServiceUnit">Department / Service Unit</label><input id="progressServiceUnit" type="text" readonly></div>
+                      <div class="field-group full-width"><label for="progressWorkDescription">Work Description</label><textarea id="progressWorkDescription" rows="3" readonly></textarea></div>
+                      <div class="field-group"><label for="progressStatusInput">Current Work Status</label><input id="progressStatusInput" type="text" readonly></div>
+                      <div class="field-group full-width"><span>Available actions</span><div class="row-actions" id="technicianProgressActions"></div></div>
+                      <div class="field-group full-width"><label for="progressActionTaken">Progress / Action Notes *</label><textarea id="progressActionTaken" rows="3" minlength="5" maxlength="2000" placeholder="Describe this action. For a hold, explain the reason." required disabled></textarea></div>
+                      <div class="field-group" id="progressPercentageField" hidden><label for="progressPercentageInput">Progress Percentage *</label><input id="progressPercentageInput" type="number" min="1" max="99" step="1" disabled></div>
+                      <div class="field-group full-width" id="progressCompletionSummaryField" hidden><label for="progressCompletionSummary">Completion Summary *</label><textarea id="progressCompletionSummary" rows="3" minlength="10" maxlength="2000" disabled></textarea></div>
                     </div>
-                    <div class="form-actions"><button class="button button-secondary" type="reset">Reset</button><button class="button button-primary" type="submit">Update Work Order</button></div>
+                    <div class="form-actions"><button class="button button-secondary" type="reset">Reset Notes</button><button class="button button-primary" id="technicianProgressSubmit" type="submit" disabled hidden>Select an Action</button></div>
                   </form>
                 </div>
                 <div class="panel-card"><div class="panel-title"><div><small>Work History</small><h3>Recent Technician Updates</h3></div></div><div class="compact-list" id="technicianHistoryList"></div></div>
@@ -848,7 +849,7 @@
             </section>
 
             <section class="workspace-view" data-view="technician-history" hidden>
-              <div class="table-card panel-card"><div class="table-heading"><div><small>Completed / Updated Work</small><h3>Work History</h3></div><span class="record-count" id="technicianHistoryCount">0 Records</span></div><div class="table-scroll"><table><thead><tr><th>Work Order ID</th><th>Request ID</th><th>Status</th><th>Action Taken</th><th>Completion</th><th>Remarks</th></tr></thead><tbody id="technicianHistoryTableBody"></tbody></table></div></div>
+              <div class="table-card panel-card"><div class="table-heading"><div><small>Completed / Updated Work</small><h3>Work History</h3></div><span class="record-count" id="technicianHistoryCount">0 Records</span></div><div class="table-scroll"><table><thead><tr><th>Work Order</th><th>Request</th><th>Update Type</th><th>Status Change</th><th>Progress</th><th>Progress Notes</th><th>Recorded At</th></tr></thead><tbody id="technicianHistoryTableBody"></tbody></table></div></div>
             </section>
           </div>
         </div>
@@ -1239,6 +1240,6 @@
   <button class="back-to-top" id="backToTopButton" type="button" aria-label="Back to top" title="Back to top">&uarr;</button>
 
   <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="false"></div>
-  <script src="js/script.js?v=20260917-step4-duplicate-ui1"></script>
+  <script src="js/script.js?v=20260920-phase5b-technician"></script>
 </body>
 </html>
