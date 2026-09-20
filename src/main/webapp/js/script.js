@@ -36,6 +36,7 @@ const API_ENDPOINTS = Object.freeze({
   workOrderProgress: "api/work-order-progress",
   serviceRequestReviews: "api/service-request-reviews",
   serviceRequestDuplicates: "api/service-request-duplicates",
+  notifications: "api/notifications",
 });
 
 /* =========================
@@ -81,6 +82,8 @@ const state = {
   technicianSubmitting: false,
   technicianQueueError: "",
   notifications: [],
+  notificationUnreadCount: null,
+  notificationsLoading: false,
   pendingAssignmentWorkOrderId: null,
 };
 
@@ -1572,6 +1575,10 @@ function activateRoleWorkspace(role, name, email) {
 
   openWorkspaceView(roleConfiguration[role].defaultView);
 
+  if (typeof fetchNotifications === "function") {
+    fetchNotifications();
+  }
+
   window.scrollTo({
     top: 0,
     behavior: "smooth",
@@ -1596,6 +1603,8 @@ function clearAuthenticatedWorkspace() {
   state.approvalHistory = [];
   state.technicianHistory = [];
   state.notifications = [];
+  state.notificationUnreadCount = null;
+  state.notificationsLoading = false;
 
   renderPublicMetrics();
   renderPublicActivity();
@@ -6719,11 +6728,21 @@ function initializeEvents() {
      NOTIFICATIONS
   ========================= */
   on(byId("notificationButton"), "click", () => {
-    byId("notificationPanel").hidden = !byId("notificationPanel").hidden;
+    const panel = byId("notificationPanel");
+    panel.hidden = !panel.hidden;
+    if (!panel.hidden) {
+      fetchNotifications();
+    }
   });
 
   on(byId("closeNotificationPanel"), "click", () => {
     byId("notificationPanel").hidden = true;
+  });
+
+  on(byId("markAllNotificationsReadButton"), "click", () => {
+    if (typeof markAllNotificationsRead === "function") {
+      markAllNotificationsRead();
+    }
   });
 
   /* =========================
@@ -7171,3 +7190,242 @@ async function initializeApp() {
    START APPLICATION
   ========================= */
 document.addEventListener("DOMContentLoaded", initializeApp);
+
+/* =========================
+   NOTIFICATIONS
+========================= */
+const NOTIFICATION_ENDPOINT = API_ENDPOINTS.notifications;
+
+function renderNotificationControls() {
+  const countEl = byId("notificationCount");
+  const markAllEl = byId("markAllNotificationsReadButton");
+
+  if (!countEl) {
+    return;
+  }
+
+  if (!state.currentAccount || state.notificationsLoading) {
+    countEl.hidden = true;
+    if (markAllEl) {
+      markAllEl.hidden = true;
+      markAllEl.disabled = true;
+    }
+    return;
+  }
+
+  const unreadCount = state.notificationUnreadCount;
+  if (unreadCount > 0) {
+    countEl.textContent = unreadCount > 99 ? "99+" : unreadCount;
+    countEl.hidden = false;
+  } else {
+    countEl.hidden = true;
+  }
+
+  if (markAllEl) {
+    markAllEl.hidden = unreadCount === 0;
+    markAllEl.disabled = unreadCount === 0;
+  }
+}
+
+function renderNotificationList() {
+  const listEl = byId("notificationList");
+  if (!listEl) {
+    return;
+  }
+
+  if (!state.currentAccount) {
+    listEl.innerHTML = "";
+    return;
+  }
+
+  if (state.notifications.length === 0) {
+    listEl.innerHTML = "";
+    const empty = document.createElement("p");
+    empty.className = "notification-empty";
+    empty.textContent = state.notificationsLoading ? "Loading notifications..." : "No notifications.";
+    listEl.appendChild(empty);
+    return;
+  }
+
+  listEl.innerHTML = "";
+
+  state.notifications.forEach(function (notification) {
+    const item = document.createElement("article");
+    item.className = "notification-item";
+
+    const header = document.createElement("div");
+    header.className = "notification-item-header";
+
+    const title = document.createElement("strong");
+    title.textContent = notification.title || "Notification";
+    header.appendChild(title);
+
+    if (notification.isRead) {
+      const readBadge = document.createElement("span");
+      readBadge.className = "notification-read-badge";
+      readBadge.textContent = "Read";
+      header.appendChild(readBadge);
+    }
+
+    item.appendChild(header);
+
+    if (notification.message) {
+      const message = document.createElement("p");
+      message.className = "notification-item-message";
+      message.textContent = notification.message;
+      item.appendChild(message);
+    }
+
+    if (notification.createdAt) {
+      const time = document.createElement("time");
+      time.className = "notification-item-time";
+      time.dateTime = notification.createdAt;
+      time.textContent = formatDateTime(notification.createdAt);
+      item.appendChild(time);
+    }
+
+    if (!notification.isRead) {
+      const actionRow = document.createElement("div");
+      actionRow.className = "notification-item-actions";
+
+      const markReadBtn = document.createElement("button");
+      markReadBtn.type = "button";
+      markReadBtn.className = "notification-item-action";
+      markReadBtn.textContent = "Mark as read";
+      markReadBtn.addEventListener("click", function () {
+        markNotificationRead(notification.notificationId);
+      });
+      actionRow.appendChild(markReadBtn);
+
+      item.appendChild(actionRow);
+    }
+
+    listEl.appendChild(item);
+  });
+}
+
+async function markNotificationRead(notificationId) {
+  if (!state.currentAccount) return;
+
+  const csrf = await getCsrfToken();
+  if (!csrf?.token) return;
+
+  try {
+    const response = await fetch(NOTIFICATION_ENDPOINT, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        [csrf.headerName]: csrf.token,
+      },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        action: "markRead",
+        notificationId: notificationId
+      })
+    });
+
+    const data = await readJsonResponse(response);
+
+    if (response.ok && data.success) {
+      await fetchNotifications();
+    } else {
+      showToast(data && data.message ? data.message : "Unable to mark notification as read.", "error");
+    }
+  } catch (error) {
+    showToast("Unable to mark notification as read.", "error");
+  }
+}
+
+async function markAllNotificationsRead() {
+  if (!state.currentAccount) return;
+
+  const csrf = await getCsrfToken();
+  if (!csrf?.token) return;
+
+  try {
+    const response = await fetch(NOTIFICATION_ENDPOINT, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        [csrf.headerName]: csrf.token,
+      },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        action: "markAllRead"
+      })
+    });
+
+    const data = await readJsonResponse(response);
+
+    if (response.ok && data.success) {
+      await fetchNotifications();
+    } else {
+      showToast(data && data.message ? data.message : "Unable to mark notifications as read.", "error");
+    }
+  } catch (error) {
+    showToast("Unable to mark notifications as read.", "error");
+  }
+}
+
+async function fetchNotifications() {
+  if (!state.currentAccount || state.accountLoading) {
+    state.notifications = [];
+    state.notificationUnreadCount = 0;
+    renderNotificationControls();
+    renderNotificationList();
+    return;
+  }
+
+  state.notificationsLoading = true;
+  renderNotificationControls();
+
+  const currentEmail = state.currentAccount.email;
+
+  try {
+    const response = await fetch(NOTIFICATION_ENDPOINT, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+
+    const data = await readJsonResponse(response);
+
+    if (!state.currentAccount || state.currentAccount.email !== currentEmail) {
+      return;
+    }
+
+    if (!response.ok || !data || typeof data !== "object") {
+      state.notifications = [];
+      state.notificationUnreadCount = 0;
+      showToast(data && data.message ? data.message : "Unable to load notifications.", "error");
+      state.notificationsLoading = false;
+      renderNotificationControls();
+      renderNotificationList();
+      return;
+    }
+
+    state.notifications = Array.isArray(data.notifications) ? data.notifications : [];
+    state.notificationUnreadCount = Number.isInteger(data.unreadCount) ? data.unreadCount : 0;
+
+    renderNotificationControls();
+    renderNotificationList();
+  } catch (error) {
+    if (!state.currentAccount || state.currentAccount.email !== currentEmail) {
+      return;
+    }
+    state.notifications = [];
+    state.notificationUnreadCount = 0;
+    showToast(error.message || "Unable to load notifications.", "error");
+  } finally {
+    if (state.currentAccount && state.currentAccount.email === currentEmail) {
+      state.notificationsLoading = false;
+      renderNotificationControls();
+      renderNotificationList();
+    }
+  }
+}

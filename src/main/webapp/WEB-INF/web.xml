@@ -228,4 +228,14 @@
   <welcome-file-list>
     <welcome-file>index.html</welcome-file>
   </welcome-file-list>
+
+   <servlet>
+      <servlet-name>NotificationServlet</servlet-name>
+      <servlet-class>ph.edu.htcgsc.serviceportal.servlet.NotificationServlet</servlet-class>
+   </servlet>
+
+   <servlet-mapping>
+      <servlet-name>NotificationServlet</servlet-name>
+      <url-pattern>/api/notifications</url-pattern>
+   </servlet-mapping>
 </web-app>
