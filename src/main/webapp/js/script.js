@@ -34,6 +34,7 @@ const API_ENDPOINTS = Object.freeze({
   approvals: "api/approvals",
   workOrders: "api/work-orders",
   workOrderProgress: "api/work-order-progress",
+  workOrderHistory: "api/work-order-history",
   serviceRequestReviews: "api/service-request-reviews",
   serviceRequestDuplicates: "api/service-request-duplicates",
   notifications: "api/notifications",
@@ -85,6 +86,7 @@ const state = {
   notificationUnreadCount: null,
   notificationsLoading: false,
   pendingAssignmentWorkOrderId: null,
+  workOrderTimelineVersion: 0,
 };
 
 /* =========================
@@ -510,6 +512,7 @@ function isTechnicianSessionCurrent(session) {
 
 function clearTechnicianSelection() {
   state.technicianDetailVersion += 1;
+  state.workOrderTimelineVersion += 1;
   state.technicianWorkOrder = null;
   state.technicianWorkOrderId = null;
   state.technicianDetailLoading = false;
@@ -1201,6 +1204,11 @@ function closeModal(modalId) {
 
   modal.hidden = true;
 
+  if (modalId === "detailsModal") {
+    state.workOrderTimelineVersion += 1;
+    delete modal.dataset.workOrderTimelineId;
+  }
+
   if (modalId === "loginModal") {
     clearAuthMessage();
   }
@@ -1587,6 +1595,7 @@ function activateRoleWorkspace(role, name, email) {
 
 function clearAuthenticatedWorkspace() {
   clearTechnicianWorkspace();
+  state.workOrderTimelineVersion += 1;
   state.activeRole = null;
 
   state.userName = "";
@@ -2902,6 +2911,7 @@ function showDetails(recordId, recordLabel, fields) {
   title.textContent = recordId || "Details";
 
   content.replaceChildren();
+  delete byId("detailsModal")?.dataset.workOrderTimelineId;
 
   const safeFields = Array.isArray(fields) ? fields : [];
 
@@ -2960,6 +2970,100 @@ function showDetails(recordId, recordLabel, fields) {
   });
 
   openModal("detailsModal", "button.modal-close");
+}
+
+function appendTimelineSection(title, events, emptyMessage) {
+  const section = createElement("div", "detail-item full");
+  section.appendChild(createElement("h3", "", title));
+  const timelineEvents = Array.isArray(events) ? events : [];
+  if (!timelineEvents.length) {
+    section.appendChild(createElement("p", "notification-empty", emptyMessage));
+    return section;
+  }
+
+  timelineEvents.forEach((event) => {
+    const item = createElement("div", "compact-item");
+    const copy = createElement("div");
+    const titleText = event?.title || event?.eventType || "Timeline event";
+    const previousStatus = event?.previousStatus || "—";
+    const newStatus = event?.newStatus || "—";
+    const percentage = Number(event?.percentage);
+    const details = [
+      `${previousStatus} → ${newStatus}`,
+      Number.isFinite(percentage) ? `${percentage}%` : "",
+      event?.remarks || "",
+    ].filter(Boolean).join(" · ");
+    copy.append(
+      createElement("strong", "", titleText),
+      createElement("span", "", details),
+      createElement("small", "", formatDateTime(event?.occurredAt)),
+    );
+    item.appendChild(copy);
+    section.appendChild(item);
+  });
+  return section;
+}
+
+async function loadAndAppendWorkOrderTimeline(workOrderId, role) {
+  const id = Number(workOrderId);
+  const modal = byId("detailsModal");
+  if (!Number.isSafeInteger(id) || id <= 0 || !modal) return;
+
+  const account = state.currentAccount;
+  const requestVersion = ++state.workOrderTimelineVersion;
+  modal.dataset.workOrderTimelineId = String(id);
+  const current = () => state.currentAccount === account && state.activeRole === role &&
+    state.workOrderTimelineVersion === requestVersion &&
+    modal.dataset.workOrderTimelineId === String(id) && !modal.hidden &&
+    (role !== "technician" || state.technicianWorkOrderId === id);
+
+  try {
+    const response = await fetch(`${API_ENDPOINTS.workOrderHistory}?workOrderId=${encodeURIComponent(id)}`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    const data = await readJsonResponse(response);
+    if (!response.ok || data?.success !== true) {
+      const error = new Error(data?.message || "Unable to load work-order history.");
+      error.status = response.status;
+      throw error;
+    }
+    if (!current()) return;
+    if (Number(data.workOrderId) !== id || !Array.isArray(data.workOrderEvents)) {
+      throw new Error("The server returned invalid work-order history data.");
+    }
+
+    const content = byId("detailsModalContent");
+    if (!content || !current()) return;
+    content.appendChild(appendTimelineSection(
+      "Work Order Timeline",
+      data.workOrderEvents,
+      "No work-order history is available.",
+    ));
+    if (role === "administrator" && Array.isArray(data.requestEvents) && data.requestEvents.length) {
+      content.appendChild(appendTimelineSection("Request Timeline", data.requestEvents, ""));
+    }
+  } catch (error) {
+    if (!current()) return;
+    if (error.status === 401) {
+      clearAuthenticatedWorkspace();
+    } else if (role === "technician" && (error.status === 403 || error.status === 404)) {
+      clearTechnicianSelection();
+      showToast("This work order is no longer available.", "error");
+    } else {
+      const content = byId("detailsModalContent");
+      if (content && current()) {
+        content.appendChild(appendTimelineSection(
+          "Work Order Timeline",
+          [],
+          "Timeline data is unavailable. Refresh and try again.",
+        ));
+      }
+      showToast(error.message || "Unable to load work-order history.", "error");
+    }
+  }
 }
 
 function formatAttachmentSize(fileSizeBytes) {
@@ -3335,6 +3439,7 @@ function showWorkOrderDetails(workOrder) {
       full: true,
     },
   ]);
+  void loadAndAppendWorkOrderTimeline(workOrder.databaseId, "administrator");
 }
 
 /* =========================
@@ -4117,22 +4222,7 @@ function showTechnicianWorkOrderDetails(order) {
   ].map(([label, value, full]) => ({ label, value: value || "\u2014", full }));
   showDetails(order.id, "Assigned Work Order", fields);
   byId("detailsModal").dataset.technicianWorkOrderId = String(order.databaseId);
-  const history = createElement("div", "detail-item full");
-  history.appendChild(createElement("h3", "", "Progress History"));
-  order.progressHistory.forEach((record) => {
-    const entry = createElement("div", "compact-item");
-    const copy = createElement("div");
-    copy.append(
-      createElement("strong", "", record.updateType),
-      createElement("span", "", `${record.previousStatus} → ${record.newStatus} · ${record.progressPercentage == null ? "\u2014" : `${record.progressPercentage}%`}`),
-      createElement("span", "", record.progressNotes),
-      createElement("small", "", formatDateTime(record.recordedAt)),
-    );
-    entry.appendChild(copy);
-    history.appendChild(entry);
-  });
-  if (!order.progressHistory.length) history.appendChild(createElement("p", "notification-empty", "No progress recorded yet."));
-  byId("detailsModalContent").appendChild(history);
+  void loadAndAppendWorkOrderTimeline(order.databaseId, "technician");
 }
 
 function validateCompletionDate(statusInput, dateInput, actionInput = null) {
