@@ -34,7 +34,7 @@ full-system-migration
 
 Current verified checkpoint:
 
-475690e Add work order history timeline
+6466fd0 Improve requester and approval history presentation
 
 Do not work from obsolete or duplicate project folders.
 
@@ -58,10 +58,12 @@ Completed and frozen:
 - Phase 5 — Technician Work-Progress Workflow (overall)
 - Phase 6A — Notifications
 - Phase 6B1 - Work Order History Timeline
+- Phase 6B2 - Requester and Department Head History Presentation Cleanup
+- Phase 6B - History Presentation (overall)
 
 Current next phase:
 
-- Phase 6B2 - Requester and Department Head History Presentation Cleanup
+- Phase 6C - Audit Viewer
 
 Phase 6 — Notifications + History + Audit Integration remains IN PROGRESS.
 
@@ -1758,7 +1760,7 @@ Security notes:
 
 Status:
 
-IN PROGRESS
+COMPLETE / FROZEN
 
 Present existing request, Work Order, and progress history cleanly without changing frozen Phase 6A notification behavior.
 
@@ -1844,19 +1846,74 @@ Boundaries preserved:
 
 Status:
 
-PLANNED - CURRENT NEXT SUB-PHASE
+COMPLETE / FROZEN
 
-Scope:
+Implementation checkpoint:
 
-- improve requester-owned request-history presentation through existing authorized APIs without exposing work-order or technician data
-- improve and sort Department Head Approval History presentation while preserving session-derived department scope
-- add backend capability only if inspection establishes a genuine authorization-safe blocker
+6466fd0 Improve requester and approval history presentation
+
+Current HEAD before this documentation edit:
+
+6466fd0
+
+Frontend-only implementation:
+
+- MODIFIED: `src/main/webapp/js/script.js`
+- no Java/backend changes, new endpoints, database migration, or runtime schema changes
+
+Requester history:
+
+- continues to use the requester-owned `GET /api/service-requests/history?requestId=<id>` endpoint
+- requester ownership remains server-side and unchanged
+- safe event cards render in the existing details modal with oldest-first ordering by `changedAt ASC, History_ID ASC`; invalid timestamps safely fall last
+- an event without a previous status renders as `Initial status: <status>`; later events render `previousStatus -> newStatus`
+- change reason appears when present, timestamps use readable local date/time, and an empty response displays `No status history is available.`
+- rendering uses safe DOM creation and `textContent`; no work-order history or technician progress is exposed to Requesters
+- stale responses are discarded after logout, account switch, modal close, request change, or another details view
+
+Department Head Approval History:
+
+- continues to use `GET /api/approvals?status=Approved` and `GET /api/approvals?status=Rejected`
+- approved and rejected authorized records are combined before rendering and sorted globally by `decisionDate DESC, approvalId DESC`
+- the existing table/page remains; the count reflects all combined authorized records, remarks remain visible, and an empty history displays a clear in-table state
+- Department Head department authorization remains server-enforced; no frontend-only department filtering was introduced
+
+Validation:
+
+- `node --check`: PASS
+- `mvn clean test`: 115 tests, 0 failures, 0 errors, 0 skipped
+- `mvn clean package`: BUILD SUCCESS; WAR generated successfully
+- `git diff --check`: PASS
+- focused temporary in-memory frontend checks passed for requester chronological ordering, null previous-status rendering, safe text rendering, requester empty state, stale-response guards, combined Approval History ordering, and Approval History empty state; the helper was deleted and not committed
+
+Runtime verification passed:
+
+- Requester histories for `SR-2026-000006` and `SR-2026-000003` displayed Submitted, Awaiting Approval, and Approved as clean oldest-first event cards with initial-status text, transitions, reasons, and timestamps; switching requester/account/request did not retain old history
+- Department Head Approval History displayed three combined records newest-first: Approved at 9/20/2026 6:19:28 PM, Rejected at 9/20/2026 12:33:51 AM, and Approved at 9/20/2026 12:32:48 AM; the displayed count and visible-row count were both 3
+- Administrator `WO-2026-0002` retained its existing details, Work Order Timeline, and Request Timeline; Technician `WO-2026-0002` retained its work-order timeline without a Request Timeline; Technician notifications continued to load existing assignment notifications
+
+Phase 6B boundaries:
+
+- Phase 6A notifications, the Phase 6B1 work-order history endpoint, requester backend ownership, Department Head backend authorization, Administrator history, and Technician history remain unchanged
+- no reassignment, verification, closure, audit viewer, Java files, migration, or runtime schema change was added
+- `workflows.js` remains unchanged and `AUDIT_LOG` remains Phase 6C
+
+Phase 6B completion:
+
+- Phase 6B is COMPLETE / FROZEN
+- Phase 6B1 - Work Order History Timeline: `475690e Add work order history timeline`
+- Phase 6B2 - Requester and Department Head History Presentation Cleanup: `6466fd0 Improve requester and approval history presentation`
+- do not modify Phase 6B behavior during Phase 6C unless a verified regression requires a narrow repair
+
+Next phase:
+
+Phase 6C - Audit Viewer. It will focus on administrative/security audit evidence using the existing `AUDIT_LOG` architecture.
 
 ## PHASE 6C — Audit Viewer
 
 Status:
 
-PLANNED
+PLANNED - CURRENT NEXT SUB-PHASE
 
 Review:
 
@@ -2297,9 +2354,11 @@ Phase 6A — Notifications: COMPLETE / FROZEN (3b79f12)
 
 Phase 6B1 - Work Order History Timeline: COMPLETE / FROZEN (475690e)
 
-Phase 6B2 - Requester and Department Head History Presentation Cleanup: current next sub-phase
+Phase 6B2 - Requester and Department Head History Presentation Cleanup: COMPLETE / FROZEN (6466fd0)
 
-Phase 6C — Audit Viewer: planned
+Phase 6B - History Presentation: COMPLETE / FROZEN
+
+Phase 6C - Audit Viewer: current next phase
 
 Copilot/Cline
 
