@@ -34,7 +34,7 @@ full-system-migration
 
 Current verified checkpoint:
 
-6466fd0 Improve requester and approval history presentation
+43e06a5 Integrate advisory AI analysis
 
 Do not work from obsolete or duplicate project folders.
 
@@ -62,10 +62,15 @@ Completed and frozen:
 - Phase 6B - History Presentation (overall)
 - Phase 6C — Audit Viewer
 - Phase 6 — Notifications + History + Audit Integration (overall)
+- Phase 7A - Advisory AI Analysis Integration
 
-Current next phase:
+In progress:
 
 - Phase 7 — Python AI Integration
+
+Current next target:
+
+- Phase 7B - Ranked Duplicate Recommendation Presentation
 
 Remaining:
 
@@ -1990,7 +1995,7 @@ Codex / Cline
 
 Status:
 
-PLANNED
+IN PROGRESS
 
 Expected AI capabilities:
 
@@ -2040,6 +2045,56 @@ Never send:
 - authentication tokens
 
 to the AI service.
+
+---
+
+## PHASE 7A - Advisory AI Analysis Integration
+
+Status:
+
+COMPLETE / FROZEN
+
+Implementation checkpoint:
+
+43e06a5 Integrate advisory AI analysis
+
+Implemented:
+
+- advisory Python AI analysis integration; it does not perform workflow actions
+- authenticated, CSRF-protected `POST /api/ai-recommendations/analyze`
+- server-side request loading and session-derived Administrator identity
+- persisted current advisory recommendation for a service request in `AI_RECOMMENDATION`
+- active Administrator recommendation presentation in `index.html` and `script.js`
+- Python standard-library service with bearer-token protection, loopback binding, `/health`, and deterministic rule-based advisory output
+- configuration through `HTC_AI_BASE_URL` and `HTC_AI_TOKEN`; no committed token or database migration
+
+Authorization and data boundaries:
+
+- only an authenticated, active Role 2 Service Administrator may analyze a Submitted request
+- the client supplies only a positive `requestId`; actor identity, role, department, workflow status, request content, recommendation values, scores, model values, and duplicate candidates are not trusted from the browser
+- Java validates the AI response before persistence, handles unavailable or invalid AI responses safely, and preserves normal manual workflow operation when AI is unavailable
+- Python receives only the minimum request fields required for advisory analysis; it does not receive credentials, session tokens, or database access
+- recommendations remain advisory; administrators retain final judgment and existing requester, approval, work-order, notification, history, and audit boundaries remain unchanged
+
+Persistence behavior:
+
+- no migration was required; the existing `AI_RECOMMENDATION` table is used
+- successful analysis replaces the current recommendation for the same request and leaves request workflow state unchanged
+- malformed, unavailable, unauthorized, non-Submitted, and invalid-request analysis attempts do not persist a recommendation
+
+Verified runtime behavior:
+
+- Python 3.13.15; three Python tests passed
+- Java 17; 135 tests passed with zero failures, errors, or skips
+- `mvn clean package` completed successfully and `node --check src/main/webapp/js/script.js` passed
+- live analysis for Request_ID 4 succeeded; persisted recommendation data was rendered in the Administrator request-detail view
+- authenticated Role 2, CSRF, positive-ID, Submitted-state, and safe AI failure behavior were verified; offline AI service behavior preserved manual workflow availability
+
+Next target:
+
+Phase 7B - Ranked Duplicate Recommendation Presentation
+
+Phase 7 remains IN PROGRESS. Do not implement Phase 7B under this Phase 7A closeout.
 
 ---
 
@@ -2393,7 +2448,11 @@ Copilot/Cline
 
 PHASE 7
 
-Python AI Integration
+Python AI Integration: IN PROGRESS
+
+Phase 7A - Advisory AI Analysis Integration: COMPLETE / FROZEN (43e06a5)
+
+Phase 7B - Ranked Duplicate Recommendation Presentation: NEXT
 
 Claude/Kilo architecture
 
