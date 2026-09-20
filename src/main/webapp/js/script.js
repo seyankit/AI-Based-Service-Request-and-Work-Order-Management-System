@@ -70,6 +70,8 @@ const state = {
   personnel: [],
   approvals: [],
   approvalHistory: [],
+  approverApprovalVersion: 0,
+  requestHistoryVersion: 0,
   technicianHistory: [],
   technicianWorkOrders: [],
   technicianWorkOrder: null,
@@ -361,10 +363,16 @@ async function loadAdministratorServiceRequestReviews() {
 
 async function loadApproverApprovals() {
   if (state.activeRole !== "approver") {
+    state.approverApprovalVersion += 1;
     state.approvals = [];
     state.approvalHistory = [];
     return;
   }
+
+  const account = state.currentAccount;
+  const requestVersion = ++state.approverApprovalVersion;
+  const current = () => state.activeRole === "approver" &&
+    state.currentAccount === account && state.approverApprovalVersion === requestVersion;
 
   try {
     const statuses = ["Pending", "Approved", "Rejected"];
@@ -388,16 +396,18 @@ async function loadApproverApprovals() {
       }
     });
 
+    if (!current()) return;
     state.approvals = results[0].approvals || [];
     state.approvalHistory = [
       ...(results[1].approvals || []),
       ...(results[2].approvals || []),
-    ];
+    ].sort(compareApprovalHistoryNewestFirst);
 
     renderApproverMetrics();
     renderApprovalTable();
     renderApprovalHistory();
   } catch (error) {
+    if (!current()) return;
     state.approvals = [];
     state.approvalHistory = [];
     renderApproverMetrics();
@@ -1206,7 +1216,9 @@ function closeModal(modalId) {
 
   if (modalId === "detailsModal") {
     state.workOrderTimelineVersion += 1;
+    state.requestHistoryVersion += 1;
     delete modal.dataset.workOrderTimelineId;
+    delete modal.dataset.requestHistoryId;
   }
 
   if (modalId === "loginModal") {
@@ -1596,6 +1608,8 @@ function activateRoleWorkspace(role, name, email) {
 function clearAuthenticatedWorkspace() {
   clearTechnicianWorkspace();
   state.workOrderTimelineVersion += 1;
+  state.approverApprovalVersion += 1;
+  state.requestHistoryVersion += 1;
   state.activeRole = null;
 
   state.userName = "";
@@ -2584,13 +2598,21 @@ function renderApprovalHistory() {
       idCell,
       decisionCell,
 
-      createElement("td", "", formatDate(record.decisionDate)),
+      createElement("td", "", formatDateTime(record.decisionDate)),
 
       createElement("td", "", record.remarks || "\u2014"),
     ].forEach((cell) => row.appendChild(cell));
 
     body.appendChild(row);
   });
+
+  if (!state.approvalHistory.length) {
+    const row = createElement("tr");
+    const cell = createElement("td", "notification-empty", "No approval decisions have been recorded.");
+    cell.colSpan = 4;
+    row.appendChild(cell);
+    body.appendChild(row);
+  }
 
   byId("approvalHistoryCount").textContent = `${state.approvalHistory.length} ${
     state.approvalHistory.length === 1 ? "Record" : "Records"
@@ -2912,6 +2934,8 @@ function showDetails(recordId, recordLabel, fields) {
 
   content.replaceChildren();
   delete byId("detailsModal")?.dataset.workOrderTimelineId;
+  state.requestHistoryVersion += 1;
+  delete byId("detailsModal")?.dataset.requestHistoryId;
 
   const safeFields = Array.isArray(fields) ? fields : [];
 
@@ -3066,6 +3090,20 @@ async function loadAndAppendWorkOrderTimeline(workOrderId, role) {
   }
 }
 
+function compareApprovalHistoryNewestFirst(left, right) {
+  const leftTime = Date.parse(left?.decisionDate);
+  const rightTime = Date.parse(right?.decisionDate);
+  const normalizedLeftTime = Number.isNaN(leftTime) ? Number.NEGATIVE_INFINITY : leftTime;
+  const normalizedRightTime = Number.isNaN(rightTime) ? Number.NEGATIVE_INFINITY : rightTime;
+  if (normalizedLeftTime !== normalizedRightTime) return normalizedRightTime - normalizedLeftTime;
+
+  const leftApprovalId = Number(left?.approvalId);
+  const rightApprovalId = Number(right?.approvalId);
+  const normalizedLeftApprovalId = Number.isSafeInteger(leftApprovalId) ? leftApprovalId : 0;
+  const normalizedRightApprovalId = Number.isSafeInteger(rightApprovalId) ? rightApprovalId : 0;
+  return normalizedRightApprovalId - normalizedLeftApprovalId;
+}
+
 function formatAttachmentSize(fileSizeBytes) {
   const bytes = Number(fileSizeBytes);
 
@@ -3143,48 +3181,109 @@ async function loadRequesterServiceRequestDetails(requestId) {
   return mapServiceRequestFromApi(data.request);
 }
 
+function sortRequestHistoryChronologically(history) {
+  return [...history].sort((left, right) => {
+    const leftTime = Date.parse(left?.changedAt);
+    const rightTime = Date.parse(right?.changedAt);
+    const normalizedLeftTime = Number.isNaN(leftTime) ? Number.POSITIVE_INFINITY : leftTime;
+    const normalizedRightTime = Number.isNaN(rightTime) ? Number.POSITIVE_INFINITY : rightTime;
+    if (normalizedLeftTime !== normalizedRightTime) return normalizedLeftTime - normalizedRightTime;
+
+    const leftHistoryId = Number(left?.historyId);
+    const rightHistoryId = Number(right?.historyId);
+    const normalizedLeftHistoryId = Number.isSafeInteger(leftHistoryId) ? leftHistoryId : 0;
+    const normalizedRightHistoryId = Number.isSafeInteger(rightHistoryId) ? rightHistoryId : 0;
+    return normalizedLeftHistoryId - normalizedRightHistoryId;
+  });
+}
+
+function appendRequesterHistoryTimeline(history) {
+  const section = createElement("div", "detail-item full");
+  section.appendChild(createElement("h3", "", "Request History"));
+  if (!history.length) {
+    section.appendChild(createElement("p", "notification-empty", "No status history is available."));
+    return section;
+  }
+
+  history.forEach((event) => {
+    const item = createElement("div", "compact-item");
+    const copy = createElement("div");
+    const newStatus = String(event?.newStatus || "Status updated").trim() || "Status updated";
+    const previousStatus = String(event?.previousStatus || "").trim();
+    const transition = previousStatus
+      ? `${previousStatus} → ${newStatus}`
+      : `Initial status: ${newStatus}`;
+    copy.append(
+      createElement("strong", "", newStatus),
+      createElement("span", "", transition),
+    );
+    if (event?.changeReason != null && String(event.changeReason).trim() !== "") {
+      copy.appendChild(createElement("span", "", String(event.changeReason)));
+    }
+    copy.appendChild(createElement("small", "", formatDateTime(event?.changedAt)));
+    item.appendChild(copy);
+    section.appendChild(item);
+  });
+  return section;
+}
+
+function renderRequesterHistoryModal(request, requestId, history) {
+  showDetails(request.id, "Request History", []);
+  const modal = byId("detailsModal");
+  const content = byId("detailsModalContent");
+  if (!modal || !content) return;
+  modal.dataset.requestHistoryId = String(requestId);
+  content.appendChild(appendRequesterHistoryTimeline(history));
+}
+
 async function showRequestHistory(request) {
   const requestId = Number(request?.databaseId);
-
   if (!Number.isInteger(requestId) || requestId <= 0) {
     showToast("This request has no valid identifier.", "error");
     return;
   }
+
+  showDetails(request.id, "Request History", [{
+    label: "Request History",
+    value: "Loading request history...",
+    full: true,
+  }]);
+  const modal = byId("detailsModal");
+  const account = state.currentAccount;
+  const requestVersion = ++state.requestHistoryVersion;
+  if (!modal) return;
+  modal.dataset.requestHistoryId = String(requestId);
+  const current = () => state.activeRole === "requester" && state.currentAccount === account &&
+    state.requestHistoryVersion === requestVersion && !modal.hidden &&
+    modal.dataset.requestHistoryId === String(requestId);
 
   try {
     const response = await fetch(
       `${API_ENDPOINTS.serviceRequests}/history?requestId=${encodeURIComponent(requestId)}`,
       {
         method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
+        headers: { Accept: "application/json" },
         credentials: "same-origin",
         cache: "no-store",
       },
     );
-
     const data = await readJsonResponse(response);
-
     if (!response.ok || !data.success) {
-      throw new Error(data.message || "Unable to load request history.");
+      const error = new Error(data.message || "Unable to load request history.");
+      error.status = response.status;
+      throw error;
     }
-
-    const history = Array.isArray(data.history) ? data.history : [];
-    const fields = history.length === 0
-      ? [{ label: "History", value: "No status history is available.", full: true }]
-      : history.map((item, index) => ({
-          label: `History ${index + 1}`,
-          value: [
-            item.changedAt,
-            `${item.previousStatus || "Initial"} -> ${item.newStatus || ""}`,
-            item.changeReason,
-          ].filter(Boolean).join(" | "),
-          full: true,
-        }));
-
-    showDetails(request.id, "Request History", fields);
+    if (!current()) return;
+    const history = sortRequestHistoryChronologically(
+      Array.isArray(data.history) ? data.history : [],
+    );
+    renderRequesterHistoryModal(request, requestId, history);
   } catch (error) {
+    if (!current()) return;
+    if (error.status === 401) {
+      clearAuthenticatedWorkspace();
+      return;
+    }
     console.error("Request history error:", error);
     showToast(error.message || "Unable to load request history.", "error");
   }
@@ -3200,6 +3299,8 @@ async function showRequestDetails(request) {
     showToast("This request has no valid identifier.", "error");
     return;
   }
+
+  state.requestHistoryVersion += 1;
 
   let detailRequest;
 
