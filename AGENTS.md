@@ -34,7 +34,7 @@ full-system-migration
 
 Current verified checkpoint:
 
-d932dc7 Complete technician frontend workflow integration
+3b79f12 Complete notification center workflow
 
 Do not work from obsolete or duplicate project folders.
 
@@ -56,10 +56,13 @@ Completed and frozen:
 - Phase 5A — Technician Backend Workflow
 - Phase 5B — Technician Frontend Integration
 - Phase 5 — Technician Work-Progress Workflow (overall)
+- Phase 6A — Notifications
 
 Current next phase:
 
-- Phase 6 — Notifications + History + Audit Integration
+- Phase 6B — History Presentation
+
+Phase 6 — Notifications + History + Audit Integration remains IN PROGRESS.
 
 Remaining:
 
@@ -1681,11 +1684,88 @@ Copilot / Cline
 
 Status:
 
-PLANNED
+IN PROGRESS
 
 Objective:
 
 complete lifecycle traceability.
+
+## PHASE 6A — Notifications
+
+Status:
+
+COMPLETE / FROZEN
+
+Implementation checkpoint:
+
+3b79f12 Complete notification center workflow
+
+Implemented:
+
+- GET /api/notifications with authenticated, session-only recipient access
+- recipient identity derived only from session Personnel_ID
+- newest-first list bounded to 50 notifications and a separately calculated authoritative unread count
+- PUT /api/notifications actions: markRead and markAllRead
+- CSRF protection for notification mutations
+- notification ownership enforced with Notification_ID + Recipient_ID
+- foreign and nonexistent notification IDs return the same non-enumerating 404
+- idempotent owned markRead without unnecessarily overwriting Read_At
+- existing notification bell, unread badge, panel, mark-one-read, and mark-all-read UI connected to backend data
+- Mark All control shown only when unread notifications exist
+- private notification state cleared on logout and account switch
+- stale notification responses discarded after authenticated account changes
+- no automatic navigation from Action_URL
+- no polling, WebSockets, or SSE
+
+Main implementation files:
+
+- NEW: src/main/java/ph/edu/htcgsc/serviceportal/dao/NotificationDAO.java
+- NEW: src/main/java/ph/edu/htcgsc/serviceportal/servlet/NotificationServlet.java
+- NEW: src/test/java/ph/edu/htcgsc/serviceportal/servlet/NotificationServletTest.java
+- MODIFIED: src/main/webapp/WEB-INF/web.xml
+- MODIFIED: src/main/webapp/index.html
+- MODIFIED: src/main/webapp/js/script.js
+- workflows.js remained unchanged
+
+Validation:
+
+- Java 17
+- mvn clean test: 104 tests, 0 failures, 0 errors, 0 skipped
+- NotificationServletTest: 18 tests passed
+- mvn clean package: BUILD SUCCESS
+- node --check: PASS
+- git diff --check: PASS
+
+Runtime verification passed with Tomcat and MySQL:
+
+- /api/health returned success with MySQL connectivity
+- Administrator notification list returned HTTP 200 with count/unreadCount initially 19/19; the UI badge matched the authoritative unread count and newest-first ordering
+- markRead for notification 32 changed unread 19 → 18, set Is_Read = 1, and populated Read_At; repeated markRead returned HTTP 200, kept unread at 18, and retained the original Read_At
+- Mark All as Read changed unread 18 → 0; database totals were 19 total, 19 read, and 0 unread
+- switching Administrator to Technician cleared Administrator notifications; Technician loaded only its own notifications and showed 2 unread
+- missing CSRF mutation returned HTTP 403
+- a Technician marking Administrator notification 32 received generic HTTP 404; the Administrator notification remained unchanged
+
+Security notes:
+
+- never trust Recipient_ID from the client; the recipient is always session-derived
+- CSRF is required for PUT
+- foreign and nonexistent notification IDs are indistinguishable
+- notification write paths from prior workflow phases, SMTP, and database migrations were unchanged
+
+## PHASE 6B — History Presentation
+
+Status:
+
+PLANNED — CURRENT NEXT SUB-PHASE
+
+Present existing request, Work Order, and progress history cleanly without changing frozen Phase 6A notification behavior.
+
+## PHASE 6C — Audit Viewer
+
+Status:
+
+PLANNED
 
 Review:
 
@@ -2122,7 +2202,11 @@ Codex/Cline implementation
 
 PHASE 6
 
-Notifications + History + Audit
+Phase 6A — Notifications: COMPLETE / FROZEN (3b79f12)
+
+Phase 6B — History Presentation: current next sub-phase
+
+Phase 6C — Audit Viewer: planned
 
 Copilot/Cline
 
