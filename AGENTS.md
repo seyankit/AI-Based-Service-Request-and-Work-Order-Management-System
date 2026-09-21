@@ -34,7 +34,7 @@ full-system-migration
 
 Current verified checkpoint:
 
-43e06a5 Integrate advisory AI analysis
+1f05fb2 Add ranked duplicate recommendations
 
 Do not work from obsolete or duplicate project folders.
 
@@ -63,6 +63,7 @@ Completed and frozen:
 - Phase 6C — Audit Viewer
 - Phase 6 — Notifications + History + Audit Integration (overall)
 - Phase 7A - Advisory AI Analysis Integration
+- Phase 7B - Ranked Duplicate Recommendation Presentation
 
 In progress:
 
@@ -70,7 +71,7 @@ In progress:
 
 Current next target:
 
-- Phase 7B - Ranked Duplicate Recommendation Presentation
+- Phase 7C — Administrator Service Insights
 
 Remaining:
 
@@ -2092,9 +2093,44 @@ Verified runtime behavior:
 
 Next target:
 
-Phase 7B - Ranked Duplicate Recommendation Presentation
+Phase 7C — Administrator Service Insights
 
-Phase 7 remains IN PROGRESS. Do not implement Phase 7B under this Phase 7A closeout.
+Phase 7 remains IN PROGRESS.
+
+---
+
+## PHASE 7B - Ranked Duplicate Recommendation Presentation
+
+Status:
+
+COMPLETE / FROZEN
+
+Implementation checkpoint:
+
+1f05fb2 Add ranked duplicate recommendations
+
+Implemented and verified:
+
+- runtime migration `020` applied successfully; `AI_RECOMMENDATION.Duplicate_Candidates_JSON` exists as nullable JSON with no index
+- Java validates ranked candidate IDs, ordering, scores, threshold, self and foreign candidates, and bounded candidate count
+- ranked candidates persist to `AI_RECOMMENDATION`; existing top-candidate columns remain compatible
+- the existing Role 2 review API exposes current enriched duplicate candidates
+- the Forward Request modal presents ranked candidates with similarity percentages and Review buttons; Review is non-mutating
+- explicit administrator confirmation remains required before marking a request Duplicate
+- lower-ranked candidate confirmation was runtime verified for target Request_ID 9 (`SR-2026-000009`) with selected Original_Request_ID 8; Recommendation_ID 9 was preserved
+- the target request changed `Submitted` to `Duplicate` only after explicit confirmation; request-status history and the `SERVICE_REQUEST_MARKED_DUPLICATE` audit action were written
+- Request Queue duplicate display is `No likely duplicate identified` for completed analysis with zero candidates, `1 possible duplicate` for one, `N possible duplicates` for multiple, and `Awaiting AI analysis` while pending
+- final Java baseline: 139 tests with 0 failures, 0 errors, and 0 skipped; Node syntax check passed; Maven package completed with BUILD SUCCESS
+- Python tests previously passed 3/3 in the local runtime
+- Phase 7B does not auto-route, auto-forward, or auto-confirm duplicates
+
+Overall system progress after Phase 7B: approximately 87%.
+
+Next target:
+
+Phase 7C — Administrator Service Insights
+
+Phase 7 remains IN PROGRESS.
 
 ---
 
@@ -2452,7 +2488,9 @@ Python AI Integration: IN PROGRESS
 
 Phase 7A - Advisory AI Analysis Integration: COMPLETE / FROZEN (43e06a5)
 
-Phase 7B - Ranked Duplicate Recommendation Presentation: NEXT
+Phase 7B - Ranked Duplicate Recommendation Presentation: COMPLETE / FROZEN (1f05fb2)
+
+Phase 7C — Administrator Service Insights: NEXT
 
 Claude/Kilo architecture
 
