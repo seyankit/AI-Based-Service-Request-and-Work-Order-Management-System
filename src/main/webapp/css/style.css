@@ -2732,32 +2732,49 @@ body.workspace-active .site-footer {
 .field-group.is-invalid select,
 .field-group.is-invalid textarea,
 .checkbox-field.is-invalid {
-  background: #fffafa;
+  background: #fff7f7;
   border-color: var(--red);
-  box-shadow: 0 0 0 3px rgba(178, 61, 61, 0.08);
+  box-shadow: 0 0 0 3px rgba(178, 61, 61, 0.12);
 }
 
 .field-group.is-valid input:not([type="checkbox"]):not([type="file"]),
 .field-group.is-valid select,
 .field-group.is-valid textarea {
+  background: #fbfefc;
   border-color: var(--htc-green-mid);
-  box-shadow: 0 0 0 3px rgba(11, 117, 69, 0.06);
+  box-shadow: 0 0 0 3px rgba(11, 117, 69, 0.09);
+}
+
+.field-group.is-invalid input:focus,
+.field-group.is-invalid select:focus,
+.field-group.is-invalid textarea:focus {
+  border-color: #9f2f2f;
+  box-shadow: 0 0 0 4px rgba(178, 61, 61, 0.16);
+}
+
+.field-group.is-valid input:not([type="checkbox"]):not([type="file"]):focus,
+.field-group.is-valid select:focus,
+.field-group.is-valid textarea:focus {
+  border-color: var(--htc-green);
+  box-shadow: 0 0 0 4px rgba(11, 117, 69, 0.12);
 }
 
 .field-group .validation-message {
   align-items: flex-start;
   color: var(--red);
   display: flex;
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-weight: 700;
   gap: 5px;
   line-height: 1.45;
-  margin-top: 5px;
+  margin-top: 6px;
+  min-height: 1.45em;
 }
 
 .field-group .validation-message::before {
-  content: "";
+  content: "!";
   flex: 0 0 auto;
+  font-weight: 900;
 }
 
 .field-group .validation-success {

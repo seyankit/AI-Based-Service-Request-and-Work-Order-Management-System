@@ -4183,6 +4183,7 @@ function validateControl(input) {
   if (
     !input ||
     input.disabled ||
+    input.readOnly ||
     input.type === "hidden" ||
     input.type === "submit" ||
     input.type === "button" ||
@@ -5839,6 +5840,8 @@ async function handlePersonnelSubmit(event) {
 
   const form = event.currentTarget;
 
+  if (!validateForm(form)) return;
+
   const targetPersonnelId = Number(byId("personnelTargetId")?.value);
 
   const departmentId = Number(byId("personnelDepartment")?.value);
@@ -5846,8 +5849,7 @@ async function handlePersonnelSubmit(event) {
   const roleId = Number(byId("personnelRole")?.value);
 
   if (!Number.isInteger(targetPersonnelId) || targetPersonnelId <= 0) {
-    showToast("Select a personnel account to manage.", "error");
-
+    setFieldError(byId("personnelTargetId"), "Select a personnel account to manage.");
     byId("personnelTargetId")?.focus();
 
     return;
@@ -5863,16 +5865,14 @@ async function handlePersonnelSubmit(event) {
   }
 
   if (!Number.isInteger(departmentId) || departmentId <= 0) {
-    showToast("Select a valid department.", "error");
-
+    setFieldError(byId("personnelDepartment"), "Select a valid department.");
     byId("personnelDepartment")?.focus();
 
     return;
   }
 
   if (!Number.isInteger(roleId) || roleId < 1 || roleId > 4) {
-    showToast("Select a valid system role.", "error");
-
+    setFieldError(byId("personnelRole"), "Select a valid system role.");
     byId("personnelRole")?.focus();
 
     return;
@@ -5936,26 +5936,11 @@ async function handleWorkOrderSubmit(event) {
   event.preventDefault();
 
   const form = event.currentTarget;
+  if (!validateForm(form)) return;
   const requestInput = byId("workOrderRequestId");
   const descriptionInput = byId("workDescription");
   const requestNumber = requestInput.value.trim().toUpperCase();
   const description = descriptionInput.value.trim();
-
-  requestInput.setCustomValidity("");
-  descriptionInput.setCustomValidity("");
-
-  if (!/^SR-\d{4}-\d{6}$/.test(requestNumber)) {
-    requestInput.setCustomValidity("Use the format SR-YYYY-NNNNNN.");
-    requestInput.reportValidity();
-    return;
-  }
-  if (description.length < 10 || description.length > 2000) {
-    descriptionInput.setCustomValidity(
-      "Work description must contain 10 to 2000 characters.",
-    );
-    descriptionInput.reportValidity();
-    return;
-  }
 
   setSubmitting(form, true);
   try {
@@ -6057,6 +6042,7 @@ async function openWorkOrderAssignment(workOrder) {
 async function handleWorkOrderAssignmentSubmit(event) {
   event.preventDefault();
   const form = event.currentTarget;
+  if (!validateForm(form)) return;
   const workOrderId = Number(form.dataset.workOrderId || state.pendingAssignmentWorkOrderId);
   const technicianId = Number(byId("assignmentTechnician")?.value);
   const notes = byId("assignmentNotes")?.value.trim() || "";
@@ -6066,13 +6052,8 @@ async function handleWorkOrderAssignmentSubmit(event) {
     return;
   }
   if (!Number.isInteger(technicianId) || technicianId <= 0) {
-    showToast("Select an active technician.", "error");
+    setFieldError(byId("assignmentTechnician"), "Select an active technician.");
     byId("assignmentTechnician")?.focus();
-    return;
-  }
-  if (notes && (notes.length < 3 || notes.length > 1000)) {
-    showToast("Assignment notes must contain 3 to 1000 characters when provided.", "error");
-    byId("assignmentNotes")?.focus();
     return;
   }
 
@@ -6349,6 +6330,7 @@ async function openForwardRequestModal(request) {
     : "";
 
   error.textContent = "";
+  resetValidationState(form);
   submitButton.disabled = true;
 
   openModal("adminForwardModal", "#adminForwardCategory");
@@ -6624,6 +6606,10 @@ async function refreshAdminAdvisoryRequest(request, account) {
 async function forwardRequest(event, request) {
   event.preventDefault();
 
+  const form = event.currentTarget;
+
+  if (!validateForm(form)) return;
+
   const categorySelect = byId("adminForwardCategory");
 
   const prioritySelect = byId("adminForwardPriority");
@@ -6652,21 +6638,21 @@ async function forwardRequest(event, request) {
 
   if (!Number.isInteger(finalCategoryId) || finalCategoryId <= 0) {
     error.textContent = "Select the final service category.";
-
+    setFieldError(categorySelect, error.textContent);
     categorySelect.focus();
     return;
   }
 
   if (!["Low", "Medium", "High", "Urgent"].includes(finalPriority)) {
     error.textContent = "Select a valid final priority.";
-
+    setFieldError(prioritySelect, error.textContent);
     prioritySelect.focus();
     return;
   }
 
   if (!Number.isInteger(routedDepartmentId) || routedDepartmentId <= 0) {
     error.textContent = "Select the routed department.";
-
+    setFieldError(departmentSelect, error.textContent);
     departmentSelect.focus();
     return;
   }
@@ -6786,6 +6772,7 @@ async function openDuplicateRequestModal(request, preferredOriginalRequestId = n
 
   reason.value = "";
   error.textContent = "";
+  resetValidationState(form);
   submitButton.disabled = true;
 
   openModal("adminDuplicateModal", "#adminDuplicateOriginal");
@@ -6835,6 +6822,10 @@ async function openDuplicateRequestModal(request, preferredOriginalRequestId = n
 async function flagDuplicate(event, request) {
   event.preventDefault();
 
+  const form = event.currentTarget;
+
+  if (!validateForm(form)) return;
+
   const originalSelect = byId("adminDuplicateOriginal");
 
   const reasonInput = byId("adminDuplicateReason");
@@ -6859,21 +6850,21 @@ async function flagDuplicate(event, request) {
 
   if (!Number.isInteger(originalRequestId) || originalRequestId <= 0) {
     error.textContent = "Select the original request.";
-
+    setFieldError(originalSelect, error.textContent);
     originalSelect.focus();
     return;
   }
 
   if (originalRequestId === duplicateRequestId) {
     error.textContent = "A request cannot be a duplicate of itself.";
-
+    setFieldError(originalSelect, error.textContent);
     return;
   }
 
   if (confirmationReason.length < 5) {
     error.textContent =
       "Enter a duplicate confirmation reason of at least 5 characters.";
-
+    setFieldError(reasonInput, error.textContent);
     reasonInput.focus();
     return;
   }
@@ -6881,7 +6872,7 @@ async function flagDuplicate(event, request) {
   if (confirmationReason.length > 1000) {
     error.textContent =
       "The duplicate confirmation reason must not exceed 1000 characters.";
-
+    setFieldError(reasonInput, error.textContent);
     reasonInput.focus();
     return;
   }
@@ -7603,7 +7594,7 @@ function initializeEvents() {
     }
   });
 
-  all(".record-form input, .record-form select, .record-form textarea").forEach(
+  all("form[novalidate] input, form[novalidate] select, form[novalidate] textarea").forEach(
     (input) => {
       if (["checkbox", "submit", "button", "reset"].includes(input.type))
         return;

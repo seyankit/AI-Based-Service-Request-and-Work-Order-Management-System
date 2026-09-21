@@ -722,7 +722,7 @@
                   <form class="record-form workspace-form" id="workOrderForm" novalidate>
                     <div class="form-grid">
                       <div class="field-group"><label for="workOrderRequestId">Service Request ID *</label><input id="workOrderRequestId" type="text" placeholder="SR-2026-000001" pattern="SR-[0-9]{4}-[0-9]{6}" required></div>
-                      <div class="field-group full-width"><label for="workDescription">Work Description *</label><textarea id="workDescription" rows="3" minlength="10" maxlength="500" placeholder="Describe the work to be performed." required></textarea></div>
+                      <div class="field-group full-width"><label for="workDescription">Work Description *</label><textarea id="workDescription" rows="3" minlength="10" maxlength="2000" placeholder="Describe the work to be performed." required></textarea></div>
                     </div>
                     <div class="form-actions"><button class="button button-secondary" type="reset">Clear</button><button class="button button-primary" type="submit">Save Work Order</button></div>
                   </form>
@@ -952,7 +952,7 @@
           <div class="field-group"><label for="registerLastName">Last Name *</label><input id="registerLastName" type="text" maxlength="70" autocomplete="family-name" placeholder="Santos" required></div>
           <div class="field-group"><label for="registerSuffix">Suffix</label><select id="registerSuffix"><option value="">None</option><option>Jr.</option><option>Sr.</option><option>II</option><option>III</option><option>IV</option></select></div>
           <div class="field-group"><label for="registerEmail">School Email *</label><input id="registerEmail" type="email" maxlength="120" autocomplete="email" placeholder="name@online.htcgsc.edu.ph" required><small>Use your @online.htcgsc.edu.ph account.</small></div>
-          <div class="field-group"><label for="registerContactNumber">Contact Number</label><input id="registerContactNumber" type="tel" inputmode="tel" maxlength="13" autocomplete="tel" placeholder="09XXXXXXXXX"></div>
+          <div class="field-group"><label for="registerContactNumber">Contact Number</label><input id="registerContactNumber" type="tel" inputmode="tel" pattern="(?:\+63|0)9[0-9]{9}" maxlength="13" autocomplete="tel" placeholder="09XXXXXXXXX"></div>
           <div class="field-group"><label for="registerDepartment">Department / Program *</label><select id="registerDepartment" required>
             <option value="">Select department or program</option><option value="6">College of Engineering and Technology Education</option><option value="7">College Department</option><option value="8">Basic Education Department</option><option value="1">Information Technology Office</option><option value="9">Registrar's Office</option><option value="5">Administration Office</option><option value="2">Facilities Management</option><option value="3">Electrical Services</option><option value="4">Maintenance Services</option><option value="10">Other School Office</option>
           </select></div>
@@ -1086,7 +1086,7 @@
           <div class="field-group"><label for="assignmentWorkOrderNumber">Work Order</label><input id="assignmentWorkOrderNumber" type="text" readonly></div>
           <div class="field-group"><label for="assignmentDepartment">Service Unit</label><input id="assignmentDepartment" type="text" readonly></div>
           <div class="field-group full-width"><label for="assignmentTechnician">Technician *</label><select id="assignmentTechnician" required><option value="">Select an active technician</option></select></div>
-          <div class="field-group full-width"><label for="assignmentNotes">Assignment Notes</label><textarea id="assignmentNotes" rows="3" maxlength="1000" placeholder="Optional assignment instructions."></textarea></div>
+          <div class="field-group full-width"><label for="assignmentNotes">Assignment Notes</label><textarea id="assignmentNotes" rows="3" minlength="3" maxlength="1000" placeholder="Optional assignment instructions."></textarea></div>
         </div>
         <div class="form-actions"><button class="button button-secondary" type="button" data-close-modal="workOrderAssignmentModal">Cancel</button><button class="button button-primary" type="submit">Assign Technician</button></div>
       </form>
