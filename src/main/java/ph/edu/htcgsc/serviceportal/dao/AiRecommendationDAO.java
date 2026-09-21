@@ -1,5 +1,6 @@
 package ph.edu.htcgsc.serviceportal.dao;
 
+import com.google.gson.Gson;
 import ph.edu.htcgsc.serviceportal.config.DatabaseConnection;
 import ph.edu.htcgsc.serviceportal.service.AiRecommendationService;
 import ph.edu.htcgsc.serviceportal.service.AiServiceClient;
@@ -10,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /** Database authority for the advisory analysis input and persisted result. */
@@ -17,6 +19,7 @@ public final class AiRecommendationDAO implements AiRecommendationService.Reposi
 
     private static final int SERVICE_ADMINISTRATOR_ROLE_ID = 2;
     private static final int MAXIMUM_DUPLICATE_CANDIDATES = 200;
+    private final Gson gson = new Gson();
 
     public static final class RequestNotFoundException extends Exception {
         public RequestNotFoundException() {
@@ -243,6 +246,7 @@ public final class AiRecommendationDAO implements AiRecommendationService.Reposi
                     Recommendation_Method = ?, Recommended_Category_ID = ?, Category_Confidence = ?,
                     Recommended_Priority = ?, Priority_Confidence = ?, Possible_Duplicate_Request_ID = ?,
                     Duplicate_Similarity = ?, Duplicate_Threshold = ?, Category_Explanation = ?,
+                    Duplicate_Candidates_JSON = ?,
                     Priority_Explanation = ?, Duplicate_Explanation = ?, Analysis_Message = ?,
                     Model_Name = ?, Model_Version = ?, Processing_Time_Ms = ?, Generated_At = CURRENT_TIMESTAMP
                 WHERE Recommendation_ID = ?
@@ -257,13 +261,14 @@ public final class AiRecommendationDAO implements AiRecommendationService.Reposi
             statement.setBigDecimal(7, value.duplicateSimilarity());
             statement.setBigDecimal(8, value.duplicateThreshold());
             statement.setString(9, value.categoryExplanation());
-            statement.setString(10, value.priorityExplanation());
-            statement.setString(11, value.duplicateExplanation());
-            statement.setString(12, value.analysisMessage());
-            statement.setString(13, value.modelName());
-            statement.setString(14, value.modelVersion());
-            statement.setInt(15, value.processingTimeMs());
-            statement.setLong(16, recommendationId);
+            statement.setString(10, rankedCandidatesJson(value.duplicateCandidates()));
+            statement.setString(11, value.priorityExplanation());
+            statement.setString(12, value.duplicateExplanation());
+            statement.setString(13, value.analysisMessage());
+            statement.setString(14, value.modelName());
+            statement.setString(15, value.modelVersion());
+            statement.setInt(16, value.processingTimeMs());
+            statement.setLong(17, recommendationId);
             requireOneUpdatedRow(statement);
         }
     }
@@ -275,6 +280,7 @@ public final class AiRecommendationDAO implements AiRecommendationService.Reposi
                     Recommended_Priority = NULL, Priority_Confidence = NULL,
                     Possible_Duplicate_Request_ID = NULL, Duplicate_Similarity = NULL,
                     Duplicate_Threshold = NULL, Category_Explanation = NULL,
+                    Duplicate_Candidates_JSON = NULL,
                     Priority_Explanation = NULL, Duplicate_Explanation = NULL,
                     Analysis_Message = 'Advisory analysis is currently unavailable.', Model_Name = NULL,
                     Model_Version = NULL, Processing_Time_Ms = NULL, Generated_At = NULL
@@ -289,6 +295,18 @@ public final class AiRecommendationDAO implements AiRecommendationService.Reposi
 
     private void requireOneUpdatedRow(PreparedStatement statement) throws SQLException {
         if (statement.executeUpdate() != 1) throw new SQLException("The advisory recommendation was not updated.");
+    }
+
+    private String rankedCandidatesJson(List<AiServiceClient.DuplicateCandidate> candidates) {
+        List<java.util.Map<String, Object>> values = new ArrayList<>();
+        for (AiServiceClient.DuplicateCandidate candidate : candidates) {
+            java.util.Map<String, Object> value = new LinkedHashMap<>();
+            value.put("requestId", candidate.requestId());
+            value.put("score", candidate.similarity());
+            value.put("explanation", candidate.explanation());
+            values.add(value);
+        }
+        return gson.toJson(values);
     }
 
     private String toIsoTimestamp(Timestamp value) {

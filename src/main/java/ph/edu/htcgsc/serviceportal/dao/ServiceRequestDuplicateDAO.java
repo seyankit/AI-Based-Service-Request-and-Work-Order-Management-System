@@ -437,7 +437,13 @@ public final class ServiceRequestDuplicateDAO {
                 FROM AI_RECOMMENDATION
                 WHERE Request_ID = ?
                   AND Is_Current = TRUE
-                  AND Possible_Duplicate_Request_ID = ?
+                  AND (
+                      Possible_Duplicate_Request_ID = ?
+                      OR JSON_CONTAINS(
+                          COALESCE(Duplicate_Candidates_JSON, JSON_ARRAY()),
+                          JSON_OBJECT('requestId', CAST(? AS UNSIGNED))
+                      )
+                  )
                 ORDER BY
                     Recommendation_Sequence DESC,
                     Recommendation_ID DESC
@@ -455,6 +461,11 @@ public final class ServiceRequestDuplicateDAO {
 
             statement.setLong(
                     2,
+                    originalRequestId
+            );
+
+            statement.setLong(
+                    3,
                     originalRequestId
             );
 

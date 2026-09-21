@@ -55,6 +55,48 @@ class AiServiceClientTest {
     }
 
     @Test
+    void rankedCandidatesRetainDescendingOrderAndMeetThreshold() throws Exception {
+        String candidates = "[{\"requestId\":8,\"similarity\":0.82,\"explanation\":\"First.\"},"
+                + "{\"requestId\":9,\"similarity\":0.74,\"explanation\":\"Second.\"}]";
+        String response = response("Medium", 1, candidates)
+                .replace("\"possibleDuplicateRequestId\":null", "\"possibleDuplicateRequestId\":8")
+                .replace("\"duplicateSimilarity\":null", "\"duplicateSimilarity\":0.82");
+        AiServiceClient.AnalysisResult result = client(200, response).analyze(inputWithRankedCandidates());
+        assertEquals(List.of(8L, 9L), result.duplicateCandidates().stream()
+                .map(AiServiceClient.DuplicateCandidate::requestId).toList());
+    }
+
+    @Test
+    void candidateBelowThresholdIsRejected() {
+        String candidates = "[{\"requestId\":8,\"similarity\":0.57,\"explanation\":\"Below threshold.\"}]";
+        String response = response("Medium", 1, candidates)
+                .replace("\"possibleDuplicateRequestId\":null", "\"possibleDuplicateRequestId\":8")
+                .replace("\"duplicateSimilarity\":null", "\"duplicateSimilarity\":0.57");
+        assertThrows(AiServiceClient.InvalidResponseException.class,
+                () -> client(200, response).analyze(input()));
+    }
+
+    @Test
+    void invalidDuplicateCandidateShapesAreRejected() {
+        assertInvalidDuplicateCandidates("[{\"requestId\":7,\"similarity\":0.82,\"explanation\":\"Self.\"}]");
+        assertInvalidDuplicateCandidates("[{\"requestId\":8,\"similarity\":0.82,\"explanation\":\"First.\"},"
+                + "{\"requestId\":8,\"similarity\":0.74,\"explanation\":\"Repeated.\"}]");
+        assertInvalidDuplicateCandidates("[{\"requestId\":8,\"similarity\":1.01,\"explanation\":\"Invalid score.\"}]");
+        assertInvalidDuplicateCandidates("[1]");
+    }
+
+    @Test
+    void tooManyDuplicateCandidatesAreRejected() {
+        StringBuilder candidates = new StringBuilder("[");
+        for (int index = 0; index < 11; index++) {
+            if (index > 0) candidates.append(',');
+            candidates.append("{\"requestId\":8,\"similarity\":0.82,\"explanation\":\"Candidate.\"}");
+        }
+        candidates.append(']');
+        assertInvalidDuplicateCandidates(candidates.toString());
+    }
+
+    @Test
     void nonLoopbackServiceIsRejectedBeforeAnyRequest() {
         AiServiceClient client = new AiServiceClient(
                 new AiServiceClient.Configuration("http://example.test:8091", TOKEN),
@@ -70,12 +112,32 @@ class AiServiceClientTest {
         return new AiServiceClient.Configuration("http://127.0.0.1:8091", TOKEN);
     }
 
+    private void assertInvalidDuplicateCandidates(String candidates) {
+        String response = response("Medium", 1, candidates)
+                .replace("\"possibleDuplicateRequestId\":null", "\"possibleDuplicateRequestId\":8")
+                .replace("\"duplicateSimilarity\":null", "\"duplicateSimilarity\":0.82");
+        assertThrows(AiServiceClient.InvalidResponseException.class,
+                () -> client(200, response).analyze(input()));
+    }
+
     private AiServiceClient.AnalysisInput input() {
         return new AiServiceClient.AnalysisInput(7, "Network outage", "The internet is not working.",
                 "Room 10", 1, "2026-09-21T00:00:00Z",
                 List.of(new AiServiceClient.Category(1, "INTERNET_NETWORK", "Internet & Network", "Network issues.")),
                 List.of(new AiServiceClient.Candidate(8, "SR-2026-000008", "Older network outage",
                         "Internet unavailable.", "Room 10", 1, "2026-09-20T00:00:00Z", "Submitted")));
+    }
+
+    private AiServiceClient.AnalysisInput inputWithRankedCandidates() {
+        return new AiServiceClient.AnalysisInput(7, "Network outage", "The internet is not working.",
+                "Room 10", 1, "2026-09-21T00:00:00Z",
+                List.of(new AiServiceClient.Category(1, "INTERNET_NETWORK", "Internet & Network", "Network issues.")),
+                List.of(
+                        new AiServiceClient.Candidate(8, "SR-2026-000008", "Older network outage",
+                                "Internet unavailable.", "Room 10", 1, "2026-09-20T00:00:00Z", "Submitted"),
+                        new AiServiceClient.Candidate(9, "SR-2026-000009", "Second network outage",
+                                "Internet unavailable.", "Room 10", 1, "2026-09-19T00:00:00Z", "Submitted")
+                ));
     }
 
     private String response(String priority, long categoryId, String candidates) {

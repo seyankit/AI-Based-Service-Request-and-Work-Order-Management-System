@@ -14,6 +14,7 @@ import java.io.StringWriter;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -73,12 +74,12 @@ class AiRecommendationServletTest {
     private AiRecommendationService.Analyzer successAnalyzer() {
         return (actor, role, requestId) -> new AiRecommendationService.Result(true, "Completed", "Ready.", 1,
                 "Internet & Network", BigDecimal.valueOf(.5), "Medium", BigDecimal.valueOf(.5), null,
-                null, null, "Category reason.", "Priority reason.", "No duplicate.", "Rule-Based", "Rules", "1");
+                null, null, List.of(), "Category reason.", "Priority reason.", "No duplicate.", "Rule-Based", "Rules", "1");
     }
 
     private AiRecommendationService.Result unavailableResult() {
         return new AiRecommendationService.Result(false, "Unavailable", "Unavailable.", 0, null,
-                null, null, null, null, null, null, null, null, null, "None", null, null);
+                null, null, null, null, null, null, List.of(), null, null, null, "None", null, null);
     }
 
     private HttpServletRequest request(Integer personnelId, Integer roleId, String csrf, String body) {

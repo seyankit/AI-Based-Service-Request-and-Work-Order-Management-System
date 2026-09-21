@@ -1,5 +1,9 @@
 package ph.edu.htcgsc.serviceportal.dao;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import ph.edu.htcgsc.serviceportal.config.DatabaseConnection;
 import ph.edu.htcgsc.serviceportal.model.ServiceRequest;
 import ph.edu.htcgsc.serviceportal.model.ServiceRequestReviewItem;
@@ -10,8 +14,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class ServiceRequestReviewDAO {
 
@@ -101,6 +108,8 @@ public final class ServiceRequestReviewDAO {
                         AS AI_Duplicate_Similarity,
                     ai.Duplicate_Threshold
                         AS AI_Duplicate_Threshold,
+                    ai.Duplicate_Candidates_JSON
+                        AS AI_Duplicate_Candidates_JSON,
                     ai.Category_Explanation
                         AS AI_Category_Explanation,
                     ai.Priority_Explanation
@@ -194,7 +203,7 @@ public final class ServiceRequestReviewDAO {
 
                 while (result.next()) {
                     reviewItems.add(
-                            mapReviewItem(result)
+                            mapReviewItem(connection, result)
                     );
                 }
             }
@@ -204,6 +213,7 @@ public final class ServiceRequestReviewDAO {
     }
 
     private ServiceRequestReviewItem mapReviewItem(
+            Connection connection,
             ResultSet result
     ) throws SQLException {
 
@@ -342,6 +352,12 @@ public final class ServiceRequestReviewDAO {
                                             result.getTimestamp(
                                                     "AI_Generated_At"
                                             )
+                                    ),
+                                    loadRankedCandidates(
+                                            connection,
+                                            result.getString(
+                                                    "AI_Duplicate_Candidates_JSON"
+                                            )
                                     )
                             );
         }
@@ -352,6 +368,104 @@ public final class ServiceRequestReviewDAO {
                 requestedCategory,
                 aiRecommendation
         );
+    }
+
+    private List<ServiceRequestReviewItem.DuplicateCandidateSummary> loadRankedCandidates(
+            Connection connection, String storedJson
+    ) throws SQLException {
+        List<StoredDuplicateCandidate> storedCandidates = parseRankedCandidates(storedJson);
+        if (storedCandidates.isEmpty()) {
+            return List.of();
+        }
+
+        String placeholders = String.join(", ", java.util.Collections.nCopies(storedCandidates.size(), "?"));
+        String sql = """
+                SELECT sr.Request_ID, sr.Request_Number, sr.Request_Title, sr.Current_Status,
+                       category.Category_Name
+                FROM SERVICE_REQUEST sr
+                LEFT JOIN SERVICE_CATEGORY category ON category.Category_ID = sr.Requested_Category_ID
+                WHERE sr.Request_ID IN (%s)
+                """.formatted(placeholders);
+        java.util.Map<Long, CurrentDuplicateCandidate> currentCandidates = new java.util.HashMap<>();
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            for (int index = 0; index < storedCandidates.size(); index++) {
+                statement.setLong(index + 1, storedCandidates.get(index).requestId());
+            }
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    currentCandidates.put(result.getLong("Request_ID"), new CurrentDuplicateCandidate(
+                            result.getString("Request_Number"), result.getString("Request_Title"),
+                            result.getString("Category_Name"), result.getString("Current_Status")
+                    ));
+                }
+            }
+        }
+
+        List<ServiceRequestReviewItem.DuplicateCandidateSummary> results = new ArrayList<>();
+        for (StoredDuplicateCandidate stored : storedCandidates) {
+            CurrentDuplicateCandidate current = currentCandidates.get(stored.requestId());
+            if (current == null || "Duplicate".equalsIgnoreCase(current.currentStatus())) {
+                continue;
+            }
+            results.add(new ServiceRequestReviewItem.DuplicateCandidateSummary(
+                    stored.requestId(), current.requestNumber(), current.title(), current.category(),
+                    current.currentStatus(), stored.score(), stored.explanation()
+            ));
+        }
+        return List.copyOf(results);
+    }
+
+    private List<StoredDuplicateCandidate> parseRankedCandidates(String storedJson) {
+        if (storedJson == null || storedJson.isBlank()) {
+            return List.of();
+        }
+        try {
+            JsonElement root = JsonParser.parseString(storedJson);
+            if (!root.isJsonArray()) {
+                return List.of();
+            }
+            JsonArray values = root.getAsJsonArray();
+            if (values.size() > 10) {
+                return List.of();
+            }
+            Set<Long> ids = new HashSet<>();
+            List<StoredDuplicateCandidate> results = new ArrayList<>();
+            for (JsonElement value : values) {
+                if (!value.isJsonObject()) {
+                    continue;
+                }
+                JsonObject item = value.getAsJsonObject();
+                if (!item.has("requestId") || !item.has("score") || !item.has("explanation")
+                        || !item.get("requestId").isJsonPrimitive()
+                        || !item.get("requestId").getAsJsonPrimitive().isNumber()
+                        || !item.get("score").isJsonPrimitive()
+                        || !item.get("score").getAsJsonPrimitive().isNumber()
+                        || !item.get("explanation").isJsonPrimitive()
+                        || !item.get("explanation").getAsJsonPrimitive().isString()) {
+                    continue;
+                }
+                BigDecimal requestIdValue = new BigDecimal(item.get("requestId").getAsString());
+                long requestId = requestIdValue.longValueExact();
+                BigDecimal score = new BigDecimal(item.get("score").getAsString());
+                String explanation = item.get("explanation").getAsString().trim();
+                if (requestId <= 0 || requestIdValue.compareTo(BigDecimal.valueOf(requestId)) != 0 || !ids.add(requestId)
+                        || score.compareTo(BigDecimal.ZERO) < 0 || score.compareTo(BigDecimal.ONE) > 0
+                        || explanation.length() > 1000) {
+                    continue;
+                }
+                results.add(new StoredDuplicateCandidate(requestId, score, explanation));
+            }
+            return List.copyOf(results);
+        } catch (RuntimeException exception) {
+            return List.of();
+        }
+    }
+
+    private record StoredDuplicateCandidate(long requestId, BigDecimal score, String explanation) {
+    }
+
+    private record CurrentDuplicateCandidate(String requestNumber, String title, String category,
+                                             String currentStatus) {
     }
 
     private ServiceRequest mapServiceRequest(

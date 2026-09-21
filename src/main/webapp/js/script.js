@@ -189,34 +189,48 @@ function mapAdministratorReviewFromApi(item) {
 
   const requestedCategory = item?.requestedCategory || {};
 
-  const ai = item?.aiRecommendation || {};
+  const recommendation = item?.aiRecommendation;
 
   const requesterName = [requester.firstName, requester.lastName]
     .filter(Boolean)
     .join(" ")
     .trim();
 
-  const analysisStatus = String(ai.analysisStatus || "Pending").trim();
+  const analysisStatus = String(recommendation?.analysisStatus || "Pending").trim();
 
   const recommendedCategory =
-    ai.recommendedCategoryName || ai.categoryName || "";
+    recommendation?.recommendedCategoryName || recommendation?.categoryName || "";
 
-  const recommendedPriority = ai.recommendedPriority || "";
+  const recommendedPriority = recommendation?.recommendedPriority || "";
 
-  const duplicateRequestNumber = ai.duplicateCandidateRequestNumber || "";
-
-  const similarityValue = Number(
-    ai.duplicateSimilarityScore ?? ai.similarityScore,
-  );
+  const duplicateCandidates = Array.isArray(recommendation?.duplicateCandidates)
+    ? recommendation.duplicateCandidates
+      .map((candidate) => ({
+        requestId: Number(candidate?.requestId),
+        requestNumber: candidate?.requestNumber || "Request",
+        title: candidate?.title || "Untitled request",
+        category: candidate?.category || "Not specified",
+        currentStatus: candidate?.currentStatus || "Unknown",
+        similarityScore: Number(candidate?.similarityScore),
+        explanation: candidate?.explanation || "",
+      }))
+      .filter((candidate) =>
+        Number.isSafeInteger(candidate.requestId) && candidate.requestId > 0 &&
+        Number.isFinite(candidate.similarityScore) && candidate.similarityScore >= 0 &&
+        candidate.similarityScore <= 1,
+      )
+    : [];
 
   let duplicateCheck = "Awaiting AI analysis";
 
-  if (duplicateRequestNumber) {
-    duplicateCheck = Number.isFinite(similarityValue)
-      ? `Possible duplicate: ${duplicateRequestNumber} (${Math.round(similarityValue * 100)}%)`
-      : `Possible duplicate: ${duplicateRequestNumber}`;
+  if (["unavailable", "failed"].includes(analysisStatus.toLowerCase())) {
+    duplicateCheck = "Duplicate analysis unavailable";
+  } else if (duplicateCandidates.length) {
+    duplicateCheck = `${duplicateCandidates.length} possible duplicate${
+      duplicateCandidates.length === 1 ? "" : "s"
+    }`;
   } else if (analysisStatus.toLowerCase() === "completed") {
-    duplicateCheck = "No duplicate indicated";
+    duplicateCheck = "No likely duplicate identified";
   }
 
   return {
@@ -285,19 +299,21 @@ function mapAdministratorReviewFromApi(item) {
 
     duplicateCheck,
 
-    aiAnalysisMessage: ai.analysisMessage || "",
+    aiAnalysisMessage: recommendation?.analysisMessage || "",
 
-    aiRecommendationMethod: ai.recommendationMethod || "",
+    aiRecommendationMethod: recommendation?.recommendationMethod || "",
 
-    aiCategoryExplanation: ai.categoryExplanation || "",
+    aiCategoryExplanation: recommendation?.categoryExplanation || "",
 
-    aiPriorityExplanation: ai.priorityExplanation || "",
+    aiPriorityExplanation: recommendation?.priorityExplanation || "",
 
-    aiDuplicateExplanation: ai.duplicateExplanation || "",
+    aiDuplicateExplanation: recommendation?.duplicateExplanation || "",
 
-    aiModelName: ai.modelName || "",
+    aiDuplicateCandidates: duplicateCandidates,
 
-    aiModelVersion: ai.modelVersion || "",
+    aiModelName: recommendation?.modelName || "",
+
+    aiModelVersion: recommendation?.modelVersion || "",
   };
 }
 
@@ -6260,6 +6276,66 @@ function renderAdminAdvisoryRecommendation(request) {
     .forEach((explanation) => {
       details.appendChild(createElement("span", "", explanation));
     });
+
+  renderAdminRankedDuplicateCandidates(request);
+}
+
+function renderAdminRankedDuplicateCandidates(request) {
+  const container = byId("adminForwardAiDuplicateCandidates");
+
+  if (!container) {
+    return;
+  }
+
+  container.replaceChildren();
+
+  if (String(request.aiStatus || "").toLowerCase() !== "completed") {
+    return;
+  }
+
+  const candidates = Array.isArray(request.aiDuplicateCandidates)
+    ? request.aiDuplicateCandidates
+    : [];
+
+  if (!candidates.length) {
+    container.appendChild(
+      createElement("span", "helper-text", "No likely duplicate requests were identified."),
+    );
+    return;
+  }
+
+  const heading = createElement("strong", "", "Possible Duplicate Requests");
+  container.appendChild(heading);
+
+  candidates.forEach((candidate, index) => {
+    const item = createElement("div", "compact-item");
+    const copy = createElement("div");
+    const score = Math.round(candidate.similarityScore * 100);
+
+    copy.append(
+      createElement("strong", "", `${index + 1}. ${candidate.requestNumber}`),
+      createElement("span", "", candidate.title),
+      createElement(
+        "span",
+        "",
+        `${candidate.category} • ${candidate.currentStatus} • Similarity score: ${score}%`,
+      ),
+    );
+
+    if (candidate.explanation) {
+      copy.appendChild(createElement("span", "", candidate.explanation));
+    }
+
+    const review = createElement("button", "button button-small button-secondary", "Review");
+    review.type = "button";
+    review.addEventListener("click", () => {
+      closeModal("adminForwardModal");
+      openDuplicateRequestModal(request, candidate.requestId);
+    });
+
+    item.append(copy, review);
+    container.appendChild(item);
+  });
 }
 
 async function runAdvisoryAnalysis(request, button = null) {
@@ -6315,7 +6391,12 @@ async function runAdvisoryAnalysis(request, button = null) {
       request.aiCategoryExplanation = "";
       request.aiPriorityExplanation = "";
       request.aiDuplicateExplanation = "";
+      request.aiDuplicateCandidates = [];
       request.duplicateCheck = "No duplicate analysis available";
+      await refreshAdminAdvisoryRequest(request, account);
+      if (state.currentAccount !== account || state.activeRole !== "administrator") {
+        return;
+      }
       renderAdminAdvisoryRecommendation(request);
       renderAdminReviewTable();
       renderAdminAiSummary();
@@ -6328,9 +6409,14 @@ async function runAdvisoryAnalysis(request, button = null) {
       request.aiCategoryExplanation = recommendation.categoryExplanation || "";
       request.aiPriorityExplanation = recommendation.priorityExplanation || "";
       request.aiDuplicateExplanation = recommendation.duplicateExplanation || "";
+      request.aiDuplicateCandidates = [];
       request.duplicateCheck = recommendation.possibleDuplicateRequestNumber
         ? `Possible duplicate: ${recommendation.possibleDuplicateRequestNumber}`
         : "No duplicate indicated";
+      await refreshAdminAdvisoryRequest(request, account);
+      if (state.currentAccount !== account || state.activeRole !== "administrator") {
+        return;
+      }
       renderAdminAdvisoryRecommendation(request);
       renderAdminReviewTable();
       renderAdminAiSummary();
@@ -6348,6 +6434,23 @@ async function runAdvisoryAnalysis(request, button = null) {
       button.disabled = false;
       button.textContent = originalText;
     }
+  }
+}
+
+async function refreshAdminAdvisoryRequest(request, account) {
+  try {
+    await loadAdministratorServiceRequestReviews();
+    if (state.currentAccount !== account || state.activeRole !== "administrator") {
+      return;
+    }
+    const refreshed = state.adminReviewRequests.find(
+      (item) => Number(item.databaseId) === Number(request.databaseId),
+    );
+    if (refreshed) {
+      Object.assign(request, refreshed);
+    }
+  } catch (error) {
+    console.error("Unable to refresh advisory recommendations:", error);
   }
 }
 
@@ -6483,7 +6586,7 @@ async function loadDuplicateCandidates(duplicateRequestId) {
   return data.candidates;
 }
 
-async function openDuplicateRequestModal(request) {
+async function openDuplicateRequestModal(request, preferredOriginalRequestId = null) {
   const form = byId("adminDuplicateForm");
 
   const originalSelect = byId("adminDuplicateOriginal");
@@ -6538,6 +6641,15 @@ async function openDuplicateRequestModal(request) {
     );
 
     originalSelect.replaceChildren(placeholder, ...options);
+
+    const preferredId = Number(preferredOriginalRequestId);
+    if (Number.isSafeInteger(preferredId) && preferredId > 0) {
+      if (candidates.some((candidate) => Number(candidate.requestId) === preferredId)) {
+        originalSelect.value = String(preferredId);
+      } else {
+        error.textContent = "This suggested request is no longer available for confirmation.";
+      }
+    }
 
     form.onsubmit = (event) => flagDuplicate(event, request);
 

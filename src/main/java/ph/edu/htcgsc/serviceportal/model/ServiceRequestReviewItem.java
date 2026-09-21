@@ -1,6 +1,7 @@
 package ph.edu.htcgsc.serviceportal.model;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record ServiceRequestReviewItem(
         ServiceRequest request,
@@ -49,7 +50,19 @@ public record ServiceRequestReviewItem(
             String modelName,
             String modelVersion,
             Integer processingTimeMs,
-            String generatedAt
+            String generatedAt,
+            List<DuplicateCandidateSummary> duplicateCandidates
+    ) {
+    }
+
+    public record DuplicateCandidateSummary(
+            long requestId,
+            String requestNumber,
+            String title,
+            String category,
+            String currentStatus,
+            BigDecimal similarityScore,
+            String explanation
     ) {
     }
 }

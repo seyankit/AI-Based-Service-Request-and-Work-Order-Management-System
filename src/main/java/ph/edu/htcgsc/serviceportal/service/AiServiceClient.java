@@ -223,7 +223,7 @@ public final class AiServiceClient {
             BigDecimal categoryConfidence = score(data, "categoryConfidence");
             BigDecimal priorityConfidence = score(data, "priorityConfidence");
             BigDecimal threshold = score(data, "duplicateThreshold");
-            List<DuplicateCandidate> candidates = duplicateCandidates(data, input);
+            List<DuplicateCandidate> candidates = duplicateCandidates(data, input, threshold);
             Long duplicateId = nullablePositiveLong(data, "possibleDuplicateRequestId");
             BigDecimal duplicateSimilarity = nullableScore(data, "duplicateSimilarity");
 
@@ -268,7 +268,8 @@ public final class AiServiceClient {
         }
     }
 
-    private List<DuplicateCandidate> duplicateCandidates(JsonObject data, AnalysisInput input)
+    private List<DuplicateCandidate> duplicateCandidates(JsonObject data, AnalysisInput input,
+                                                          BigDecimal threshold)
             throws InvalidResponseException {
         JsonArray values = requiredArray(data, "duplicateCandidates");
         if (values.size() > MAXIMUM_DUPLICATE_RESULTS) {
@@ -289,6 +290,7 @@ public final class AiServiceClient {
             long id = requiredPositiveLong(item, "requestId");
             BigDecimal similarity = score(item, "similarity");
             if (id == input.requestId() || !suppliedIds.contains(id) || !seen.add(id)
+                    || similarity.compareTo(threshold) < 0
                     || (previous != null && previous.compareTo(similarity) < 0)) {
                 throw new InvalidResponseException("Advisory response contains an invalid duplicate candidate.");
             }

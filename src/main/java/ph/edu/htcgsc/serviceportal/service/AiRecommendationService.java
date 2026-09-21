@@ -1,6 +1,7 @@
 package ph.edu.htcgsc.serviceportal.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public final class AiRecommendationService {
 
@@ -21,6 +22,7 @@ public final class AiRecommendationService {
                          BigDecimal categoryConfidence, String recommendedPriority,
                          BigDecimal priorityConfidence, Long possibleDuplicateRequestId,
                          String possibleDuplicateRequestNumber, BigDecimal duplicateSimilarity,
+                         List<AiServiceClient.DuplicateCandidate> duplicateCandidates,
                          String categoryExplanation, String priorityExplanation,
                          String duplicateExplanation, String recommendationMethod,
                          String modelName, String modelVersion) {
@@ -52,7 +54,7 @@ public final class AiRecommendationService {
                     analysis.recommendedCategoryId(), category.categoryName(), analysis.categoryConfidence(),
                     analysis.recommendedPriority(), analysis.priorityConfidence(),
                     analysis.possibleDuplicateRequestId(), duplicate == null ? null : duplicate.requestNumber(),
-                    analysis.duplicateSimilarity(), analysis.categoryExplanation(), analysis.priorityExplanation(),
+                    analysis.duplicateSimilarity(), analysis.duplicateCandidates(), analysis.categoryExplanation(), analysis.priorityExplanation(),
                     analysis.duplicateExplanation(), analysis.recommendationMethod(), analysis.modelName(),
                     analysis.modelVersion());
         } catch (AiServiceClient.UnavailableException exception) {
@@ -67,6 +69,6 @@ public final class AiRecommendationService {
     private Result unavailable(String status) {
         return new Result(false, status, "Advisory analysis is currently unavailable.",
                 0, null, null, null, null, null, null, null,
-                null, null, null, "None", null, null);
+                List.of(), null, null, null, "None", null, null);
     }
 }
