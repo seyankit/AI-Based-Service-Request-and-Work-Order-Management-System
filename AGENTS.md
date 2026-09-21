@@ -34,7 +34,7 @@ full-system-migration
 
 Current verified checkpoint:
 
-1f05fb2 Add ranked duplicate recommendations
+f1a4b99 Add administrator service insights
 
 Do not work from obsolete or duplicate project folders.
 
@@ -64,6 +64,7 @@ Completed and frozen:
 - Phase 6 — Notifications + History + Audit Integration (overall)
 - Phase 7A - Advisory AI Analysis Integration
 - Phase 7B - Ranked Duplicate Recommendation Presentation
+- Phase 7C — Administrator Service Insights
 
 In progress:
 
@@ -2134,6 +2135,37 @@ Phase 7 remains IN PROGRESS.
 
 ---
 
+## PHASE 7C — Administrator Service Insights
+
+Status:
+
+COMPLETE / FROZEN
+
+Implementation checkpoint:
+
+f1a4b99 Add administrator service insights
+
+Implemented and verified:
+
+- read-only `GET /api/service-insights` for authenticated Role 2 Service Administrators only
+- default period `30d`; supported periods `7d`, `30d`, `month`, and `all`
+- signed out requests return 401; Roles 1, 3, and 4 return 403; Role 2 returns 200; invalid periods return 400
+- Java/MySQL aggregate SQL is authoritative; Python `/insights` is intentionally not used and no database migration was required
+- aggregate-only, privacy-safe response; no requester personal data, contact data, request descriptions, locations, attachment details, audit details, credentials, or session data are exposed
+- effective category uses `COALESCE(Final_Category_ID, Requested_Category_ID)` and effective priority uses `COALESCE(Final_Priority, Preferred_Priority)`
+- work completion duration uses `Actual_Start_At` through `Completed_At`
+- the MySQL `ONLY_FULL_GROUP_BY` runtime issue was repaired without changing SQL mode
+- all four supported periods were runtime verified with HTTP 200
+- SQL/API verification: total requests 10; submitted 5; awaiting approval 0; approved 2; duplicate 2; total work orders 2; completed work orders 2; average completion hours 0.1651
+- responsive, full-width Administrator Service Insights UI verified, including seven summary metrics and category, priority, work-order-status, and request-trend sections
+- Java 17: 149 tests passed with 0 failures, errors, or skips; Maven package completed with BUILD SUCCESS; Node syntax check passed
+
+Overall system progress after Phase 7C: approximately 88%.
+
+Phase 7 remains IN PROGRESS.
+
+---
+
 # PHASE 8 — Dashboard + Reports
 
 Preferred tools:
@@ -2490,7 +2522,7 @@ Phase 7A - Advisory AI Analysis Integration: COMPLETE / FROZEN (43e06a5)
 
 Phase 7B - Ranked Duplicate Recommendation Presentation: COMPLETE / FROZEN (1f05fb2)
 
-Phase 7C — Administrator Service Insights: NEXT
+Phase 7C — Administrator Service Insights: COMPLETE / FROZEN (f1a4b99)
 
 Claude/Kilo architecture
 
