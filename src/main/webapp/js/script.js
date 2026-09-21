@@ -65,6 +65,7 @@ const state = {
   confirmRequiresRemarks: false,
 
   // Real records are loaded from backend APIs.
+  serviceCategories: [],
   serviceRequests: [],
   adminReviewRequests: [],
   serviceRequestDrafts: [],
@@ -760,6 +761,10 @@ async function loadServiceCategories() {
 
   if (!select) return;
 
+  state.serviceCategories = [];
+  select.disabled = true;
+  select.replaceChildren(new Option("Loading categories...", ""));
+
   try {
     const response = await fetch(API_ENDPOINTS.serviceCategories, {
       method: "GET",
@@ -776,6 +781,21 @@ async function loadServiceCategories() {
       throw new Error(data.message || "Unable to load service categories.");
     }
 
+    const categories = Array.isArray(data.categories)
+      ? data.categories
+          .map((category) => ({
+            categoryId: Number(category?.categoryId),
+            categoryName: String(category?.categoryName || "").trim(),
+          }))
+          .filter(
+            (category) =>
+              Number.isSafeInteger(category.categoryId) &&
+              category.categoryId > 0 &&
+              category.categoryName,
+          )
+      : [];
+
+    state.serviceCategories = categories;
     select.replaceChildren();
 
     const placeholder = document.createElement("option");
@@ -792,20 +812,37 @@ async function loadServiceCategories() {
 
     select.appendChild(automaticOption);
 
-    if (Array.isArray(data.categories)) {
-      data.categories.forEach((category) => {
-        const option = document.createElement("option");
+    categories.forEach((category) => {
+      const option = document.createElement("option");
 
-        option.value = String(category.categoryId);
+      option.value = String(category.categoryId);
 
-        option.textContent = category.categoryName;
+      option.textContent = category.categoryName;
 
-        select.appendChild(option);
-      });
-    }
+      select.appendChild(option);
+    });
+
+    select.disabled = false;
   } catch (error) {
+    select.replaceChildren(new Option("Categories unavailable", ""));
     console.error("Unable to load service categories:", error);
   }
+}
+
+function selectedServiceRequestCategory() {
+  const value = String(byId("requestCategory")?.value || "").trim();
+
+  if (value === "AUTO") return { valid: true, requestedCategoryId: null };
+
+  const requestedCategoryId = Number(value);
+  const valid =
+    Number.isSafeInteger(requestedCategoryId) &&
+    requestedCategoryId > 0 &&
+    state.serviceCategories.some(
+      (category) => category.categoryId === requestedCategoryId,
+    );
+
+  return { valid, requestedCategoryId: valid ? requestedCategoryId : null };
 }
 
 async function loadRequesterServiceRequests() {
@@ -4114,6 +4151,24 @@ function validateSelect(input) {
   return setFieldSuccess(input);
 }
 
+function validateServiceRequestCategory(input) {
+  if (!input.value) {
+    return setFieldError(
+      input,
+      "Select a service category or use the system recommendation.",
+    );
+  }
+
+  if (!selectedServiceRequestCategory().valid) {
+    return setFieldError(
+      input,
+      "Select a valid category loaded from the service catalog.",
+    );
+  }
+
+  return setFieldSuccess(input);
+}
+
 function validateDateNotFuture(input, required = input.required) {
   if (!input.value) {
     return required
@@ -4193,6 +4248,7 @@ function validateControl(input) {
     return true;
 
   if (input.closest("#progressUpdateForm")) return validateTechnicianProgressControl(input);
+  if (input.id === "requestCategory") return validateServiceRequestCategory(input);
   if (input.tagName === "SELECT") return validateSelect(input);
   if (input.type === "email") return validateEmail(input);
   if (
@@ -5240,6 +5296,8 @@ async function handleLoginSubmit(event) {
     }
 
     if (account.role === "requester") {
+      await loadServiceCategories();
+      if (state.currentAccount !== account || state.activeRole !== "requester") return;
       await loadRequesterServiceRequests();
       await loadRequesterServiceRequestDrafts();
       renderAll();
@@ -5451,19 +5509,14 @@ async function handleServiceRequestSubmit(event) {
       ? Number(state.currentDraftId)
       : null;
 
-  const selectedCategory = byId("requestCategory").value;
+  const categorySelection = selectedServiceRequestCategory();
 
-  const requestedCategoryId =
-    selectedCategory === "AUTO" ? null : Number(selectedCategory);
-
-  if (
-    selectedCategory !== "AUTO" &&
-    (!Number.isInteger(requestedCategoryId) || requestedCategoryId <= 0)
-  ) {
-    showToast("Please select a valid service category.", "error");
-
+  if (!categorySelection.valid) {
+    validateServiceRequestCategory(byId("requestCategory"));
     return;
   }
+
+  const requestedCategoryId = categorySelection.requestedCategoryId;
 
   const payload = {
     requestedCategoryId,
@@ -7982,7 +8035,6 @@ async function initializeApp() {
   }
 
   await loadDepartments();
-  await loadServiceCategories();
 
   /*
    * If the user just returned from email verification,
@@ -7993,6 +8045,7 @@ async function initializeApp() {
     await restoreServerSession();
 
     if (state.activeRole === "requester") {
+      await loadServiceCategories();
       await loadRequesterServiceRequests();
       await loadRequesterServiceRequestDrafts();
       renderAll();
