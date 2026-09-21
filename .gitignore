@@ -42,6 +42,15 @@ setenv.sh
 *.log
 *.tmp
 *.temp
+*.bak
+*.backup
+*.orig
+*.old
+*.copy
+*.swp
+*.zip
+*.rar
+*.7z
 
 # Operating-system files
 .DS_Store

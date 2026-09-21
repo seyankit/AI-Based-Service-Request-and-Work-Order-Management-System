@@ -164,14 +164,6 @@ src/main/webapp/js/script.js
 
 Do not assume another JavaScript file is active.
 
-In particular:
-
-workflows.js
-
-is currently not loaded by the production interface.
-
-Do not modify, activate, or depend on workflows.js unless a future phase explicitly approves it.
-
 Do not create a parallel frontend implementation.
 
 Do not modify unrelated GitHub Pages or old prototype files while implementing backend workflows.

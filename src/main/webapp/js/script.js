@@ -8265,12 +8265,12 @@ function renderNotificationList() {
   }
 
   if (!state.currentAccount) {
-    listEl.innerHTML = "";
+    listEl.replaceChildren();
     return;
   }
 
   if (state.notifications.length === 0) {
-    listEl.innerHTML = "";
+    listEl.replaceChildren();
     const empty = document.createElement("p");
     empty.className = "notification-empty";
     empty.textContent = state.notificationsLoading ? "Loading notifications..." : "No notifications.";
@@ -8278,7 +8278,7 @@ function renderNotificationList() {
     return;
   }
 
-  listEl.innerHTML = "";
+  listEl.replaceChildren();
 
   state.notifications.forEach(function (notification) {
     const item = document.createElement("article");
