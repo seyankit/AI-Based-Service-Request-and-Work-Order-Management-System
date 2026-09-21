@@ -1,7 +1,9 @@
 package ph.edu.htcgsc.serviceportal.servlet;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +36,15 @@ public class ServiceRequestServlet extends HttpServlet {
 
     private final Gson gson = new Gson();
 
-    private final ServiceRequestDAO serviceRequestDAO = new ServiceRequestDAO();
+    private final ServiceRequestDAO serviceRequestDAO;
+
+    public ServiceRequestServlet() {
+        this(new ServiceRequestDAO());
+    }
+
+    ServiceRequestServlet(ServiceRequestDAO serviceRequestDAO) {
+        this.serviceRequestDAO = serviceRequestDAO;
+    }
 
     @Override
     protected void doGet(
@@ -384,6 +394,181 @@ public class ServiceRequestServlet extends HttpServlet {
                     response,
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Unable to submit the service request.");
+        }
+    }
+
+    @Override
+    protected void doPut(
+            HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+
+        prepareJsonResponse(response);
+        request.setCharacterEncoding("UTF-8");
+
+        Integer personnelId = requireRequesterMutationAccess(request, response);
+        if (personnelId == null) return;
+
+        if (!CsrfUtil.isRequestTokenValid(request)) {
+            sendError(response, HttpServletResponse.SC_FORBIDDEN,
+                    "The security token is missing or invalid. Refresh the page and try again.");
+            return;
+        }
+
+        if (!isJsonRequest(request)) {
+            sendError(response, HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    "Content-Type must be application/json.");
+            return;
+        }
+
+        if (request.getContentLengthLong() > MAXIMUM_JSON_CHARACTERS) {
+            sendError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
+                    "The request body is too large.");
+            return;
+        }
+
+        try {
+            String jsonBody = readLimitedBody(request);
+            if (jsonBody.isBlank()) {
+                sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+                        "A JSON request body is required.");
+                return;
+            }
+
+            JsonObject body = JsonParser.parseString(jsonBody).getAsJsonObject();
+            long requestId = requiredPositiveRequestId(body, "requestId");
+            CreateServiceRequestRequest requestData = gson.fromJson(
+                    body,
+                    CreateServiceRequestRequest.class
+            );
+            Map<String, String> validationErrors = ServiceRequestValidator
+                    .validateAndNormalize(requestData);
+            if (!validationErrors.isEmpty()) {
+                sendValidationError(response, validationErrors);
+                return;
+            }
+
+            serviceRequestDAO.updateServiceRequest(
+                    requestId,
+                    requestData,
+                    personnelId,
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("success", true);
+            result.put("message", "Service request updated successfully.");
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write(gson.toJson(result));
+        } catch (PayloadTooLargeException exception) {
+            sendError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
+                    "The request body is too large.");
+        } catch (JsonParseException | IllegalArgumentException | IllegalStateException exception) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "The requestId must be a positive whole number and the request body must be valid JSON.");
+        } catch (ServiceRequestDAO.CreationException exception) {
+            handleCreationException(request, response, exception);
+        } catch (ServiceRequestDAO.MutationException exception) {
+            handleMutationException(response, exception);
+        } catch (SQLException exception) {
+            LOGGER.log(Level.SEVERE, "Service request update failed.", exception);
+            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Unable to update the service request.");
+        }
+    }
+
+    @Override
+    protected void doDelete(
+            HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+
+        prepareJsonResponse(response);
+
+        Integer personnelId = requireRequesterMutationAccess(request, response);
+        if (personnelId == null) return;
+
+        if (!CsrfUtil.isRequestTokenValid(request)) {
+            sendError(response, HttpServletResponse.SC_FORBIDDEN,
+                    "The security token is missing or invalid. Refresh the page and try again.");
+            return;
+        }
+
+        long requestId;
+        try {
+            requestId = Long.parseLong(request.getParameter("requestId").trim());
+            if (requestId <= 0) throw new NumberFormatException();
+        } catch (NullPointerException | NumberFormatException exception) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "The requestId parameter must be a positive whole number.");
+            return;
+        }
+
+        try {
+            serviceRequestDAO.deleteServiceRequest(
+                    requestId,
+                    personnelId,
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("success", true);
+            result.put("message", "Service request deleted successfully.");
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write(gson.toJson(result));
+        } catch (ServiceRequestDAO.CreationException exception) {
+            handleCreationException(request, response, exception);
+        } catch (ServiceRequestDAO.MutationException exception) {
+            handleMutationException(response, exception);
+        } catch (SQLException exception) {
+            LOGGER.log(Level.SEVERE, "Service request deletion failed.", exception);
+            sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Unable to delete the service request.");
+        }
+    }
+
+    private Integer requireRequesterMutationAccess(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException {
+        if (!SessionUtil.isAuthenticated(request)) {
+            sendError(response, HttpServletResponse.SC_UNAUTHORIZED,
+                    "Authentication is required.");
+            return null;
+        }
+        if (!SessionUtil.isRequester(request)) {
+            sendError(response, HttpServletResponse.SC_FORBIDDEN,
+                    "Only requester accounts may modify requester service requests.");
+            return null;
+        }
+        Integer personnelId = SessionUtil.getAuthenticatedPersonnelId(request);
+        if (personnelId == null) {
+            sendError(response, HttpServletResponse.SC_UNAUTHORIZED,
+                    "The authenticated session is invalid.");
+        }
+        return personnelId;
+    }
+
+    private long requiredPositiveRequestId(JsonObject body, String fieldName) {
+        if (body == null || !body.has(fieldName) || body.get(fieldName).isJsonNull()) {
+            throw new IllegalArgumentException("Missing request ID.");
+        }
+        long requestId = Long.parseLong(body.get(fieldName).getAsString());
+        if (requestId <= 0) throw new IllegalArgumentException("Invalid request ID.");
+        return requestId;
+    }
+
+    private void handleMutationException(
+            HttpServletResponse response,
+            ServiceRequestDAO.MutationException exception
+    ) throws IOException {
+        switch (exception.getReason()) {
+            case REQUEST_NOT_FOUND -> sendError(response, HttpServletResponse.SC_NOT_FOUND,
+                    exception.getMessage());
+            case REQUEST_NOT_OWNED -> sendError(response, HttpServletResponse.SC_FORBIDDEN,
+                    exception.getMessage());
+            case REQUEST_NOT_EDITABLE, PROTECTED_DEPENDENCIES ->
+                    sendError(response, HttpServletResponse.SC_CONFLICT, exception.getMessage());
         }
     }
 

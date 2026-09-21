@@ -70,6 +70,7 @@ const state = {
   adminReviewRequests: [],
   serviceRequestDrafts: [],
   currentDraftId: null,
+  editingServiceRequestId: null,
   workOrders: [],
   personnel: [],
   approvals: [],
@@ -1956,6 +1957,10 @@ function makeRowAction(label, action, id, className = "") {
   return button;
 }
 
+function isEditableServiceRequest(request) {
+  return request?.status === "Submitted";
+}
+
 async function deleteServiceRequestDraft(draftId) {
   const normalizedDraftId = Number(draftId);
 
@@ -2215,6 +2220,13 @@ function renderRequestTable() {
 
       makeRowAction("Track", "track-request", request.id, "primary"),
     );
+
+    if (isEditableServiceRequest(request)) {
+      actions.append(
+        makeRowAction("Edit", "edit-request", request.id),
+        makeRowAction("Delete", "delete-request", request.id, "danger"),
+      );
+    }
 
     actionCell.appendChild(actions);
 
@@ -4608,6 +4620,8 @@ function validateAttachment(input, report = true) {
 
 function resetServiceRequestFormForUser() {
   resetServiceRequestDraftEditingState();
+  state.editingServiceRequestId = null;
+  setServiceRequestFormMode(false);
   window.setTimeout(() => {
     byId("requestCharacterCount").textContent = "0";
 
@@ -4620,6 +4634,56 @@ function resetServiceRequestFormForUser() {
       byId("requesterTypeInput").value =
         state.currentAccount?.affiliation || "";
     }
+  }, 0);
+}
+
+function setServiceRequestFormMode(editing) {
+  const modalTitle = byId("serviceRequestModalTitle");
+  const submitButton = byId("serviceRequestSubmitButton");
+  const draftButton = byId("serviceRequestDraftButton");
+  const attachmentInput = byId("requestAttachment");
+  const resetButton = byId("serviceRequestForm")?.querySelector('button[type="reset"]');
+
+  if (modalTitle) modalTitle.textContent = editing ? "Edit Service Request" : "Submit a Service Request";
+  if (submitButton) {
+    submitButton.textContent = editing ? "Save Changes" : "Submit Request";
+    delete submitButton.dataset.defaultLabel;
+  }
+  if (draftButton) draftButton.hidden = editing;
+  if (resetButton) resetButton.textContent = editing ? "Reset Changes" : "Reset Form";
+  if (attachmentInput) {
+    attachmentInput.value = "";
+    attachmentInput.disabled = editing;
+    attachmentInput.closest(".field-group").hidden = editing;
+  }
+}
+
+function openServiceRequestEditor(request) {
+  if (!isEditableServiceRequest(request)) {
+    showToast("This request can no longer be edited because processing has started.", "warning");
+    return;
+  }
+
+  const form = byId("serviceRequestForm");
+  if (!form) return;
+
+  form.reset();
+  resetValidationState(form);
+  resetServiceRequestFormForUser();
+
+  window.setTimeout(() => {
+    state.editingServiceRequestId = Number(request.databaseId);
+    byId("requestCategory").value = request.requestedCategoryId != null
+      ? String(request.requestedCategoryId)
+      : "AUTO";
+    byId("requestPriority").value = request.preferredPriority || "";
+    byId("requestTitle").value = request.title || "";
+    byId("requestDescription").value = request.description || "";
+    byId("requestLocation").value = request.location || "";
+    byId("requestDate").value = request.dateReported || "";
+    byId("requestCharacterCount").textContent = String((request.description || "").length);
+    setServiceRequestFormMode(true);
+    openModal("serviceRequestModal", "#requestTitle");
   }, 0);
 }
 
@@ -5531,6 +5595,13 @@ async function handleServiceRequestSubmit(event) {
 
     dateReported: byId("requestDate").value,
   };
+
+  const editingRequestId = Number(state.editingServiceRequestId);
+
+  if (Number.isInteger(editingRequestId) && editingRequestId > 0) {
+    await updateServiceRequest(editingRequestId, payload, form);
+    return;
+  }
 
   setSubmitting(form, true);
 
@@ -6453,6 +6524,91 @@ async function openForwardRequestModal(request) {
   }
 }
 
+async function updateServiceRequest(requestId, payload, form) {
+  setSubmitting(form, true);
+
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch(API_ENDPOINTS.serviceRequests, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        [csrf.headerName]: csrf.token,
+      },
+      credentials: "same-origin",
+      cache: "no-store",
+      body: JSON.stringify({ requestId, ...payload }),
+    });
+    const data = await readJsonResponse(response);
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Unable to update the service request.");
+    }
+
+    await loadRequesterServiceRequests();
+    renderAll();
+    form.reset();
+    closeModal("serviceRequestModal");
+    openWorkspaceView("requester-records");
+    showToast("Service request updated successfully.", "success");
+  } catch (error) {
+    console.error("Service request update error:", error);
+    showToast(error.message || "Unable to update the service request.", "error");
+  } finally {
+    setSubmitting(form, false);
+  }
+}
+
+function confirmDeleteServiceRequest(request) {
+  if (!isEditableServiceRequest(request)) {
+    showToast("This request can no longer be deleted because processing has started.", "warning");
+    return;
+  }
+
+  openConfirm({
+    title: "Delete Service Request?",
+    message: "This will permanently remove this request when no protected workflow records exist. This action cannot be undone.",
+    confirmLabel: "Delete Request",
+    type: "danger",
+    requireRemarks: false,
+    onConfirm: () => deleteServiceRequest(request.databaseId),
+  });
+}
+
+async function deleteServiceRequest(requestId) {
+  const normalizedRequestId = Number(requestId);
+  if (!Number.isInteger(normalizedRequestId) || normalizedRequestId <= 0) {
+    showToast("The selected service request is invalid.", "error");
+    return;
+  }
+
+  try {
+    const csrf = await getCsrfToken();
+    const response = await fetch(
+      `${API_ENDPOINTS.serviceRequests}?requestId=${encodeURIComponent(normalizedRequestId)}`,
+      {
+        method: "DELETE",
+        headers: { Accept: "application/json", [csrf.headerName]: csrf.token },
+        credentials: "same-origin",
+        cache: "no-store",
+      },
+    );
+    const data = await readJsonResponse(response);
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Unable to delete the service request.");
+    }
+
+    await loadRequesterServiceRequests();
+    renderAll();
+    showToast("Service request deleted successfully.", "success");
+  } catch (error) {
+    console.error("Service request deletion error:", error);
+    showToast(error.message || "Unable to delete the service request.", "error");
+  }
+}
+
 function renderAdminAdvisoryRecommendation(request) {
   const heading = byId("adminForwardAiRecommendation");
   const details = byId("adminForwardAiDetails");
@@ -7052,6 +7208,14 @@ function handleRequestTableAction(event) {
   if (button.dataset.action === "track-request") {
     showRequestHistory(request);
   }
+
+  if (button.dataset.action === "edit-request") {
+    openServiceRequestEditor(request);
+  }
+
+  if (button.dataset.action === "delete-request") {
+    confirmDeleteServiceRequest(request);
+  }
 }
 
 /* =========================
@@ -7550,7 +7714,7 @@ function initializeEvents() {
         return;
       }
 
-      resetServiceRequestFormForUser();
+      byId("serviceRequestForm")?.reset();
 
       openModal("serviceRequestModal", "#requestTitle");
     }
