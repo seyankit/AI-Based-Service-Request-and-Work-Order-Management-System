@@ -665,7 +665,7 @@
 
           <!-- ADMINISTRATOR -->
           <div class="role-interface" data-role="administrator" hidden>
-            <section class="workspace-view" data-view="administrator-overview">
+            <section class="workspace-view administrator-overview-view" data-view="administrator-overview">
               <div class="welcome-banner admin-banner">
                 <div><small>Service Administrator / Coordinator</small><h3>Operations dashboard</h3><p>Review service requests, evaluate AI recommendations, and coordinate work assignments.</p></div>
                 <button class="button button-light" type="button" data-workspace-link="administrator-review">Open Request Queue</button>
@@ -676,9 +676,32 @@
                 <article class="stat-card"><div class="stat-icon red">HI</div><div><small>High Priority</small><strong id="adminHighMetric">00</strong><p>High or urgent requests</p></div></article>
                 <article class="stat-card"><div class="stat-icon blue">WO</div><div><small>Work Orders</small><strong id="adminWorkOrderMetric">00</strong><p>Current work records</p></div></article>
               </div>
-              <div class="dashboard-split">
-                <article class="panel-card"><div class="panel-title"><div><small>AI Recommendations</small><h3>Items needing human review</h3></div><span class="advisory-chip">ADVISORY</span></div><div class="compact-list" id="adminAiSummary"></div></article>
-                <article class="panel-card"><div class="panel-title"><div><small>Service Operations</small><h3>Management Overview</h3></div></div><div class="entity-chips"><span>Service Requests</span><span>AI Recommendations</span><span>Work Orders</span><span>Assignments</span><span>Personnel</span></div></article>
+              <div class="administrator-overview-stack">
+                <article class="panel-card administrator-ai-panel">
+                  <div class="panel-title"><div><small>AI Recommendations</small><h3>Items needing human review</h3></div><span class="advisory-chip">ADVISORY</span></div>
+                  <div class="compact-list" id="adminAiSummary"></div>
+                </article>
+                <article class="panel-card service-insights-panel">
+                  <div class="service-insights-header">
+                    <div class="service-insights-title"><small>Service Operations</small><h3>Service Insights</h3><p class="helper-text" id="serviceInsightsNotice" role="status">Loading service insights…</p></div>
+                    <div class="service-insights-controls"><label for="serviceInsightsPeriod">Insight period</label><select id="serviceInsightsPeriod"><option value="7d">Last 7 Days</option><option value="30d" selected>Last 30 Days</option><option value="month">Current Month</option><option value="all">All Time</option></select><button class="button button-secondary" id="serviceInsightsReloadButton" type="button">Reload</button></div>
+                  </div>
+                  <div class="service-insights-metric-grid">
+                    <article class="stat-card"><div class="stat-icon">TR</div><div><small>Total Requests</small><strong id="insightTotalRequests">00</strong></div></article>
+                    <article class="stat-card"><div class="stat-icon amber">SB</div><div><small>Submitted</small><strong id="insightSubmittedRequests">00</strong></div></article>
+                    <article class="stat-card"><div class="stat-icon amber">AA</div><div><small>Awaiting Approval</small><strong id="insightAwaitingApprovalRequests">00</strong></div></article>
+                    <article class="stat-card"><div class="stat-icon">AP</div><div><small>Approved</small><strong id="insightApprovedRequests">00</strong></div></article>
+                    <article class="stat-card"><div class="stat-icon red">DP</div><div><small>Duplicate</small><strong id="insightDuplicateRequests">00</strong></div></article>
+                    <article class="stat-card"><div class="stat-icon blue">CW</div><div><small>Completed Work Orders</small><strong id="insightCompletedWorkOrders">00</strong></div></article>
+                    <article class="stat-card"><div class="stat-icon">AC</div><div><small>Average Completion Time</small><strong id="insightAverageCompletionHours">—</strong></div></article>
+                  </div>
+                  <div class="service-insights-detail-grid">
+                    <article class="panel-card"><div class="panel-title"><div><small>Request Mix</small><h3>Requests by Category</h3></div></div><div class="compact-list" id="insightCategoryList"></div></article>
+                    <article class="panel-card"><div class="panel-title"><div><small>Request Mix</small><h3>Requests by Priority</h3></div></div><div class="compact-list" id="insightPriorityList"></div></article>
+                    <article class="panel-card"><div class="panel-title"><div><small>Work Order Lifecycle</small><h3>Work Orders by Status</h3></div></div><div class="compact-list" id="insightWorkOrderStatusList"></div></article>
+                    <article class="panel-card"><div class="panel-title"><div><small>Request Activity</small><h3>Request Activity Trend</h3></div></div><div class="compact-list" id="insightTrendList"></div></article>
+                  </div>
+                </article>
               </div>
             </section>
 

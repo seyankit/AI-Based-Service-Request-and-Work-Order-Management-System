@@ -39,6 +39,7 @@ const API_ENDPOINTS = Object.freeze({
   serviceRequestReviews: "api/service-request-reviews",
   serviceRequestDuplicates: "api/service-request-duplicates",
   aiRecommendationAnalysis: "api/ai-recommendations/analyze",
+  serviceInsights: "api/service-insights",
   notifications: "api/notifications",
 });
 
@@ -97,6 +98,10 @@ const state = {
   auditError: "",
   auditLoadVersion: 0,
   auditFilters: {},
+  serviceInsights: null,
+  serviceInsightsLoading: false,
+  serviceInsightsError: "",
+  serviceInsightsVersion: 0,
   adminAnalysisRequestId: null,
 };
 
@@ -1662,6 +1667,7 @@ function clearAuthenticatedWorkspace() {
   state.approverApprovalVersion += 1;
   state.requestHistoryVersion += 1;
   state.auditLoadVersion += 1;
+  state.serviceInsightsVersion += 1;
   state.activeRole = null;
 
   state.userName = "";
@@ -1685,6 +1691,9 @@ function clearAuthenticatedWorkspace() {
   state.auditLoading = false;
   state.auditError = "";
   state.auditFilters = {};
+  state.serviceInsights = null;
+  state.serviceInsightsLoading = false;
+  state.serviceInsightsError = "";
 
   renderPublicMetrics();
   renderPublicActivity();
@@ -2280,6 +2289,82 @@ function isAuditSessionCurrent(session, version) {
     session.version === version;
 }
 
+function insightCount(value) {
+  const count = Number(value);
+  return Number.isFinite(count) && count >= 0 ? count : 0;
+}
+
+function normalizeServiceInsights(data) {
+  const summary = data && typeof data.summary === "object" ? data.summary : {};
+  const list = (value) => Array.isArray(value) ? value.filter((item) => item && typeof item === "object") : [];
+  return {
+    summary: {
+      totalRequests: insightCount(summary.totalRequests),
+      submittedRequests: insightCount(summary.submittedRequests),
+      awaitingApprovalRequests: insightCount(summary.awaitingApprovalRequests),
+      approvedRequests: insightCount(summary.approvedRequests),
+      duplicateRequests: insightCount(summary.duplicateRequests),
+      totalWorkOrders: insightCount(summary.totalWorkOrders),
+      completedWorkOrders: insightCount(summary.completedWorkOrders),
+      averageCompletionHours: Number.isFinite(Number(summary.averageCompletionHours))
+        ? Number(summary.averageCompletionHours) : null,
+    },
+    requestsByCategory: list(data.requestsByCategory),
+    requestsByPriority: list(data.requestsByPriority),
+    workOrdersByStatus: list(data.workOrdersByStatus),
+    requestTrend: list(data.requestTrend),
+  };
+}
+
+function isServiceInsightsRequestCurrent(account, version) {
+  return state.currentAccount === account
+    && state.activeRole === "administrator"
+    && state.serviceInsightsVersion === version;
+}
+
+async function loadServiceInsights() {
+  const account = state.currentAccount;
+  const version = ++state.serviceInsightsVersion;
+  const period = byId("serviceInsightsPeriod")?.value || "30d";
+
+  if (state.activeRole !== "administrator" || !account) {
+    state.serviceInsights = null;
+    state.serviceInsightsLoading = false;
+    state.serviceInsightsError = "";
+    renderServiceInsights();
+    return;
+  }
+
+  state.serviceInsights = null;
+  state.serviceInsightsLoading = true;
+  state.serviceInsightsError = "";
+  renderServiceInsights();
+
+  try {
+    const response = await fetch(`${API_ENDPOINTS.serviceInsights}?period=${encodeURIComponent(period)}`, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    const data = await readJsonResponse(response);
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Unable to load service insights.");
+    }
+    if (!isServiceInsightsRequestCurrent(account, version)) return;
+    state.serviceInsights = normalizeServiceInsights(data);
+  } catch (error) {
+    if (!isServiceInsightsRequestCurrent(account, version)) return;
+    state.serviceInsightsError = error.message || "Unable to load service insights.";
+    console.error("Unable to load service insights:", error);
+  } finally {
+    if (isServiceInsightsRequestCurrent(account, version)) {
+      state.serviceInsightsLoading = false;
+      renderServiceInsights();
+    }
+  }
+}
+
 function auditDateTimeToInstant(value, fieldName) {
   if (!value) return "";
   const date = new Date(value);
@@ -2449,6 +2534,72 @@ function renderAdminMetrics() {
   byId("adminWorkOrderMetric").textContent = String(
     state.workOrders.length,
   ).padStart(2, "0");
+}
+
+function renderServiceInsightsList(id, items, label, count) {
+  const container = byId(id);
+  if (!container) return;
+  container.replaceChildren();
+
+  if (!state.serviceInsights || items.length === 0) {
+    container.appendChild(createElement(
+      "div", "notification-empty",
+      state.serviceInsightsLoading ? "Loading service insights…" : "No data for this period.",
+    ));
+    return;
+  }
+
+  items.forEach((item) => {
+    const row = createElement("div", "compact-item");
+    const copy = createElement("div");
+    copy.append(
+      createElement("strong", "", label(item)),
+      createElement("span", "", `${insightCount(count(item))} record${insightCount(count(item)) === 1 ? "" : "s"}`),
+    );
+    row.appendChild(copy);
+    container.appendChild(row);
+  });
+}
+
+function renderServiceInsights() {
+  const notice = byId("serviceInsightsNotice");
+  const reload = byId("serviceInsightsReloadButton");
+  const insights = state.serviceInsights;
+  const summary = insights?.summary;
+  const setMetric = (id, value, fallback = "00") => {
+    const element = byId(id);
+    if (element) element.textContent = value == null ? fallback : String(value).padStart(2, "0");
+  };
+
+  setMetric("insightTotalRequests", summary?.totalRequests);
+  setMetric("insightSubmittedRequests", summary?.submittedRequests);
+  setMetric("insightAwaitingApprovalRequests", summary?.awaitingApprovalRequests);
+  setMetric("insightApprovedRequests", summary?.approvedRequests);
+  setMetric("insightDuplicateRequests", summary?.duplicateRequests);
+  setMetric("insightCompletedWorkOrders", summary?.completedWorkOrders);
+  const average = byId("insightAverageCompletionHours");
+  if (average) {
+    average.textContent = summary?.averageCompletionHours == null
+      ? "—" : `${summary.averageCompletionHours.toFixed(1)} h`;
+  }
+
+  if (notice) {
+    notice.textContent = state.serviceInsightsLoading
+      ? "Loading service insights…"
+      : state.serviceInsightsError
+        ? "Service insights are currently unavailable."
+        : "Aggregate operational data for the selected period.";
+  }
+  if (reload) reload.disabled = state.serviceInsightsLoading;
+
+  renderServiceInsightsList("insightCategoryList", insights?.requestsByCategory || [],
+    (item) => String(item.categoryName || "Uncategorized"), (item) => item.count);
+  renderServiceInsightsList("insightPriorityList", insights?.requestsByPriority || [],
+    (item) => String(item.priority || "Unspecified"), (item) => item.count);
+  renderServiceInsightsList("insightWorkOrderStatusList", insights?.workOrdersByStatus || [],
+    (item) => String(item.status || "Unknown"), (item) => item.count);
+  renderServiceInsightsList("insightTrendList", insights?.requestTrend || [],
+    (item) => String(item.bucket || "Unknown"), (item) => item.count);
 }
 
 function renderAdminReviewTable() {
@@ -3112,6 +3263,7 @@ function renderAll() {
   renderRequesterRecentList();
 
   renderAdminMetrics();
+  renderServiceInsights();
   renderAdminReviewTable();
   renderAdminAiSummary();
   renderWorkOrderTable();
@@ -4875,6 +5027,11 @@ async function restoreServerSession() {
       } catch (error) {
         console.warn("Administrator work orders could not be restored.", error);
       }
+      try {
+        await loadServiceInsights();
+      } catch (error) {
+        console.warn("Administrator service insights could not be restored.", error);
+      }
     }
 
     if (account.role === "approver") {
@@ -5102,6 +5259,14 @@ async function handleLoginSubmit(event) {
         showToast(
           "Signed in successfully, but work orders could not be loaded.",
           "error",
+        );
+      }
+      try {
+        await loadServiceInsights();
+      } catch (error) {
+        showToast(
+          "Signed in successfully, but service insights could not be loaded.",
+          "warning",
         );
       }
     }
@@ -5813,6 +5978,7 @@ async function handleWorkOrderSubmit(event) {
     }
     showToast("Work order created successfully.", "success");
     await loadWorkOrders();
+    void loadServiceInsights();
     form.reset();
     renderAll();
   } catch (error) {
@@ -5937,6 +6103,7 @@ async function handleWorkOrderAssignmentSubmit(event) {
     form.reset();
     state.pendingAssignmentWorkOrderId = null;
     await loadWorkOrders();
+    void loadServiceInsights();
     renderAll();
   } catch (error) {
     console.error("Work-order assignment failed:", error);
@@ -6547,6 +6714,7 @@ async function forwardRequest(event, request) {
     );
 
     await loadAdministratorServiceRequestReviews();
+    void loadServiceInsights();
   } catch (forwardError) {
     console.error("Service-request forwarding failed:", forwardError);
 
@@ -6759,6 +6927,7 @@ async function flagDuplicate(event, request) {
     showToast(`${request.id} was confirmed as a duplicate.`, "success");
 
     await loadAdministratorServiceRequestReviews();
+    void loadServiceInsights();
   } catch (duplicateError) {
     console.error("Duplicate confirmation failed:", duplicateError);
 
@@ -7554,6 +7723,14 @@ function initializeEvents() {
   on(byId("requestStatusFilter"), "change", renderRequestTable);
 
   on(byId("adminRequestSearch"), "input", renderAdminReviewTable);
+
+  on(byId("serviceInsightsPeriod"), "change", () => {
+    if (state.activeRole === "administrator") void loadServiceInsights();
+  });
+
+  on(byId("serviceInsightsReloadButton"), "click", () => {
+    if (state.activeRole === "administrator") void loadServiceInsights();
+  });
 
   /* =========================
      TABLE ACTION EVENTS

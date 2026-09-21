@@ -141,6 +141,10 @@
     <servlet-name>AiRecommendationServlet</servlet-name>
     <servlet-class>ph.edu.htcgsc.serviceportal.servlet.AiRecommendationServlet</servlet-class>
   </servlet>
+  <servlet>
+    <servlet-name>ServiceInsightsServlet</servlet-name>
+    <servlet-class>ph.edu.htcgsc.serviceportal.servlet.ServiceInsightsServlet</servlet-class>
+  </servlet>
   <servlet-mapping>
     <servlet-name>HealthServlet</servlet-name>
     <url-pattern>/api/health</url-pattern>
@@ -241,6 +245,10 @@
   <servlet-mapping>
     <servlet-name>AiRecommendationServlet</servlet-name>
     <url-pattern>/api/ai-recommendations/analyze</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ServiceInsightsServlet</servlet-name>
+    <url-pattern>/api/service-insights</url-pattern>
   </servlet-mapping>
   <session-config>
     <session-timeout>30</session-timeout>
