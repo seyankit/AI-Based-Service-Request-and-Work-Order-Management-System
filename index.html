@@ -45,9 +45,10 @@
             <h1>AI-Based Service Request &amp; <em>Work Order Management System</em></h1>
             <p>A centralized campus platform for submitting service concerns, reviewing requests, approving work, assigning personnel, and monitoring completion.</p>
             <div class="hero-actions">
-              <button class="button button-primary" id="heroAccessButton" type="button">Access Service Portal</button>
-              <a class="button button-secondary" href="#workflow">View Workflow</a>
+              <button class="button button-primary" id="heroAccessButton" type="button">Submit a Service Request</button>
+              <button class="button button-secondary" id="heroTrackButton" type="button">Track My Requests</button>
             </div>
+            <p class="static-demo-note" role="note">Static demonstration — full database functionality is available in the deployed application.</p>
             <div class="audience-list" aria-label="System users">
               <strong>Role-based access</strong>
               <span>Requester</span><span>Administrator</span><span>Department Head</span><span>Technician</span>
@@ -57,7 +58,7 @@
           <aside class="overview-card" aria-label="Service overview">
             <div class="overview-heading">
               <div><small>Campus Operations</small><h2>Request Overview</h2></div>
-              <span class="live-indicator"><i></i> Prototype Active</span>
+              <span class="live-indicator"><i></i> Static Demo</span>
             </div>
             <div class="metric-grid">
               <article><span>Total Requests</span><strong id="publicTotalMetric">24</strong><small>Recorded concerns</small></article>
@@ -66,7 +67,7 @@
               <article class="metric-completed"><span>Completed</span><strong id="publicCompletedMetric">12</strong><small>Resolved requests</small></article>
             </div>
             <div class="activity-list">
-              <div class="activity-heading"><h3>Recent Activity</h3><span>Demo records</span></div>
+              <div class="activity-heading"><h3>Recent Activity</h3><span>Sample snapshot</span></div>
               <div id="publicRecentActivity"></div>
             </div>
           </aside>
@@ -76,15 +77,15 @@
       <section class="role-preview-section">
         <div class="section-shell">
           <div class="section-heading">
-            <span>Role-Based System</span>
-            <h2>Each user sees only the interface assigned to the selected role</h2>
-            <p>The sign-in form opens one dedicated workspace. Other role dashboards remain hidden until the user switches accounts.</p>
+            <span>Role-Based Service Management</span>
+            <h2>Access the tools and services available to your assigned account</h2>
+            <p>Each account is provided with access to tools and functions based on its assigned responsibilities.</p>
           </div>
           <div class="role-preview-grid">
-            <article><span>01</span><h3>Requester</h3><p>Submit service requests, view personal records, and track request status.</p></article>
-            <article><span>02</span><h3>Service Administrator</h3><p>Review incoming requests, inspect AI recommendations, and create work assignments.</p></article>
-            <article><span>03</span><h3>Department Head</h3><p>Review requests that require authorization and record approval decisions.</p></article>
-            <article><span>04</span><h3>Technician</h3><p>View assigned work orders, update progress, and record completion details.</p></article>
+            <article><span>01</span><h3>Requester</h3><p>Submit service concerns and monitor request progress from one workspace.</p></article>
+            <article><span>02</span><h3>Service Administrator</h3><p>Review incoming requests, manage priorities, coordinate approvals, and create work assignments.</p></article>
+            <article><span>03</span><h3>Department Head</h3><p>Review requests requiring authorization and record approval decisions.</p></article>
+            <article><span>04</span><h3>Technician</h3><p>Manage assigned work orders, update service progress, and record completion details.</p></article>
           </div>
         </div>
       </section>
@@ -94,15 +95,15 @@
           <div class="section-heading">
             <span>Campus Service Categories</span>
             <h2>One portal for common school service concerns</h2>
-            <p>Categories align with the SERVICE_CATEGORY records used by the prototype.</p>
+            <p>Choose the service category that best matches your concern and route it to the appropriate campus service unit.</p>
           </div>
           <div class="service-grid">
-            <article><span>IT</span><h3>IT &amp; Computer</h3><p>Computers, printers, software, peripherals, and laboratory devices.</p></article>
-            <article><span>NW</span><h3>Internet &amp; Network</h3><p>Wi-Fi, connectivity, routers, switches, and campus network concerns.</p></article>
-            <article><span>EL</span><h3>Electrical</h3><p>Power outlets, lighting, switches, wiring, and electrical safety issues.</p></article>
-            <article><span>FC</span><h3>Facilities</h3><p>Rooms, furniture, doors, windows, and general campus facilities.</p></article>
-            <article><span>EQ</span><h3>Equipment</h3><p>Projectors, fans, air-conditioning units, and shared equipment.</p></article>
-            <article><span>MT</span><h3>Maintenance</h3><p>Repairs and upkeep that do not fit the more specific categories.</p></article>
+            <article class="service-card"><div class="service-card-media"><img src="images/itcomputer.jpg" alt="IT and Computer service" loading="lazy" decoding="async"></div><div class="service-card-body"><span class="service-card-label">Technology Support</span><h3>IT &amp; Computer</h3><p>Computers, printers, software, peripherals, and laboratory devices.</p></div></article>
+            <article class="service-card"><div class="service-card-media"><img src="images/net.jpg" alt="Internet and Network service" loading="lazy" decoding="async"></div><div class="service-card-body"><span class="service-card-label">Connectivity</span><h3>Internet &amp; Network</h3><p>Wi-Fi, connectivity, routers, switches, and campus network concerns.</p></div></article>
+            <article class="service-card"><div class="service-card-media"><img src="images/electrical.jpg" alt="Electrical service" loading="lazy" decoding="async"></div><div class="service-card-body"><span class="service-card-label">Electrical Support</span><h3>Electrical</h3><p>Power outlets, lighting, switches, wiring, and electrical safety issues.</p></div></article>
+            <article class="service-card"><div class="service-card-media"><img src="images/faci.jpg" alt="Facilities service" loading="lazy" decoding="async"></div><div class="service-card-body"><span class="service-card-label">Campus Facilities</span><h3>Facilities</h3><p>Rooms, furniture, doors, windows, and general campus facilities.</p></div></article>
+            <article class="service-card"><div class="service-card-media"><img src="images/equip.jpg" alt="Equipment service" loading="lazy" decoding="async"></div><div class="service-card-body"><span class="service-card-label">Shared Equipment</span><h3>Equipment</h3><p>Projectors, fans, air-conditioning units, and shared equipment.</p></div></article>
+            <article class="service-card"><div class="service-card-media"><img src="images/maint.jpg" alt="Maintenance service" loading="lazy" decoding="async"></div><div class="service-card-body"><span class="service-card-label">General Maintenance</span><h3>Maintenance</h3><p>Repairs and upkeep that do not fit the more specific categories.</p></div></article>
           </div>
         </div>
       </section>
@@ -111,7 +112,7 @@
         <div class="ai-copy">
           <span class="section-label">Responsible AI Assistance</span>
           <h2>AI supports decisions without replacing authorized personnel.</h2>
-          <p>This front-end prototype uses simple JavaScript keyword rules to demonstrate how a future AI component could suggest a category, priority, and possible duplicate. It does not call a real AI service.</p>
+          <p>This static demonstration uses local JavaScript rules to illustrate advisory category, priority, and duplicate suggestions. The deployed application performs the authoritative workflow and persistence.</p>
           <div class="human-review">
             <span>✓</span>
             <p><strong>AI recommendations are advisory only.</strong> The final category, priority, approval, and work assignment are decided by authorized Holy Trinity College personnel.</p>
@@ -120,8 +121,8 @@
         <div class="ai-capabilities">
           <article><span>01</span><div><h3>Classification</h3><p>Suggests the most likely service category from the request description.</p></div></article>
           <article><span>02</span><div><h3>Priority</h3><p>Suggests urgency based on impact and safety-related keywords.</p></div></article>
-          <article><span>03</span><div><h3>Duplicate Check</h3><p>Compares the request with existing demo records for similar wording.</p></div></article>
-          <article><span>04</span><div><h3>Service Insights</h3><p>Supports dashboard summaries and visible prototype analytics.</p></div></article>
+          <article><span>03</span><div><h3>Duplicate Check</h3><p>Highlights similar sample requests for authorized human review.</p></div></article>
+          <article><span>04</span><div><h3>Service Insights</h3><p>Summarizes service operations for administrator review.</p></div></article>
         </div>
       </section>
 
@@ -153,7 +154,7 @@
 
           <div class="workspace-user">
             <div class="workspace-avatar" id="workspaceAvatar">GU</div>
-            <div><small>Signed in as</small><strong id="workspaceUserName">Guest User</strong><span id="workspaceUserEmail">user@htc.edu.ph</span></div>
+            <div><small>Signed in as</small><strong id="workspaceUserName">Guest User</strong><span id="workspaceUserEmail">user@online.htcgsc.edu.ph</span></div>
           </div>
 
           <div class="workspace-role-card"><small>Assigned Role</small><strong id="workspaceRoleName">Role</strong></div>
@@ -223,7 +224,7 @@
 
             <section class="workspace-view" data-view="requester-records" hidden>
               <div class="panel-card ai-result-card" id="latestAiCard" hidden>
-                <div class="ai-result-heading"><div><small>Latest Prototype Recommendation</small><h3>AI-assisted request review</h3></div><span class="demo-chip">DEMO ONLY</span></div>
+                <div class="ai-result-heading"><div><small>Latest Advisory Recommendation</small><h3>AI-assisted request review</h3></div><span class="demo-chip">STATIC DEMO</span></div>
                 <div class="ai-result-grid">
                   <div><small>Suggested Category</small><strong id="latestAiCategory">—</strong></div>
                   <div><small>Suggested Priority</small><strong id="latestAiPriority">—</strong></div>
@@ -257,7 +258,7 @@
           <div class="role-interface" data-role="administrator" hidden>
             <section class="workspace-view" data-view="administrator-overview">
               <div class="welcome-banner admin-banner">
-                <div><small>Service Administrator / Coordinator</small><h3>Operations dashboard</h3><p>Review service requests, validate prototype AI recommendations, and coordinate work assignments.</p></div>
+                <div><small>Service Administrator / Coordinator</small><h3>Operations dashboard</h3><p>Review service requests, evaluate advisory recommendations, and coordinate work assignments.</p></div>
                 <button class="button button-light" type="button" data-workspace-link="administrator-review">Open Request Queue</button>
               </div>
               <div class="dashboard-grid four">
@@ -289,7 +290,7 @@
                   <form class="record-form workspace-form" id="workOrderForm">
                     <div class="form-grid">
                       <div class="field-group"><label for="workOrderId">Work Order ID</label><input id="workOrderId" type="text" placeholder="Auto-generated for new record" pattern="WO-[0-9]{4}-[0-9]{4}" aria-describedby="workOrderIdHelp"><small id="workOrderIdHelp">Leave blank to create a new work order.</small></div>
-                      <div class="field-group"><label for="workOrderRequestId">Service Request ID *</label><input id="workOrderRequestId" type="text" placeholder="SR-2026-0025" pattern="SR-[0-9]{4}-[0-9]{4}" required></div>
+                      <div class="field-group"><label for="workOrderRequestId">Service Request ID *</label><input id="workOrderRequestId" type="text" placeholder="SR-2026-000025" pattern="SR-[0-9]{4}-[0-9]{6}" required></div>
                       <div class="field-group"><label for="assignedTechnician">Assigned Technician / Personnel *</label><select id="assignedTechnician" required><option value="">Select personnel</option><option>Alex Rivera</option><option>Jamie Santos</option><option>Patricia Cruz</option><option>IT Support Team</option><option>Facilities Team</option><option>Electrical Team</option><option>Maintenance Team</option></select></div>
                       <div class="field-group"><label for="serviceUnit">Department / Service Unit *</label><select id="serviceUnit" required><option value="">Select service unit</option><option>Information Technology Office</option><option>Facilities Management</option><option>Electrical Services</option><option>Maintenance Services</option></select></div>
                       <div class="field-group full-width"><label for="workDescription">Work Description *</label><textarea id="workDescription" rows="3" minlength="10" maxlength="500" placeholder="Describe the work to be performed." required></textarea></div>
@@ -313,11 +314,11 @@
             <section class="workspace-view" data-view="administrator-access" hidden>
               <div class="content-grid form-and-table">
                 <div class="panel-card form-panel">
-                  <div class="panel-title"><div><small>SCHOOL_PERSONNEL</small><h3>Personnel Access Demo</h3></div><span class="entity-badge">Prototype</span></div>
+                  <div class="panel-title"><div><small>SCHOOL_PERSONNEL</small><h3>Personnel Access</h3></div><span class="entity-badge">STATIC DEMO</span></div>
                   <form class="record-form workspace-form" id="personnelAccessForm">
                     <div class="form-grid">
                       <div class="field-group"><label for="personnelName">Personnel Name *</label><input id="personnelName" type="text" minlength="3" required></div>
-                      <div class="field-group"><label for="personnelEmail">School Email *</label><input id="personnelEmail" type="email" placeholder="name@htc.edu.ph" required></div>
+                      <div class="field-group"><label for="personnelEmail">School Email *</label><input id="personnelEmail" type="email" placeholder="name@online.htcgsc.edu.ph" required></div>
                       <div class="field-group"><label for="personnelDepartment">Department *</label><select id="personnelDepartment" required><option value="">Select department</option><option>Information Technology Office</option><option>Facilities Management</option><option>Electrical Services</option><option>Maintenance Services</option><option>Administration Office</option></select></div>
                       <div class="field-group"><label for="personnelRole">System Role *</label><select id="personnelRole" required><option value="">Select role</option><option>Service Administrator</option><option>Department Head / Authorized Approver</option><option>Service Personnel / Technician</option></select></div>
                       <fieldset class="field-group full-width checkbox-field"><legend>Access Rights *</legend><label><input type="checkbox" name="accessRights" value="Review Requests"> Review Requests</label><label><input type="checkbox" name="accessRights" value="Approve Requests"> Approve Requests</label><label><input type="checkbox" name="accessRights" value="Manage Work Orders"> Manage Work Orders</label><label><input type="checkbox" name="accessRights" value="Update Work"> Update Work</label><small class="field-error" id="permissionError" role="alert"></small></fieldset>
@@ -337,8 +338,8 @@
               <div class="welcome-banner approver-banner"><div><small>Department Head / Authorized Approver</small><h3>Approval dashboard</h3><p>Review requests requiring authorization and record the final approval decision.</p></div><button class="button button-light" type="button" data-workspace-link="approver-queue">Review Requests</button></div>
               <div class="dashboard-grid three">
                 <article class="stat-card"><div class="stat-icon amber">AP</div><div><small>Awaiting Approval</small><strong id="approverPendingMetric">00</strong><p>Requests needing a decision</p></div></article>
-                <article class="stat-card"><div class="stat-icon green">OK</div><div><small>Approved</small><strong id="approverApprovedMetric">00</strong><p>Approved prototype records</p></div></article>
-                <article class="stat-card"><div class="stat-icon red">NO</div><div><small>Rejected</small><strong id="approverRejectedMetric">00</strong><p>Rejected prototype records</p></div></article>
+                <article class="stat-card"><div class="stat-icon green">OK</div><div><small>Approved</small><strong id="approverApprovedMetric">00</strong><p>Approved sample records</p></div></article>
+                <article class="stat-card"><div class="stat-icon red">NO</div><div><small>Rejected</small><strong id="approverRejectedMetric">00</strong><p>Rejected sample records</p></div></article>
               </div>
               <div class="info-card"><h3>Human authorization remains final</h3><p>AI recommendations are visible for context, but the Department Head / Authorized Approver records the actual approval decision.</p></div>
             </section>
@@ -382,7 +383,7 @@
                   <form class="record-form workspace-form" id="progressUpdateForm">
                     <div class="form-grid">
                       <div class="field-group"><label for="progressWorkOrderId">Work Order ID *</label><input id="progressWorkOrderId" type="text" placeholder="WO-2026-0019" pattern="WO-[0-9]{4}-[0-9]{4}" required></div>
-                      <div class="field-group"><label for="progressRequestId">Service Request ID *</label><input id="progressRequestId" type="text" placeholder="SR-2026-0025" pattern="SR-[0-9]{4}-[0-9]{4}" required></div>
+                      <div class="field-group"><label for="progressRequestId">Service Request ID *</label><input id="progressRequestId" type="text" placeholder="SR-2026-000025" pattern="SR-[0-9]{4}-[0-9]{6}" required></div>
                       <div class="field-group"><label for="progressTechnician">Assigned Technician / Personnel *</label><input id="progressTechnician" type="text" minlength="3" required></div>
                       <div class="field-group"><label for="progressServiceUnit">Department / Service Unit *</label><select id="progressServiceUnit" required><option value="">Select service unit</option><option>Information Technology Office</option><option>Facilities Management</option><option>Electrical Services</option><option>Maintenance Services</option></select></div>
                       <div class="field-group full-width"><label for="progressWorkDescription">Work Description *</label><textarea id="progressWorkDescription" rows="3" minlength="10" maxlength="500" required></textarea></div>
@@ -414,9 +415,9 @@
         <div class="footer-logos"><img src="images/wildcatslogo.png" alt="Wildcats Logo"><img src="images/htclogo.png" alt="Holy Trinity College Logo"></div>
         <div><strong>AI-Based Service Request &amp; Work Order Management System</strong><span>Holy Trinity College of General Santos City</span></div>
       </div>
-      <div class="footer-note"><strong>Front-End Laboratory Prototype</strong><span>HTML5 • CSS3 • Vanilla JavaScript</span></div>
+      <div class="footer-note"><strong>GitHub Pages Static Demonstration</strong><span>HTML5 • CSS3 • Vanilla JavaScript</span></div>
     </div>
-    <div class="section-shell footer-bottom"><span>© 2026 Holy Trinity College of General Santos City</span><span>Developed for academic demonstration</span></div>
+    <div class="section-shell footer-bottom"><span>© 2026 Holy Trinity College of General Santos City</span><span>Full database workflow is available in the deployed application.</span></div>
   </footer>
 
   <!-- LOGIN MODAL -->
@@ -424,16 +425,16 @@
     <div class="modal-backdrop" data-close-modal="loginModal"></div>
     <div class="modal-card modal-card-small" role="document">
       <button class="modal-close" type="button" aria-label="Close sign-in dialog" data-close-modal="loginModal">×</button>
-      <div class="modal-heading centered"><img src="images/htclogo.png" alt="Holy Trinity College Logo" class="modal-logo"><span class="section-label">Role-Based Access</span><h2 id="loginTitle">Sign in to the service portal</h2><p>This is a front-end prototype. The selected role only controls which demo workspace is shown.</p></div>
+      <div class="modal-heading centered"><img src="images/htclogo.png" alt="Holy Trinity College Logo" class="modal-logo"><span class="section-label">Role-Based Access</span><h2 id="loginTitle">Explore the service portal</h2><p>This GitHub Pages demonstration shows the role-based interface. Use the deployed application for real authentication and database workflows.</p></div>
       <form class="record-form" id="loginForm">
         <div class="field-group"><label for="loginName">Full Name *</label><input id="loginName" type="text" minlength="3" autocomplete="name" placeholder="Enter your full name" required></div>
-        <div class="field-group"><label for="loginEmail">School Email *</label><input id="loginEmail" type="email" autocomplete="email" placeholder="name@htc.edu.ph" required></div>
+        <div class="field-group"><label for="loginEmail">School Email *</label><input id="loginEmail" type="email" autocomplete="email" placeholder="name@online.htcgsc.edu.ph" required></div>
         <div class="field-group"><label for="loginPassword">Password *</label><div class="password-control"><input id="loginPassword" type="password" minlength="8" autocomplete="current-password" placeholder="Minimum 8 characters" required><button id="togglePasswordButton" type="button" aria-label="Show password">Show</button></div></div>
         <div class="field-group"><label for="loginRole">System Role *</label><select id="loginRole" required><option value="requester">Requester</option><option value="administrator">Service Administrator / Coordinator</option><option value="approver">Department Head / Authorized Approver</option><option value="technician">Service Personnel / Technician</option></select></div>
         <label class="remember-control"><input id="rememberMe" type="checkbox"> Remember my name and email on this device</label>
         <button class="button button-primary button-full" id="loginSubmitButton" type="submit"><span>Sign In</span></button>
       </form>
-      <p class="prototype-note">Prototype notice: no real authentication, database, email, or server connection is used.</p>
+      <p class="prototype-note">Static demo notice: no real authentication, database, email, or server connection is used here.</p>
     </div>
   </div>
 
@@ -453,13 +454,13 @@
 
         <div class="form-section-heading"><span>2</span><div><strong>Request Details</strong><small>Describe the concern clearly.</small></div></div>
         <div class="form-grid">
-          <div class="field-group"><label for="requestCategory">Request Category *</label><select id="requestCategory" required><option value="">Select category</option><option value="AI Recommendation">Let prototype recommend</option><option>IT &amp; Computer</option><option>Internet &amp; Network</option><option>Electrical</option><option>Facilities</option><option>Equipment</option><option>Maintenance</option></select></div>
+          <div class="field-group"><label for="requestCategory">Request Category *</label><select id="requestCategory" required><option value="">Select category</option><option value="AI Recommendation">Let the demo recommend</option><option>IT &amp; Computer</option><option>Internet &amp; Network</option><option>Electrical</option><option>Facilities</option><option>Equipment</option><option>Maintenance</option></select></div>
           <div class="field-group"><label for="requestPriority">Preferred Priority *</label><select id="requestPriority" required><option value="">Select priority</option><option>Low</option><option>Medium</option><option>High</option><option>Urgent</option></select></div>
           <div class="field-group full-width"><label for="requestTitle">Request Title *</label><input id="requestTitle" type="text" minlength="5" maxlength="100" placeholder="Example: No internet connection in Laboratory 2" required></div>
           <div class="field-group full-width"><label for="requestDescription">Detailed Description *</label><textarea id="requestDescription" rows="5" minlength="15" maxlength="500" placeholder="Describe what happened, when it started, and how it affects the area." aria-describedby="requestCharacterHelp" required></textarea><small id="requestCharacterHelp" class="character-help"><span id="requestCharacterCount">0</span>/500 characters</small></div>
           <div class="field-group"><label for="requestLocation">Location / Room *</label><input id="requestLocation" type="text" minlength="2" maxlength="80" placeholder="Example: Laboratory 2" required></div>
           <div class="field-group"><label for="requestDate">Date Reported *</label><input id="requestDate" type="date" required></div>
-          <div class="field-group full-width"><label for="requestAttachment">Attachment / Photo</label><input id="requestAttachment" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" aria-describedby="attachmentHelp"><small id="attachmentHelp">Optional. PNG, JPG, WEBP, or PDF up to 5 MB for this front-end demo.</small></div>
+          <div class="field-group full-width"><label for="requestAttachment">Attachment / Photo</label><input id="requestAttachment" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" aria-describedby="attachmentHelp"><small id="attachmentHelp">Optional. PNG, JPG, WEBP, or PDF up to 5 MB for this static demonstration.</small></div>
         </div>
 
         <div class="form-note"><span>✦</span><p><strong>AI-assisted demo</strong> JavaScript rules may suggest a category and priority and flag a possible duplicate. AI recommendations are advisory only. The final decision is made by authorized school personnel.</p></div>

@@ -36,9 +36,9 @@ const state = {
 
   serviceRequests: [
     {
-      id: "SR-2026-0024",
+      id: "SR-2026-000024",
       requesterName: "Demo Requester",
-      requesterEmail: "requester@htc.edu.ph",
+      requesterEmail: "requester@online.htcgsc.edu.ph",
       requesterType: "Student",
       department: "College of Engineering and Technology Education",
       category: "Internet & Network",
@@ -58,9 +58,9 @@ const state = {
     },
 
     {
-      id: "SR-2026-0023",
+      id: "SR-2026-000023",
       requesterName: "Demo Requester",
-      requesterEmail: "requester@htc.edu.ph",
+      requesterEmail: "requester@online.htcgsc.edu.ph",
       requesterType: "Faculty",
       department: "College Department",
       category: "Equipment",
@@ -80,9 +80,9 @@ const state = {
     },
 
     {
-      id: "SR-2026-0022",
+      id: "SR-2026-000022",
       requesterName: "Demo Requester",
-      requesterEmail: "requester@htc.edu.ph",
+      requesterEmail: "requester@online.htcgsc.edu.ph",
       requesterType: "School Personnel",
       department: "Administration Office",
       category: "Maintenance",
@@ -94,7 +94,7 @@ const state = {
       preferredPriority: "Low",
       aiCategory: "Facilities",
       aiPriority: "Low",
-      duplicateCheck: "Possible match: SR-2026-0018",
+      duplicateCheck: "Possible match: SR-2026-000018",
       priority: "Low",
       status: "For Review",
       dateReported: "2026-08-23",
@@ -102,9 +102,9 @@ const state = {
     },
 
     {
-      id: "SR-2026-0021",
+      id: "SR-2026-000021",
       requesterName: "Demo Requester",
-      requesterEmail: "requester@htc.edu.ph",
+      requesterEmail: "requester@online.htcgsc.edu.ph",
       requesterType: "Faculty",
       department: "College Department",
       category: "Electrical",
@@ -124,9 +124,9 @@ const state = {
     },
 
     {
-      id: "SR-2026-0020",
+      id: "SR-2026-000020",
       requesterName: "Demo Requester",
-      requesterEmail: "requester@htc.edu.ph",
+      requesterEmail: "requester@online.htcgsc.edu.ph",
       requesterType: "Faculty",
       department: "College Department",
       category: "Equipment",
@@ -149,7 +149,7 @@ const state = {
   workOrders: [
     {
       id: "WO-2026-0018",
-      requestId: "SR-2026-0024",
+      requestId: "SR-2026-000024",
       assignedPersonnel: "IT Support Team",
       serviceUnit: "Information Technology Office",
       workDescription:
@@ -166,7 +166,7 @@ const state = {
 
     {
       id: "WO-2026-0017",
-      requestId: "SR-2026-0023",
+      requestId: "SR-2026-000023",
       assignedPersonnel: "Facilities Team",
       serviceUnit: "Facilities Management",
       workDescription:
@@ -181,7 +181,7 @@ const state = {
 
     {
       id: "WO-2026-0016",
-      requestId: "SR-2026-0020",
+      requestId: "SR-2026-000020",
       assignedPersonnel: "IT Support Team",
       serviceUnit: "Information Technology Office",
       workDescription:
@@ -200,7 +200,7 @@ const state = {
     {
       id: "SP-001",
       name: "Alex Rivera",
-      email: "alex.rivera@htc.edu.ph",
+      email: "alex.rivera@online.htcgsc.edu.ph",
       department: "Information Technology Office",
       role: "Service Personnel / Technician",
       rights: ["Update Work"],
@@ -210,7 +210,7 @@ const state = {
     {
       id: "SP-002",
       name: "Jamie Santos",
-      email: "jamie.santos@htc.edu.ph",
+      email: "jamie.santos@online.htcgsc.edu.ph",
       department: "Facilities Management",
       role: "Service Personnel / Technician",
       rights: ["Update Work"],
@@ -220,7 +220,7 @@ const state = {
     {
       id: "SP-003",
       name: "Patricia Cruz",
-      email: "patricia.cruz@htc.edu.ph",
+      email: "patricia.cruz@online.htcgsc.edu.ph",
       department: "Administration Office",
       role: "Service Administrator",
       rights: ["Review Requests", "Manage Work Orders"],
@@ -230,7 +230,7 @@ const state = {
 
   approvals: [
     {
-      requestId: "SR-2026-0021",
+      requestId: "SR-2026-000021",
       decision: "Pending",
       decisionDate: "",
       remarks: ""
@@ -242,7 +242,7 @@ const state = {
   technicianHistory: [
     {
       workOrderId: "WO-2026-0016",
-      requestId: "SR-2026-0020",
+      requestId: "SR-2026-000020",
       status: "Completed",
       actionTaken:
         "Replaced the damaged HDMI cable and tested projector output.",
@@ -256,7 +256,7 @@ const state = {
       id: 1,
       targetRole: "requester",
       title: "Request in progress",
-      message: "SR-2026-0024 is currently being serviced.",
+      message: "SR-2026-000024 is currently being serviced.",
       date: "2026-08-26"
     },
 
@@ -264,7 +264,7 @@ const state = {
       id: 2,
       targetRole: "administrator",
       title: "Request awaiting review",
-      message: "SR-2026-0022 is ready for administrator review.",
+      message: "SR-2026-000022 is ready for administrator review.",
       date: "2026-08-26"
     },
 
@@ -272,7 +272,7 @@ const state = {
       id: 3,
       targetRole: "approver",
       title: "Approval required",
-      message: "SR-2026-0021 requires an authorization decision.",
+      message: "SR-2026-000021 requires an authorization decision.",
       date: "2026-08-26"
     },
 
@@ -4147,7 +4147,7 @@ function handleServiceRequestSubmit(
     `SR-2026-${String(
       state.requestNumber
     ).padStart(
-      4,
+      6,
       "0"
     )}`;
 
@@ -4223,7 +4223,7 @@ function handleServiceRequestSubmit(
   addNotification(
     "requester",
     "Service request submitted",
-    `${requestId} was submitted successfully and is now For Review.`
+    `${requestId} was added to this browser-only demonstration.`
   );
 
   addNotification(
@@ -4249,7 +4249,7 @@ function handleServiceRequestSubmit(
   );
 
   showToast(
-    `Service request ${requestId} submitted successfully.`,
+    `Demo request ${requestId} added locally. Full database functionality is available in the deployed application.`,
     "success"
   );
 }
@@ -4302,7 +4302,7 @@ function handleWorkOrderSubmit(
     byId(
       "workOrderRequestId"
     ).setCustomValidity(
-      "Enter an existing Service Request ID from the prototype records."
+      "Enter an existing Service Request ID from the demo records."
     );
 
     byId(
@@ -5345,6 +5345,20 @@ function initializeEvents() {
   on(
     byId(
       "heroAccessButton"
+    ),
+    "click",
+    () => {
+      openModal(
+        "loginModal",
+        "#loginName"
+      );
+    }
+  );
+
+
+  on(
+    byId(
+      "heroTrackButton"
     ),
     "click",
     () => {

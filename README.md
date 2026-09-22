@@ -12,8 +12,10 @@ application is packaged from `src/main/webapp/` and served by Tomcat.
 - PBKDF2-HMAC-SHA-256 password hashing and session/CSRF protections.
 
 The root `index.html`, `css/`, `js/`, and `images/` directory are a separate
-static prototype published through GitHub Pages. They are not packaged into the
-WAR and do not replace the Tomcat application.
+static demonstration published through GitHub Pages. Its forms and role
+workspaces demonstrate the interface locally without servlets, MySQL,
+authenticated sessions, CSRF, or the Python service. These files are not
+packaged into the WAR and do not replace the Tomcat application.
 
 ## Required setup
 
